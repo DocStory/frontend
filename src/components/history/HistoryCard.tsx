@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 import { Dropdown, DropdownOption } from '../common/Dropdown';
 import avatarImg from '../../assets/avatar.svg';
 
@@ -115,7 +115,7 @@ const HistoryCard: React.FC<HistoryCardProps> = ({
     setDropdown({ open: true, x: e.clientX, y: e.clientY });
   };
 
-  const handleDropdownSelect = (value: string) => {
+  const handleDropdownSelect = (_value: string) => {
     setDropdown({ ...dropdown, open: false });
     // TODO: 실제 동작 연결
     // alert(value);

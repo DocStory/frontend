@@ -1,4 +1,4 @@
-import React from 'react';
+// import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import HistoryCard from '../components/history/HistoryCard';
 import avatarImg from '../assets/avatar.svg';

@@ -1,6 +1,6 @@
-import React from 'react';
+// import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import RepositoryCard, { FileType } from '../components/common/RepositoryCard';
+import RepositoryCard from '../components/common/RepositoryCard';
 
 const meta: Meta<typeof RepositoryCard> = {
   title: 'Common/RepositoryCard',

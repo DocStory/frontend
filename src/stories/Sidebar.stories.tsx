@@ -1,40 +1,19 @@
-import React from 'react';
+// import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import SideBar from '../components/common/SideBar';
+import Sidebar from '../components/layout/Sidebar';
 
-const meta: Meta<typeof SideBar> = {
+const meta: Meta<typeof Sidebar> = {
   title: 'Common/SideBar',
-  component: SideBar,
+  component: Sidebar,
   parameters: {
     layout: 'fullscreen',
   },
   tags: ['autodocs'],
-  argTypes: {
-    activeMenu: {
-      control: 'select',
-      options: ['홈', '저장소', '도움말'],
-      description: '활성화된 메뉴',
-    },
-  },
 };
 
 export default meta;
-type Story = StoryObj<typeof SideBar>;
+type Story = StoryObj<typeof Sidebar>;
 
 export const Default: Story = {
-  args: {
-    activeMenu: '홈',
-  },
-};
-
-export const RepositoryActive: Story = {
-  args: {
-    activeMenu: '저장소',
-  },
-};
-
-export const HelpActive: Story = {
-  args: {
-    activeMenu: '도움말',
-  },
+  args: {},
 }; 

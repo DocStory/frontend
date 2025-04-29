@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import NavigationMenu from './NavigationMenu';
+// import NavigationMenu from './NavigationMenu'; // 파일이 없으므로 주석 처리
 
 interface SidebarProps {
   isCollapsed?: boolean;
@@ -29,23 +29,12 @@ const Logo = styled.h1`
   margin: 0;
 `;
 
-const NavigationSection = styled.div`
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`;
-
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false }) => {
   return (
     <SidebarContainer isCollapsed={isCollapsed}>
       <LogoSection>
         <Logo>DocStory</Logo>
       </LogoSection>
-      
-      <NavigationSection>
-        <NavigationMenu />
-      </NavigationSection>
     </SidebarContainer>
   );
 };
