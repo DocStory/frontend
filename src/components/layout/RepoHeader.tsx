@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import SearchBar from '../common/SearchBar';
 import NotificationIcon from '../../assets/notificationIcon.svg';
+import NotiIcon from '../../assets/notiIcon.svg';
 import TeamIcon from '../../assets/teamIcon.svg';
 import RepoIcon from '../../assets/proposalIcon.svg';
 
@@ -36,7 +37,11 @@ const Icon = styled.img`
   cursor: pointer;
 `;
 
-const RepoHeader: React.FC = () => (
+interface RepoHeaderProps {
+  hasNewNotification?: boolean;
+}
+
+const RepoHeader: React.FC<RepoHeaderProps> = ({ hasNewNotification = false }) => (
   <HeaderContainer>
     <SearchBarWrapper>
       <SearchBar />
@@ -44,7 +49,10 @@ const RepoHeader: React.FC = () => (
     <Right>
       <Icon src={RepoIcon} alt="레포" />
       <Icon src={TeamIcon} alt="팀" />
-      <Icon src={NotificationIcon} alt="알림" />
+      <Icon
+        src={hasNewNotification ? NotiIcon : NotificationIcon}
+        alt="알림"
+      />
     </Right>
   </HeaderContainer>
 );

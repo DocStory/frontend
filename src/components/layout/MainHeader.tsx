@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import SearchBar from '../common/SearchBar';
 import NotificationIcon from '../../assets/notificationIcon.svg';
+import NotiIcon from '../../assets/notiIcon.svg';
 
 const HeaderContainer = styled.header`
   position: relative;
@@ -34,13 +35,20 @@ const Icon = styled.img`
   cursor: pointer;
 `;
 
-const MainHeader: React.FC = () => (
+interface MainHeaderProps {
+  hasNewNotification?: boolean;
+}
+
+const MainHeader: React.FC<MainHeaderProps> = ({ hasNewNotification = false }) => (
   <HeaderContainer>
     <SearchBarWrapper>
       <SearchBar />
     </SearchBarWrapper>
     <Right>
-      <Icon src={NotificationIcon} alt="알림" />
+      <Icon
+        src={hasNewNotification ? NotiIcon : NotificationIcon}
+        alt="알림"
+      />
     </Right>
   </HeaderContainer>
 );
