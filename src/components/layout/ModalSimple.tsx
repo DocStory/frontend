@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import ProfileList from '../common/ProfileList.tsx';
-import ModalContent from '../common/ModalContent.tsx';
+import ModalContent from '../common/ContentArea.tsx';
 import ModalList from '../common/ModalList.tsx';
 
 interface ModalItem {

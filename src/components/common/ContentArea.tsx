@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-interface ModalContentProps {
+interface ContentProps {
   title: string;
   content: string;
   isEditing?: boolean;
@@ -31,7 +31,7 @@ const ContentText = styled.p`
   margin: 0;
 `;
 
-const ModalContent: React.FC<ModalContentProps> = ({
+const ContentArea: React.FC<ContentProps> = ({
   title,
   content,
   isEditing,
@@ -44,4 +44,4 @@ const ModalContent: React.FC<ModalContentProps> = ({
   );
 };
 
-export default ModalContent;
+export default ContentArea;

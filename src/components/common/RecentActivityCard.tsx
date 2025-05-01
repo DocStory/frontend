@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import ProfileList from './ProfileList.tsx';
-import ModalContent from './ModalContent.tsx';
+import ModalContent from './ContentArea.tsx';
 
 interface RecentActivityCardProps {
   headerTitle: string;

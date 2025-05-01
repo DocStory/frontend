@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import ModalContent from '../components/common/ModalContent.tsx';
+import ContentArea from "../components/common/ContentArea.tsx";
 
-const meta: Meta<typeof ModalContent> = {
-  title: 'Modal/ModalContent',
-  component: ModalContent,
+const meta: Meta<typeof ContentArea> = {
+  title: 'Common/ContentArea',
+  component: ContentArea,
   parameters: {
     layout: 'centered',
   },
@@ -11,7 +11,7 @@ const meta: Meta<typeof ModalContent> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof ModalContent>;
+type Story = StoryObj<typeof ContentArea>;
 
 export const Default: Story = {
   args: {
