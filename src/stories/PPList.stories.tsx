@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import PPList, { PPItem } from './PPList';
+import PPList, { PPItem } from '../components/common/PPList.tsx';
 
 const meta: Meta<typeof PPList> = {
   title: 'Common/PPList',
