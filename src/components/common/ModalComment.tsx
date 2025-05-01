@@ -32,7 +32,7 @@ const CommentInputContainer = styled.div`
   align-items: center;
   gap: 12px;
   margin-top: 24px;
-  background: #f1f5f9;
+  background: #ffffff;
   border-radius: 10px;
   padding: 8px 12px;
   border: 2px solid #cbd5e1;
@@ -48,7 +48,7 @@ const Input = styled.input`
   flex: 1;
   padding: 12px;
   border: none;
-  background: #f1f5f9;
+  background: #ffffff;
   font-family: 'Pretendard';
   font-weight: 400;
   font-size: 18px;
