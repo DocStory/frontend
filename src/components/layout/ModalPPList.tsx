@@ -1,14 +1,13 @@
 import React from 'react';
 import styled from 'styled-components';
-import ModalList from '../common/ModalList.tsx';
+import PPList from '../common/PPList';
 import FilterTab from '../common/FilterTab';
 import Button from '../common/Button';
 
 export interface PPItem {
   Name: string;
-  date: string;
-  iconType?: 'download' | 'upload' | 'diff';
-  status: 'all' | 'inProgress' | 'completed';
+  content: string;
+  status: 'progress' | 'merge' | 'close';
 }
 
 interface ModalPPListProps {
@@ -77,13 +76,17 @@ const StyledButton = styled(Button)`
 `;
 
 const ModalPPList: React.FC<ModalPPListProps> = ({ items }) => {
-  const [currentFilter, setCurrentFilter] = React.useState<
-    'all' | 'inProgress' | 'completed'
-  >('all');
+  const [currentFilter, setCurrentFilter] = React.useState<'all' | 'progress' | 'completed'>('all');
 
-  const handleFilterChange = (filter: 'all' | 'inProgress' | 'completed') => {
+  const handleFilterChange = (filter: 'all' | 'progress' | 'completed') => {
     setCurrentFilter(filter);
   };
+
+  const filteredItems = React.useMemo(() => {
+    if (currentFilter === 'all') return items;
+    if (currentFilter === 'progress') return items.filter(item => item.status === 'progress');
+    return items.filter(item => item.status === 'merge' || item.status === 'close');
+  }, [items, currentFilter]);
 
   return (
     <ModalPPListContainer>
@@ -96,19 +99,19 @@ const ModalPPList: React.FC<ModalPPListProps> = ({ items }) => {
         />
         <StyledFilterTab
           label='진행중'
-          isActive={currentFilter === 'inProgress'}
+          isActive={currentFilter === 'progress'}
           showLine={true}
-          onClick={() => handleFilterChange('inProgress')}
+          onClick={() => handleFilterChange('progress')}
         />
         <StyledFilterTab
-          label='종료'
+          label='완료'
           isActive={currentFilter === 'completed'}
           showLine={true}
           onClick={() => handleFilterChange('completed')}
         />
       </FilterSection>
       <ContentWrapper>
-        <ModalList items={items} />
+        <PPList items={filteredItems} />
       </ContentWrapper>
       <ButtonSection>
         <StyledButton variant='primary' size='large'>
