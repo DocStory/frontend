@@ -43,6 +43,7 @@ const RecentActivityCard: React.FC<RecentActivityCardProps> = ({
         time={headerTime}
         isEditing={isEditing}
         canEdit={canEdit}
+        backgroundColor="#ffffff"
       />
       <ContentWrapper>
         <ModalContent

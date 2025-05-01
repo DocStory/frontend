@@ -9,14 +9,15 @@ interface ModalHeaderProps {
   time: string;
   isEditing?: boolean;
   canEdit?: boolean;
+  backgroundColor?: string;
 }
 
-const HeaderContainer = styled.div`
+const HeaderContainer = styled.div<{ backgroundColor?: string }>`
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 37px 24px 16px 33px;
-  background: #ffffff;
+  background: ${props => props.backgroundColor || '#ffffff'};
 `;
 
 const HeaderContent = styled.div`
@@ -87,6 +88,7 @@ const ModalHeader: React.FC<ModalHeaderProps> = ({
   time,
   isEditing = false,
   canEdit = false,
+  backgroundColor,
 }) => {
   let icon = null;
   if (isEditing) {
@@ -96,7 +98,7 @@ const ModalHeader: React.FC<ModalHeaderProps> = ({
   }
 
   return (
-    <HeaderContainer>
+    <HeaderContainer backgroundColor={backgroundColor}>
       <HeaderContent>
         <UserInfo>
           <Avatar src={avatar} alt='User Avatar' />

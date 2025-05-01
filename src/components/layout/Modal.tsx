@@ -80,6 +80,7 @@ const Modal: React.FC<ModalProps> = ({
         time={headerTime}
         isEditing={isEditing}
         canEdit={canEdit}
+        backgroundColor="#f1f5f9"
       />
       <ContentWrapper>
         <ModalContent
