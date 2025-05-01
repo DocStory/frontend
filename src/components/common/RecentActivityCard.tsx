@@ -49,7 +49,7 @@ const RecentActivityCard: React.FC<RecentActivityCardProps> = ({
         <ModalContent
           title={contentTitle}
           content={content}
-          isEditing={isEditing}
+          isEditing={true}
         />
       </ContentWrapper>
     </ModalContainer>

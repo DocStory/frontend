@@ -9,7 +9,7 @@ interface ModalContentProps {
 
 const ContentContainer = styled.div<{ isEditing?: boolean }>`
   padding: 24px 33px;
-  background: #ffffff;
+  background: ${({ isEditing }) => (isEditing ? '#ffffff' : '#F9FBFD')};
 `;
 
 const ContentTitle = styled.h3`
