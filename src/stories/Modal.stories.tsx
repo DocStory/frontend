@@ -52,7 +52,16 @@ export const PP_조회: Story = {
         iconType: 'diff',
       },
     ],
-    comments: [],
+    comments: [
+      {
+        author: '홍길동',
+        content: '첫 번째 댓글입니다. 문서 내용에 대한 피드백을 남깁니다.',
+      },
+      {
+        author: '김철수',
+        content: '두 번째 댓글입니다. 추가적인 의견을 남깁니다.',
+      },
+    ],
     onReject: () => {},
     onAccept: () => {},
     role: 'user',
@@ -84,7 +93,16 @@ export const PP_수정: Story = {
         iconType: 'diff',
       },
     ],
-    comments: [{ author: '홍길동', content: '수정 상태의 댓글' }],
+    comments: [
+      {
+        author: '홍길동',
+        content: '첫 번째 댓글입니다. 문서 내용에 대한 피드백을 남깁니다.',
+      },
+      {
+        author: '김철수',
+        content: '두 번째 댓글입니다. 추가적인 의견을 남깁니다.',
+      },
+    ],
     onReject: () => {},
     onAccept: () => {},
     role: 'Reviewer',
@@ -116,7 +134,16 @@ export const PP_조회_병합_권한: Story = {
         iconType: 'diff',
       },
     ],
-    comments: [{ author: '홍길동', content: '병합 권한이 있는 경우' }],
+    comments: [
+      {
+        author: '홍길동',
+        content: '첫 번째 댓글입니다. 문서 내용에 대한 피드백을 남깁니다.',
+      },
+      {
+        author: '김철수',
+        content: '두 번째 댓글입니다. 추가적인 의견을 남깁니다.',
+      },
+    ],
     onReject: () => {},
     onAccept: () => {},
     role: 'Reviewer',

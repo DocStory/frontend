@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import ModalHeader from '../common/ModalHeader.tsx';
+import ProfileList from '../common/ProfileList.tsx';
 import ModalContent from '../common/ModalContent.tsx';
 import ModalList from '../common/ModalList.tsx';
 
@@ -60,7 +60,7 @@ const ModalSimple: React.FC<ModalSimpleProps> = ({
 }) => {
   return (
     <ModalContainer>
-      <ModalHeader
+      <ProfileList
         title={headerTitle}
         time={headerTime}
         isEditing={isEditing}

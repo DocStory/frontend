@@ -24,8 +24,11 @@ export const Default: Story = {
     comments: [
       {
         author: '홍길동',
-        content:
-          'All occur 글로벌 영어 발음 전체 듣기 · 미국 발음듣기 · 영국 발음듣기 · 호주 발음듣기 · 인도 발음듣기. Listen',
+        content: '첫 번째 댓글입니다. 문서 내용에 대한 피드백을 남깁니다.',
+      },
+      {
+        author: '김철수',
+        content: '두 번째 댓글입니다. 추가적인 의견을 남깁니다.',
       },
     ],
   },
@@ -41,6 +44,10 @@ export const Multiple: Story = {
       {
         author: '김철수',
         content: '두 번째 댓글입니다. 추가적인 의견을 남깁니다.',
+      },
+      {
+        author: '이영희',
+        content: '세 번째 댓글입니다. 다른 관점에서의 의견을 남깁니다.',
       },
     ],
   },

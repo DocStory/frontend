@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import ModalHeader from '../components/common/ModalHeader.tsx';
+import ProfileList from '../components/common/ProfileList.tsx';
 
-const meta: Meta<typeof ModalHeader> = {
-  title: 'Modal/ModalHeader',
-  component: ModalHeader,
+const meta: Meta<typeof ProfileList> = {
+  title: 'Common/ProfileList',
+  component: ProfileList,
   parameters: {
     layout: 'centered',
   },
@@ -11,7 +11,7 @@ const meta: Meta<typeof ModalHeader> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof ModalHeader>;
+type Story = StoryObj<typeof ProfileList>;
 
 export const Default: Story = {
   args: {

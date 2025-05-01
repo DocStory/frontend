@@ -4,7 +4,7 @@ import pencilIcon from '../../assets/pencilIcon.svg';
 import saveIcon from '../../assets/saveIcon.svg';
 import avatar from '../../assets/avatar.svg';
 
-interface ModalHeaderProps {
+interface ProfileListProps {
   title: string;
   time: string;
   isEditing?: boolean;
@@ -12,7 +12,7 @@ interface ModalHeaderProps {
   backgroundColor?: string;
 }
 
-const HeaderContainer = styled.div<{ backgroundColor?: string }>`
+const ProfileListContainer = styled.div<{ backgroundColor?: string }>`
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -20,7 +20,7 @@ const HeaderContainer = styled.div<{ backgroundColor?: string }>`
   background: ${props => props.backgroundColor || '#ffffff'};
 `;
 
-const HeaderContent = styled.div`
+const ProfileListContent = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -83,7 +83,7 @@ const Icon = styled.img`
   min-height: 20px;
 `;
 
-const ModalHeader: React.FC<ModalHeaderProps> = ({
+const ProfileList: React.FC<ProfileListProps> = ({
   title,
   time,
   isEditing = false,
@@ -98,8 +98,8 @@ const ModalHeader: React.FC<ModalHeaderProps> = ({
   }
 
   return (
-    <HeaderContainer backgroundColor={backgroundColor}>
-      <HeaderContent>
+    <ProfileListContainer backgroundColor={backgroundColor}>
+      <ProfileListContent>
         <UserInfo>
           <Avatar src={avatar} alt='User Avatar' />
           <TextContainer>
@@ -108,9 +108,9 @@ const ModalHeader: React.FC<ModalHeaderProps> = ({
           </TextContainer>
         </UserInfo>
         {icon && <IconButton>{icon}</IconButton>}
-      </HeaderContent>
-    </HeaderContainer>
+      </ProfileListContent>
+    </ProfileListContainer>
   );
 };
 
-export default ModalHeader;
+export default ProfileList;

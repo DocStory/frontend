@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import ModalHeader from './ModalHeader.tsx';
+import ProfileList from './ProfileList.tsx';
 import ModalContent from './ModalContent.tsx';
 
 interface RecentActivityCardProps {
@@ -38,7 +38,7 @@ const RecentActivityCard: React.FC<RecentActivityCardProps> = ({
 }) => {
   return (
     <ModalContainer>
-      <ModalHeader
+      <ProfileList
         title={headerTitle}
         time={headerTime}
         isEditing={isEditing}

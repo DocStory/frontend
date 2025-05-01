@@ -27,49 +27,19 @@ const Title = styled.h3`
   margin: 0 0 22px 0;
 `;
 
-const CommentInputContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 24px;
-  background: #ffffff;
-  border-radius: 10px;
-  padding: 8px 12px;
-  border: 2px solid #cbd5e1;
-`;
-
-const Avatar = styled.img`
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-`;
-
-const Input = styled.input`
-  flex: 1;
-  padding: 12px;
-  border: none;
-  background: #ffffff;
-  font-family: 'Pretendard';
-  font-weight: 400;
-  font-size: 18px;
-  line-height: 1.11em;
-  letter-spacing: -0.006em;
-  color: #475569;
-  &::placeholder {
-    color: #475569;
-  }
-`;
-
 const CommentList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
 `;
 
 const CommentItem = styled.div`
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 16px;
 `;
 
 const CommentContent = styled.div`
@@ -97,6 +67,33 @@ const CommentText = styled.p`
   margin: 0;
 `;
 
+const CommentInputContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 8px 12px;
+  border: 2px solid #cbd5e1;
+`;
+
+const Input = styled.input`
+  flex: 1;
+  padding: 12px;
+  border: none;
+  background: #ffffff;
+  font-family: 'Pretendard';
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1.11em;
+  letter-spacing: -0.006em;
+  color: #475569;
+  &::placeholder {
+    color: #475569;
+  }
+`;
+
 const ModalComment: React.FC<ModalCommentProps> = ({
   comments,
   isEditing = false,
@@ -109,7 +106,7 @@ const ModalComment: React.FC<ModalCommentProps> = ({
       <CommentList>
         {comments.map((comment, index) => (
           <CommentItem key={index}>
-            <Avatar src={avatar} alt='avatar' />
+            <img src={avatar} alt='avatar' width={48} height={48} style={{ borderRadius: '50%' }} />
             <CommentContent>
               <AuthorName>{comment.author}</AuthorName>
               <CommentText>{comment.content}</CommentText>
@@ -118,7 +115,7 @@ const ModalComment: React.FC<ModalCommentProps> = ({
         ))}
       </CommentList>
       <CommentInputContainer>
-        <Avatar src={avatar} alt='avatar' />
+        <img src={avatar} alt='avatar' width={48} height={48} style={{ borderRadius: '50%' }} />
         <Input placeholder='댓글을 입력하세요' />
       </CommentInputContainer>
     </ModalCommentContainer>
