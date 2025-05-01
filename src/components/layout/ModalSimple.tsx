@@ -65,7 +65,7 @@ const ModalSimple: React.FC<ModalSimpleProps> = ({
         time={headerTime}
         isEditing={isEditing}
         canEdit={canEdit}
-        backgroundColor="#cbd5e1"
+        backgroundColor="#f1f5f9"
       />
       <ContentWrapper>
         <ModalContent
