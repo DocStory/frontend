@@ -36,6 +36,7 @@ export const PP_조회: Story = {
   args: {
     headerTitle: '문서 제목',
     headerTime: '2025/03/20',
+    modalTitle: 'Proposal',
     isEditing: false,
     canEdit: false,
     contentTitle: '문서 내용',
@@ -77,6 +78,7 @@ export const PP_수정: Story = {
   args: {
     headerTitle: 'AI 프로젝트',
     headerTime: '7시간 전',
+    modalTitle: 'Proposal',
     isEditing: true,
     canEdit: true,
     contentTitle: '서식 제목',
@@ -118,6 +120,7 @@ export const PP_조회_병합_권한: Story = {
   args: {
     headerTitle: 'AI 프로젝트',
     headerTime: '7시간 전',
+    modalTitle: 'Proposal',
     isEditing: false,
     canEdit: true,
     contentTitle: '서식 제목',

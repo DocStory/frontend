@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import ProfileList from '../common/ProfileList.tsx';
 import ModalContent from '../common/ContentArea.tsx';
 import ModalList from '../common/ModalList.tsx';
+import ModalHeader from '../common/ModalHeader';
 
 interface ModalItem {
   Name: string;
@@ -13,6 +14,7 @@ interface ModalItem {
 interface ModalSimpleProps {
   headerTitle: string;
   headerTime: string;
+  modalTitle: string;
   isEditing?: boolean;
   canEdit?: boolean;
   contentTitle: string;
@@ -52,6 +54,7 @@ const SectionTitle = styled.h3`
 const ModalSimple: React.FC<ModalSimpleProps> = ({
   headerTitle,
   headerTime,
+  modalTitle,
   isEditing = false,
   canEdit = false,
   contentTitle,
@@ -60,6 +63,7 @@ const ModalSimple: React.FC<ModalSimpleProps> = ({
 }) => {
   return (
     <ModalContainer>
+      <ModalHeader title={modalTitle} onClose={() => {}} backgroundColor="#f1f5f9"/>
       <ProfileList
         title={headerTitle}
         time={headerTime}

@@ -5,6 +5,7 @@ import ModalContent from '../common/ContentArea.tsx';
 import ModalList from '../common/ModalList.tsx';
 import ModalComment from '../common/ModalComment.tsx';
 import ModalFooter from '../common/ModalFooter.tsx';
+import ModalHeader from '../common/ModalHeader';
 
 interface ModalItem {
   Name: string;
@@ -20,6 +21,7 @@ interface Comment {
 interface ModalProps {
   headerTitle: string;
   headerTime: string;
+  modalTitle: string;
   isEditing?: boolean;
   canEdit?: boolean;
   contentTitle: string;
@@ -63,6 +65,7 @@ const SectionTitle = styled.h3`
 const Modal: React.FC<ModalProps> = ({
   headerTitle,
   headerTime,
+  modalTitle,
   isEditing = false,
   canEdit = false,
   contentTitle,
@@ -75,6 +78,7 @@ const Modal: React.FC<ModalProps> = ({
 }) => {
   return (
     <ModalContainer>
+      <ModalHeader title={modalTitle} onClose={() => {}} backgroundColor="#f1f5f9"/>
       <ProfileList
         title={headerTitle}
         time={headerTime}

@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import closeIcon from '../../assets/closeIcon.svg';
 import SettingsList from '../common/SettingsList.tsx';
+import ModalHeader from '../common/ModalHeader';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -30,34 +31,6 @@ const ModalContent = styled.div`
   position: relative;
   display: flex;
   flex-direction: column;
-`;
-
-const Header = styled.div`
-  padding: 40px 40px 24px;
-  border-bottom: 1px solid #f2f2f2;
-`;
-
-const Title = styled.h2`
-  font-size: 18px;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin: 0;
-  text-align: center;
-`;
-
-const CloseButton = styled.button`
-  position: absolute;
-  top: 24px;
-  right: 24px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-
-  img {
-    width: 24px;
-    height: 24px;
-  }
 `;
 
 const ContentWrapper = styled.div`
@@ -106,12 +79,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   return (
     <ModalOverlay isOpen={isOpen} onClick={onClose}>
       <ModalContent onClick={(e) => e.stopPropagation()}>
-        <Header>
-          <Title>설정</Title>
-          <CloseButton onClick={onClose}>
-            <img src={closeIcon} alt='close' />
-          </CloseButton>
-        </Header>
+        <ModalHeader title="설정" onClose={onClose} />
         <ContentWrapper>
           <SettingsList items={settingsItems} />
         </ContentWrapper>

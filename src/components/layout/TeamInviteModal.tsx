@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import sendIcon from '../../assets/sendIcon.svg';
 import MemberList from '../common/MemberList';
+import ModalHeader from '../common/ModalHeader';
 
 interface TeamInviteModalProps {
   isOpen: boolean;
@@ -32,36 +33,6 @@ const ModalContent = styled.div`
   box-shadow: 0px 2px 30px 0px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
-`;
-
-const ModalHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid #ffffff;
-  background: white;
-  z-index: 1;
-  border-radius: 24px 24px 0 0;
-`;
-
-const ModalTitle = styled.h2`
-  font-size: 22px;
-  font-weight: 600;
-  color: #393433;
-  margin: 0;
-  font-family: 'Pretendard', sans-serif;
-`;
-
-const CloseButton = styled.button`
-  background: #f4f2f1;
-  border: none;
-  border-radius: 1000px;
-  padding: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 `;
 
 const ModalBody = styled.div`
@@ -185,27 +156,7 @@ const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
   return (
     <ModalContainer isOpen={isOpen}>
       <ModalContent>
-        <ModalHeader>
-          <ModalTitle>멤버 초대</ModalTitle>
-          <CloseButton onClick={onClose}>
-            <svg
-              width='24'
-              height='24'
-              viewBox='0 0 24 24'
-              fill='none'
-              xmlns='http://www.w3.org/2000/svg'
-            >
-              <path
-                d='M18 6L6 18M6 6L18 18'
-                stroke='#4C4848'
-                strokeWidth='1.8'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-              />
-            </svg>
-          </CloseButton>
-        </ModalHeader>
-
+        <ModalHeader title="멤버 초대" onClose={onClose}/>
         <ModalBody>
           <InputSection>
             <InputContainer>

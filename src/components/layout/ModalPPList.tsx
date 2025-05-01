@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import PPList from '../common/PPList';
 import FilterTab from '../common/FilterTab';
 import Button from '../common/Button';
+import ModalHeader from '../common/ModalHeader';
 
 export interface PPItem {
   Name: string;
@@ -90,6 +91,7 @@ const ModalPPList: React.FC<ModalPPListProps> = ({ items }) => {
 
   return (
     <ModalPPListContainer>
+      <ModalHeader title="Proposal 목록" onClose={() => {}} backgroundColor="#f1f5f9"/>
       <FilterSection>
         <StyledFilterTab
           label='전체'

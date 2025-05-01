@@ -1,9 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
-import closeIcon from '../../assets/closeIcon.svg';
 import avatarIcon from '../../assets/avatar.svg';
 import profilePencilIcon from '../../assets/profilepencilIcon.svg';
 import InfoList from '../common/InfoList.tsx';
+import ModalHeader from '../common/ModalHeader';
 
 interface UserInfoModalProps {
   isOpen: boolean;
@@ -30,25 +30,15 @@ const ModalOverlay = styled.div<{ isOpen: boolean }>`
 const ModalContent = styled.div`
   background: white;
   width: 100%;
-  max-width: 400px;
+  max-width: 500px;
   border-radius: 16px;
   position: relative;
-  padding: 40px;
+  display: flex;
+  flex-direction: column;
 `;
 
-const CloseButton = styled.button`
-  position: absolute;
-  top: 24px;
-  right: 24px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-
-  img {
-    width: 24px;
-    height: 24px;
-  }
+const ContentWrapper = styled.div`
+  padding: 40px;
 `;
 
 const ProfileSection = styled.div`
@@ -118,27 +108,30 @@ const UserInfoModal: React.FC<UserInfoModalProps> = ({
   return (
     <ModalOverlay isOpen={isOpen} onClick={onClose}>
       <ModalContent onClick={(e) => e.stopPropagation()}>
-        <CloseButton onClick={onClose}>
-          <img src={closeIcon} alt='close' />
-        </CloseButton>
-        <ProfileSection>
-          <AvatarWrapper>
-            <Avatar src={avatarIcon} alt='user avatar' />
-            <EditButton>
-              <img src={profilePencilIcon} alt='edit profile' />
-            </EditButton>
-          </AvatarWrapper>
-          <UserInfo>
-            <UserName>{userName}</UserName>
-            <UserEmail>{userEmail}</UserEmail>
-          </UserInfo>
-        </ProfileSection>
-        <InfoList
-          name={userName}
-          email={userEmail}
-          phoneNumber={phoneNumber}
-          address={address}
+        <ModalHeader 
+          title="사용자 정보" 
+          onClose={onClose}
         />
+        <ContentWrapper>
+          <ProfileSection>
+            <AvatarWrapper>
+              <Avatar src={avatarIcon} alt='user avatar' />
+              <EditButton>
+                <img src={profilePencilIcon} alt='edit profile' />
+              </EditButton>
+            </AvatarWrapper>
+            <UserInfo>
+              <UserName>{userName}</UserName>
+              <UserEmail>{userEmail}</UserEmail>
+            </UserInfo>
+          </ProfileSection>
+          <InfoList
+            name={userName}
+            email={userEmail}
+            phoneNumber={phoneNumber}
+            address={address}
+          />
+        </ContentWrapper>
       </ModalContent>
     </ModalOverlay>
   );

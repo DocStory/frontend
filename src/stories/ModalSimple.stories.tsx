@@ -36,6 +36,7 @@ export const History_조회: Story = {
   args: {
     headerTitle: '문서 제목',
     headerTime: '2025/03/20',
+    modalTitle: 'History',
     contentTitle: '문서 내용',
     content: '문서 내용입니다.',
     items: [
@@ -57,6 +58,7 @@ export const History_PP_생성: Story = {
   args: {
     headerTitle: 'AI 프로젝트',
     headerTime: '7시간 전',
+    modalTitle: 'History/PP',
     isEditing: true,
     canEdit: true,
     contentTitle: '서식 제목',
@@ -80,6 +82,7 @@ export const History_PP_수정: Story = {
   args: {
     headerTitle: 'AI 프로젝트',
     headerTime: '7시간 전',
+    modalTitle: 'History/PP',
     isEditing: true,
     canEdit: true,
     contentTitle: '서식 제목',
