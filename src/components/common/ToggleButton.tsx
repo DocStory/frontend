@@ -25,7 +25,7 @@ const StyledButton = styled(Button)`
   font-size: 12px;
   font-weight: 400;
   line-height: 1.5em;
-  letter-spacing: 0.144em;
+  letter-spacing: 0.02em;
   color: #161414;
   border-color: #6c9eff;
   background-color: #d8e5ff;

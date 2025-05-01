@@ -1,5 +1,6 @@
 import { Meta, StoryObj } from '@storybook/react';
 import ToggleButton from '../components/common/ToggleButton';
+import { useState } from 'react';
 
 const meta: Meta<typeof ToggleButton> = {
   title: 'Common/ToggleButton',
@@ -14,32 +15,43 @@ export default meta;
 type Story = StoryObj<typeof ToggleButton>;
 
 const options = [
-  { label: '관리자', value: 'admin' },
-  { label: '리뷰어', value: 'reviewer' },
+  { label: '보기 가능', value: 'view' },
+  { label: '편집 가능', value: 'edit' },
 ];
 
-export const Admin: Story = {
+const Template = (args: any) => {
+  const [value, setValue] = useState(args.currentValue);
+  return (
+    <ToggleButton
+      {...args}
+      currentValue={value}
+      onChange={(newValue) => setValue(newValue)}
+    />
+  );
+};
+
+export const View: Story = {
+  render: Template,
   args: {
-    currentValue: 'admin',
+    currentValue: 'view',
     options,
-    onChange: (value) => console.log('Selected:', value),
     onDelete: () => console.log('Delete clicked'),
   },
 };
 
-export const Reviewer: Story = {
+export const Edit: Story = {
+  render: Template,
   args: {
-    currentValue: 'reviewer',
+    currentValue: 'edit',
     options,
-    onChange: (value) => console.log('Selected:', value),
     onDelete: () => console.log('Delete clicked'),
   },
 };
 
 export const WithoutDelete: Story = {
+  render: Template,
   args: {
-    currentValue: 'admin',
+    currentValue: 'view',
     options,
-    onChange: (value) => console.log('Selected:', value),
   },
 };
