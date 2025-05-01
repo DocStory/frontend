@@ -29,13 +29,13 @@ export const HostList: Story = {
         id: '2',
         name: '김철수',
         email: 'kim@example.com',
-        role: 'reviewer',
+        role: 'admin',
       },
       {
         id: '3',
         name: '이영희',
         email: 'lee@example.com',
-        role: 'reviewer',
+        role: 'admin',
       },
     ],
     onRoleChange: (id, role) =>
