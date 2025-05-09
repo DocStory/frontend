@@ -4,12 +4,12 @@ import LoginButton from './LoginButton';
 
 const HeroWrapper = styled.section`
   width: 100vw;
-  min-height: 600px;
+  min-height: 580px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(180deg, #F7FAFF 0%, #E3EDFF 100%);
-  padding: 120px 0 60px 0;
+  padding: 110px 0 50px 0;
   box-sizing: border-box;
   overflow-x: hidden;
 `;
@@ -20,61 +20,68 @@ const Content = styled.div`
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  padding-left: 120px;
-  min-width: 420px;
+  padding-left: 100px;
+  min-width: 400px;
 `;
 
 const Title = styled.h1`
   font-family: 'Inter', 'Pretendard', sans-serif;
   font-weight: 700;
-  font-size: 50px;
-  color: #6C9EFF;
+  font-size: 44px;
+  color: #000;
   margin-bottom: 8px;
-  letter-spacing: -3.5%;
+  letter-spacing: -1.5px;
+`;
+
+const HighlightText = styled.span`
+  color: #6C9EFF;
 `;
 
 const SubTitle = styled.h2`
   font-family: 'Inter', 'Pretendard', sans-serif;
   font-weight: 700;
-  font-size: 50px;
-  color: #6C9EFF;
-  margin-bottom: 18px;
-  letter-spacing: -3.5%;
+  font-size: 44px;
+  color: #000;
+  margin-bottom: 16px;
+  letter-spacing: -1.5px;
 `;
 
 const Desc = styled.p`
   font-family: 'Inter', 'Pretendard', sans-serif;
-  font-weight: 700;
-  font-size: 28px;
-  color: #000;
-  margin-bottom: 32px;
-  line-height: 2.06;
+  font-weight: 500;
+  font-size: 16px;
+  color: #64748B;
+  margin-bottom: 30px;
+  line-height: 1.6;
+  max-width: 500px;
 `;
 
 const ButtonRow = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   margin-bottom: 16px;
-  width: 327px;
+  width: 300px;
 `;
 
 const MacbookImage = styled.img`
   flex: 1;
-  max-width: 600px;
-  min-width: 320px;
+  max-width: 550px;
+  min-width: 300px;
   height: auto;
   margin-left: 40px;
-  box-shadow: 0px 4px 24px 0px rgba(0,0,0,0.10);
   border-radius: 24px;
 `;
 
 const LandingHero: React.FC = () => (
-  <HeroWrapper aria-label="히어로 섹션" tabIndex={0}>
+  <HeroWrapper aria-label="히어로 섹션" tabIndex={0} id="intro">
     <Content>
-      <Title>DocStory와 함께,</Title>
-      <SubTitle>빠르고 쉬운 문서관리</SubTitle>
-      <Desc>문서를 업로드하고, 쉽게 버전 관리하세요. <br />팀원들과의 협업도 간편하게</Desc>
+      <Title>복잡한 파일 관리,</Title>
+      <SubTitle><HighlightText>DocStory</HighlightText>가 해결합니다.</SubTitle>
+      <Desc>
+        문서를 업로드하고, 문서 흐름을 간편하게 관리해보세요. 
+        팀원들과 협업까지 간편하게 가능합니다.
+      </Desc>
       <ButtonRow>
         <LoginButton type="google">구글 계정으로 로그인</LoginButton>
         <LoginButton type="kakao">카카오 계정으로 로그인</LoginButton>
@@ -85,4 +92,4 @@ const LandingHero: React.FC = () => (
   </HeroWrapper>
 );
 
-export default LandingHero; 
+export default LandingHero;

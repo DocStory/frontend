@@ -9,15 +9,15 @@ interface LoginButtonProps {
 }
 
 const Button = styled.button<{ $type: 'google' | 'kakao' | 'guest' }>`
-  width: 327px;
-  height: 50px;
+  width: 300px;
+  height: 48px;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
   font-family: 'Pretendard', 'Inter', sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: ${(props) => (props.$type === 'guest' ? 700 : 500)};
   cursor: pointer;
   box-sizing: border-box;
@@ -47,9 +47,9 @@ const Button = styled.button<{ $type: 'google' | 'kakao' | 'guest' }>`
 `;
 
 const Icon = styled.img`
-  width: 24px;
-  height: 24px;
-  margin-right: 12px;
+  width: 22px;
+  height: 22px;
+  margin-right: 10px;
 `;
 
 const LoginButton: React.FC<LoginButtonProps> = ({ type, onClick, children, className }) => (

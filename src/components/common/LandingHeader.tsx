@@ -61,7 +61,9 @@ const LandingHeader: React.FC = () => (
     </LogoRow>
     <MenuRow>
       <MenuItem href="#intro" aria-label="소개" tabIndex={0}>소개</MenuItem>
+      <MenuItem href="#features" aria-label="주요 기능" tabIndex={0}>주요 기능</MenuItem>
       <MenuItem href="#how" aria-label="사용 방법" tabIndex={0}>사용 방법</MenuItem>
+      <MenuItem href="#pricing" aria-label="요금제" tabIndex={0}>요금제</MenuItem>
     </MenuRow>
   </HeaderWrapper>
 );
