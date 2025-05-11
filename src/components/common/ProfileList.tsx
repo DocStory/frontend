@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import pencilIcon from '../../assets/pencilIcon.svg';
 import saveIcon from '../../assets/saveIcon.svg';
 import avatar from '../../assets/avatar.svg';
+import statusIcon from '../../assets/StatusIcon.svg';
 
 interface ProfileListProps {
   title: string;
@@ -10,6 +11,7 @@ interface ProfileListProps {
   isEditing?: boolean;
   canEdit?: boolean;
   backgroundColor?: string;
+  isRecentActivity?: boolean;
 }
 
 const ProfileListContainer = styled.div<{ backgroundColor?: string }>`
@@ -44,23 +46,23 @@ const TextContainer = styled.div`
   gap: 4px;
 `;
 
-const Title = styled.h2`
+const Title = styled.h2<{ isRecentActivity?: boolean }>`
   font-family: 'Pretendard';
   font-weight: 600;
-  font-size: 22px;
+  font-size: ${props => props.isRecentActivity ? '14px' : '22px'};
   line-height: 1em;
   letter-spacing: -0.007em;
-  color: #1e293b;
+  color: #31394D;
   margin: 0;
 `;
 
-const Time = styled.span`
+const Time = styled.span<{ isRecentActivity?: boolean }>`
   font-family: 'Pretendard';
   font-weight: 500;
-  font-size: 14px;
+  font-size: ${props => props.isRecentActivity ? '12px' : '14px'};
   line-height: 1.43em;
   letter-spacing: -0.006em;
-  color: #475569;
+  color: #C4C4C4;
 `;
 
 const IconButton = styled.button`
@@ -89,9 +91,12 @@ const ProfileList: React.FC<ProfileListProps> = ({
   isEditing = false,
   canEdit = false,
   backgroundColor,
+  isRecentActivity = false,
 }) => {
   let icon = null;
-  if (isEditing) {
+  if (isRecentActivity) {
+    icon = <Icon src={statusIcon} alt='Status' />;
+  } else if (isEditing) {
     icon = <Icon src={saveIcon} alt='Save' />;
   } else if (canEdit) {
     icon = <Icon src={pencilIcon} alt='Pencil' />;
@@ -103,8 +108,8 @@ const ProfileList: React.FC<ProfileListProps> = ({
         <UserInfo>
           <Avatar src={avatar} alt='User Avatar' />
           <TextContainer>
-            <Title>{title}</Title>
-            <Time>{time}</Time>
+            <Title isRecentActivity={isRecentActivity}>{title}</Title>
+            <Time isRecentActivity={isRecentActivity}>{time}</Time>
           </TextContainer>
         </UserInfo>
         {icon && <IconButton>{icon}</IconButton>}

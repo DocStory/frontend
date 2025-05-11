@@ -13,7 +13,7 @@ interface RecentActivityCardProps {
 }
 
 const ModalContainer = styled.div`
-  width: 1016px;
+  width: 100%;
   min-height: 200px;
   background: #ffffff;
   border-radius: 15px;
@@ -26,6 +26,7 @@ const ModalContainer = styled.div`
 const ContentWrapper = styled.div`
   flex: 1;
   background: #ffffff;
+  margin-top: -15px;
 `;
 
 const RecentActivityCard: React.FC<RecentActivityCardProps> = ({
@@ -44,12 +45,14 @@ const RecentActivityCard: React.FC<RecentActivityCardProps> = ({
         isEditing={isEditing}
         canEdit={canEdit}
         backgroundColor="#ffffff"
+        isRecentActivity={true}
       />
       <ContentWrapper>
         <ModalContent
           title={contentTitle}
           content={content}
           isEditing={true}
+          isRecentActivity={true}
         />
       </ContentWrapper>
     </ModalContainer>
