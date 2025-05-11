@@ -37,9 +37,10 @@ const Icon = styled.img`
 
 interface MainHeaderProps {
   hasNewNotification?: boolean;
+  onNotificationClick?: () => void;
 }
 
-const MainHeader: React.FC<MainHeaderProps> = ({ hasNewNotification = false }) => (
+const MainHeader: React.FC<MainHeaderProps> = ({ hasNewNotification = false, onNotificationClick }) => (
   <HeaderContainer>
     <SearchBarWrapper>
       <SearchBar />
@@ -48,6 +49,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({ hasNewNotification = false }) =
       <Icon
         src={hasNewNotification ? NotiIcon : NotificationIcon}
         alt="알림"
+        onClick={onNotificationClick}
       />
     </Right>
   </HeaderContainer>

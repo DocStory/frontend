@@ -5,6 +5,7 @@ interface ContentProps {
   title: string;
   content: string;
   isEditing?: boolean;
+  isRecentActivity?: boolean;
 }
 
 const ContentContainer = styled.div<{ isEditing?: boolean }>`
@@ -12,12 +13,12 @@ const ContentContainer = styled.div<{ isEditing?: boolean }>`
   background: ${({ isEditing }) => (isEditing ? '#ffffff' : '#F9FBFD')};
 `;
 
-const ContentTitle = styled.h3`
+const ContentTitle = styled.h3<{ isRecentActivity?: boolean }>`
   font-family: 'Pretendard';
   font-weight: 500;
-  font-size: 26px;
+  font-size: ${props => props.isRecentActivity ? '20px' : '26px'};
   line-height: 1.2;
-  color: #1e293b;
+  color: #292929;
   margin: 0 0 16px 0;
 `;
 
@@ -35,10 +36,11 @@ const ContentArea: React.FC<ContentProps> = ({
   title,
   content,
   isEditing,
+  isRecentActivity = false,
 }) => {
   return (
     <ContentContainer isEditing={isEditing}>
-      <ContentTitle>{title}</ContentTitle>
+      <ContentTitle isRecentActivity={isRecentActivity}>{title}</ContentTitle>
       <ContentText>{content}</ContentText>
     </ContentContainer>
   );

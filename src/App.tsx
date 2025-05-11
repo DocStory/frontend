@@ -1,37 +1,36 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './styles/App.css'
+import React from 'react';
 import { GlobalStyle } from "./styles/GlobalStyle.ts";
+import LandingPage from './components/common/LandingPage';
+import RepoTreePage from './components/pages/RepoTreePage';
+import PhysicsGraphTestPage from './components/pages/PhysicsGraphTestPage';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import HomePage from './components/pages/HomePage.tsx';
+import AppLayout from './components/layout/AppLayout';
+import RepositorySection from './components/common/RepositorySection';
+import NewRepositorySection from './components/common/NewRepositorySection';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
     <>
       <GlobalStyle />
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/home" element={<AppLayout />}>
+            <Route index element={<HomePage />} />
+          </Route>
+          <Route path="/repository" element={<AppLayout />}>
+            <Route index element={<RepositorySection />} />
+          </Route>
+          <Route path="/new-repository" element={<AppLayout />}>
+            <Route index element={<NewRepositorySection />} />
+          </Route>
+          <Route path="/repo-tree" element={<RepoTreePage />} />
+          <Route path="/physics-test" element={<PhysicsGraphTestPage />} />
+        </Routes>
+      </BrowserRouter>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
