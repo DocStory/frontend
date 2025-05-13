@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import LoginButton from './LoginButton';
+import AuthService from '../../api/auth';
 
 const HeroWrapper = styled.section`
   width: 100vw;
@@ -73,23 +74,43 @@ const MacbookImage = styled.img`
   border-radius: 24px;
 `;
 
-const LandingHero: React.FC = () => (
-  <HeroWrapper aria-label="히어로 섹션" tabIndex={0} id="intro">
-    <Content>
-      <Title>복잡한 파일 관리,</Title>
-      <SubTitle><HighlightText>DocStory</HighlightText>가 해결합니다.</SubTitle>
-      <Desc>
-        문서를 업로드하고, 문서 흐름을 간편하게 관리해보세요. 
-        팀원들과 협업까지 간편하게 가능합니다.
-      </Desc>
-      <ButtonRow>
-        <LoginButton type="google">구글 계정으로 로그인</LoginButton>
-        <LoginButton type="kakao">카카오 계정으로 로그인</LoginButton>
-        <LoginButton type="guest">로그인 없이 체험해보기</LoginButton>
-      </ButtonRow>
-    </Content>
-    <MacbookImage src="/assets/examImage.svg" alt="Macbook Air 일러스트" />
-  </HeroWrapper>
-);
+const LinkWrapper = styled.a`
+  text-decoration: none;
+`;
+
+const LandingHero: React.FC = () => {
+  // 소셜 로그인 핸들러
+  const handleGoogleLogin = () => {
+    window.location.href = AuthService.getSocialLoginUrl('google');
+  };
+  
+  const handleKakaoLogin = () => {
+    window.location.href = AuthService.getSocialLoginUrl('kakao');
+  };
+  
+  const handleGuestLogin = () => {
+    // 게스트 로그인 로직
+    console.log('게스트 로그인');
+  };
+
+  return (
+    <HeroWrapper aria-label="히어로 섹션" tabIndex={0} id="intro">
+      <Content>
+        <Title>복잡한 파일 관리,</Title>
+        <SubTitle><HighlightText>DocStory</HighlightText>가 해결합니다.</SubTitle>
+        <Desc>
+          문서를 업로드하고, 문서 흐름을 간편하게 관리해보세요. 
+          팀원들과 협업까지 간편하게 가능합니다.
+        </Desc>
+        <ButtonRow>
+          <LoginButton type="google" onClick={handleGoogleLogin}>구글 계정으로 로그인</LoginButton>
+          <LoginButton type="kakao" onClick={handleKakaoLogin}>카카오 계정으로 로그인</LoginButton>
+          <LoginButton type="guest" onClick={handleGuestLogin}>로그인 없이 체험해보기</LoginButton>
+        </ButtonRow>
+      </Content>
+      <MacbookImage src="/assets/examImage.svg" alt="Macbook Air 일러스트" />
+    </HeroWrapper>
+  );
+};
 
 export default LandingHero;
