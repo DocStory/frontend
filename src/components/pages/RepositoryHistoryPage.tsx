@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from "react";
 import styled from 'styled-components';
 import SideBar from '../common/SideBar';
 import RepoHeader from '../layout/RepoHeader';
 import RepositoryTile from '../layout/RepositoryTitle';
 import PhysicsRepoGraph from '../common/PhysicsRepoGraph';
+import TeamInviteModal from '../layout/TeamInviteModal';
 
 const PageContainer = styled.div`
   display: flex;
@@ -76,11 +77,16 @@ const testEdges = [
 ];
 
 const RepositoryHistoryPage: React.FC = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <PageContainer>
       <SideBar activeMenu="저장소" />
       <MainContent>
-        <RepoHeader hasNewNotification={true} />
+        <RepoHeader
+          hasNewNotification={true}
+          onTeamIconClick={() => setIsModalOpen(true)}
+        />
         <RepositoryTile 
           title="캡스톤 디자인" 
           subtitle="2025 상반기 프로젝트" 
@@ -89,6 +95,14 @@ const RepositoryHistoryPage: React.FC = () => {
           <PhysicsRepoGraph nodes={testNodes} edges={testEdges} />
         </GraphContainer>
       </MainContent>
+
+      <TeamInviteModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onInvite={(email) => {
+          console.log('Invite requested for', email);
+        }}
+      />
     </PageContainer>
   );
 };

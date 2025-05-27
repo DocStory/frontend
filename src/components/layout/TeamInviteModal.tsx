@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import sendIcon from '../../assets/sendIcon.svg';
 import MemberList from '../common/MemberList';
 import ModalHeader from '../common/ModalHeader';
+import { getTeamMembers, updateTeamMemberRole, removeTeamMember } from '../../api/team';
+import { UUID } from '../../api/common/types';
 
 interface TeamInviteModalProps {
   isOpen: boolean;
   onClose: () => void;
   onInvite: (email: string) => void;
+  repositoryId: UUID;
 }
 
 const ModalContainer = styled.div<{ isOpen: boolean }>`
@@ -110,28 +113,39 @@ const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
   isOpen,
   onClose,
   onInvite,
+  repositoryId,
 }) => {
   const [email, setEmail] = useState('');
-  const [members, setMembers] = useState([
-    {
-      id: '1',
-      name: '홍길동',
-      email: 'Marvin McKinney@gmail.com',
-      role: 'admin' as const,
-    },
-    {
-      id: '2',
-      name: '홍길동',
-      email: 'Marvin McKinney@gmail.com',
-      role: 'reviewer' as const,
-    },
-    {
-      id: '3',
-      name: '홍길동',
-      email: 'Marvin McKinney@gmail.com',
-      role: 'contributor' as const,
-    },
-  ]);
+  const [members, setMembers] = useState<Array<{
+    id: string;
+    name: string;
+    email: string;
+    role: 'admin' | 'reviewer' | 'contributor';
+  }>>([]);
+
+  const fetchTeamMembers = async () => {
+    try {
+      const response = await getTeamMembers(repositoryId);
+
+      if (response.data) {
+        const formattedMembers = response.data.map((member) => ({
+          id: member.userId,
+          name: member.nickname,
+          email: member.email,
+          role: member.role.toLowerCase() as 'admin' | 'reviewer' | 'contributor',
+        }));
+        setMembers(formattedMembers);
+      }
+    } catch (error) {
+      console.error('Failed to fetch team members:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchTeamMembers();
+    }
+  }, [isOpen, repositoryId]);
 
   const handleInvite = () => {
     if (email.trim()) {
@@ -140,17 +154,22 @@ const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
     }
   };
 
-  const handleRoleChange = (
-    id: string,
-    role: 'admin' | 'reviewer' | 'contributor'
-  ) => {
-    setMembers(
-      members.map((member) => (member.id === id ? { ...member, role } : member))
-    );
+  const handleRoleChange = async (id: string, role: 'admin' | 'reviewer' | 'contributor') => {
+    try {
+      await updateTeamMemberRole(repositoryId, id, { role: role.toUpperCase() });
+      await fetchTeamMembers();
+    } catch (error) {
+      console.error('Failed to update member role:', error);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setMembers(members.filter((member) => member.id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      await removeTeamMember(repositoryId, id);
+      await fetchTeamMembers();
+    } catch (error) {
+      console.error('Failed to remove team member:', error);
+    }
   };
 
   return (

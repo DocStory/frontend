@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "/", // 기본 URL을 프록시 사용을 위해 상대 경로로 변경
+  baseURL: "http://localhost:8080", // 기본 URL을 프록시 사용을 위해 상대 경로로 변경
   headers: {
     "Content-Type": "application/json",
   },
