@@ -203,6 +203,40 @@ const InfoDivider = styled.div`
   background-color: #F3F4F6;
 `;
 
+const WithdrawSection = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+`;
+
+const WithdrawButton = styled.button`
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  cursor: pointer;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-family: 'Pretendard';
+  font-weight: 500;
+  font-size: 16px;
+  color: #DC2626;
+  transition: all 0.2s ease;
+  min-width: 120px;
+  
+  &:hover {
+    background-color: #FEE2E2;
+    border-color: #FCA5A5;
+    color: #B91C1C;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
+  }
+  
+  &:active {
+    background-color: #FECACA;
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(220, 38, 38, 0.1);
+  }
+`;
+
 const UserInfoModal: React.FC<UserInfoModalProps> = ({
   isOpen,
   onClose,
@@ -237,6 +271,19 @@ const UserInfoModal: React.FC<UserInfoModalProps> = ({
       handleNameSave();
     } else if (e.key === 'Escape') {
       handleNameCancel();
+    }
+  };
+
+  const handleWithdraw = () => {
+    const isConfirmed = window.confirm(
+      '정말로 회원 탈퇴를 하시겠습니까?\n\n탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.'
+    );
+    
+    if (isConfirmed) {
+      // 여기에 실제 회원 탈퇴 로직을 구현
+      console.log('회원 탈퇴 요청');
+      alert('회원 탈퇴가 완료되었습니다.');
+      onClose();
     }
   };
 
@@ -297,6 +344,12 @@ const UserInfoModal: React.FC<UserInfoModalProps> = ({
             </InfoRow>
             <InfoDivider />
           </InfoSection>
+
+          <WithdrawSection>
+            <WithdrawButton onClick={handleWithdraw}>
+              회원 탈퇴
+            </WithdrawButton>
+          </WithdrawSection>
         </ContentWrapper>
       </ModalContent>
     </ModalOverlay>

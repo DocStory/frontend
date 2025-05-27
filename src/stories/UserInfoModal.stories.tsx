@@ -2,7 +2,7 @@ import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import UserInfoModal from '../components/layout/UserInfoModal';
 
-const meta: Meta<typeof UserInfoModal> = {
+const meta = {
   title: 'Layout/UserInfoModal',
   component: UserInfoModal,
   parameters: {
@@ -44,10 +44,10 @@ const meta: Meta<typeof UserInfoModal> = {
       description: '사용자 이름 변경 핸들러',
     },
   },
-};
+} satisfies Meta<typeof UserInfoModal>;
 
 export default meta;
-type Story = StoryObj<typeof UserInfoModal>;
+type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
@@ -60,41 +60,58 @@ export const Default: Story = {
   parameters: {
     docs: {
       description: {
-        story: '기본 사용자 정보 모달입니다. 닉네임 옆의 편집 아이콘을 클릭하면 이름을 수정할 수 있습니다.',
+        story: '기본 사용자 정보 모달입니다. 이름 편집 기능과 하단에 회원 탈퇴 버튼이 포함되어 있습니다.',
       },
     },
   },
 };
 
-export const WithLongName: Story = {
+export const LongUserName: Story = {
   args: {
     isOpen: true,
-    userName: '김아주긴이름을가진사용자',
-    userEmail: 'verylongusername@example.com',
+    userName: '매우긴사용자이름입니다',
+    userEmail: 'verylongusername@gmail.com',
     phoneNumber: '010-9876-5432',
-    address: '부산광역시 해운대구 센텀중앙로 79',
+    address: '부산광역시 해운대구 센텀중앙로 48',
   },
   parameters: {
     docs: {
       description: {
-        story: '긴 이름을 가진 사용자의 정보 모달입니다. 레이아웃이 적절히 조정되는지 확인할 수 있습니다.',
+        story: '긴 사용자 이름이 표시된 경우의 모달입니다.',
       },
     },
   },
 };
 
-export const WithShortName: Story = {
+export const ShortUserName: Story = {
   args: {
     isOpen: true,
-    userName: '김철수',
-    userEmail: 'kim@test.com',
+    userName: '김',
+    userEmail: 'kim@example.com',
     phoneNumber: '010-1111-2222',
-    address: '대구광역시 중구 동성로',
+    address: '대구광역시 중구 국채보상로 102',
   },
   parameters: {
     docs: {
       description: {
-        story: '짧은 이름을 가진 사용자의 정보 모달입니다.',
+        story: '짧은 사용자 이름이 표시된 경우의 모달입니다.',
+      },
+    },
+  },
+};
+
+export const WithdrawAction: Story = {
+  args: {
+    isOpen: true,
+    userName: '탈퇴예정자',
+    userEmail: 'withdraw@example.com',
+    phoneNumber: '010-0000-0000',
+    address: '서울특별시 종로구 종로 1',
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: '회원 탈퇴 버튼을 클릭하면 확인 다이얼로그가 나타나며, 확인 시 탈퇴 처리됩니다.',
       },
     },
   },
@@ -111,7 +128,7 @@ export const Closed: Story = {
   parameters: {
     docs: {
       description: {
-        story: '닫힌 상태의 모달입니다. 실제로는 보이지 않습니다.',
+        story: '닫힌 상태의 모달입니다.',
       },
     },
   },
