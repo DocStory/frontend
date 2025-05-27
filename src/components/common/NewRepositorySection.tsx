@@ -4,6 +4,7 @@ import Button from './Button';
 import { FiPlus, FiX, FiChevronDown } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import avatar from '../../assets/avatar.svg';
+import { createRepository, CreateRepositoryRequest } from '../../api/repository';
 
 const PageContainer = styled.div`
   display: flex;
@@ -288,9 +289,12 @@ const DeleteButton = styled.button`
 
 const NewRepositorySection: React.FC = () => {
   const navigate = useNavigate();
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // 임시 팀원 데이터
@@ -337,11 +341,43 @@ const NewRepositorySection: React.FC = () => {
     setSelectedTeams(prev => prev.filter(t => t !== team));
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!title.trim()) {
+      alert('제목을 입력해주세요.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const repositoryData: CreateRepositoryRequest = {
+        name: title.trim(),
+        description: description.trim()
+      };
+
+      const response = await createRepository(repositoryData);
+
+      if (response.code === 100) {
+        alert(`프로젝트 "${response.data.name}"가 성공적으로 생성되었습니다!`);
+        navigate('/repository');
+      } else {
+        alert(`프로젝트 생성 실패: ${response.message}`);
+      }
+    } catch (error) {
+      console.error('Repository creation error:', error);
+      alert('프로젝트 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <PageContainer>
       <SectionWrapper>
         <PageTitle>프로젝트 생성</PageTitle>
-        <Form>
+        <Form onSubmit={handleSubmit}>
           <FormRow>
             <FormColumn>
               <FieldGroup>
@@ -349,12 +385,23 @@ const NewRepositorySection: React.FC = () => {
                   <Label htmlFor="repo-name">제목</Label>
                   <Required>*</Required>
                 </LabelRow>
-                <Input id="repo-name" placeholder="제목을 입력해주세요." required />
+                <Input 
+                  id="repo-name" 
+                  placeholder="제목을 입력해주세요." 
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required 
+                />
               </FieldGroup>
 
               <FieldGroup>
                 <Label htmlFor="repo-desc">설명</Label>
-                <TextArea id="repo-desc" placeholder="설명을 입력해주세요." />
+                <TextArea 
+                  id="repo-desc" 
+                  placeholder="설명을 입력해주세요."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
               </FieldGroup>
             </FormColumn>
 
@@ -427,8 +474,22 @@ const NewRepositorySection: React.FC = () => {
           </FormRow>
 
           <ButtonRow>
-            <Button variant="secondary" size="medium" onClick={() => navigate('/repository')}>취소하기</Button>
-            <Button variant="primary" size="medium">생성하기</Button>
+            <Button 
+              variant="secondary" 
+              size="medium" 
+              onClick={() => navigate('/repository')}
+              disabled={isLoading}
+            >
+              취소하기
+            </Button>
+            <Button 
+              variant="primary" 
+              size="medium" 
+              type="submit"
+              disabled={isLoading}
+            >
+              {isLoading ? '생성 중...' : '생성하기'}
+            </Button>
           </ButtonRow>
         </Form>
       </SectionWrapper>
