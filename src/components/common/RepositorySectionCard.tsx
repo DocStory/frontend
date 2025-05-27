@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import RepositoryCard, { FileType } from './RepositoryCard';
 import { useRepositories } from '../../contexts/RepositoryContext';
 import api from '../../api/axios';
+import repoIcon from '../../assets/repoIcon.svg';
 
 const CardGrid = styled.div`
   width: 100%;
@@ -14,6 +15,63 @@ const CardGrid = styled.div`
 
   @media (max-width: 1100px) {
     grid-template-columns: 1fr;
+  }
+`;
+
+const EmptyStateContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+  grid-column: 1 / -1;
+`;
+
+const EmptyIcon = styled.img`
+  width: 80px;
+  height: 80px;
+  opacity: 0.3;
+  margin-bottom: 24px;
+`;
+
+const EmptyTitle = styled.h3`
+  font-family: 'Pretendard';
+  font-weight: 600;
+  font-size: 20px;
+  color: #666;
+  margin: 0 0 12px 0;
+`;
+
+const EmptyDescription = styled.p`
+  font-family: 'Pretendard';
+  font-weight: 400;
+  font-size: 16px;
+  color: #999;
+  margin: 0 0 32px 0;
+  line-height: 1.5;
+  max-width: 400px;
+`;
+
+const CreateButton = styled.button`
+  font-family: 'Pretendard';
+  font-weight: 600;
+  font-size: 14px;
+  color: #fff;
+  background: #4285f4;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #3367d6;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 `;
 
@@ -93,8 +151,33 @@ const RepositoryCardGrid: React.FC = () => {
     }
   };
 
+  const handleCreateFirstRepository = () => {
+    // 헤더의 New Repository 버튼 클릭 시뮬레이션
+    const event = new CustomEvent('openNewRepositoryModal');
+    window.dispatchEvent(event);
+  };
+
   if (loading) return <div>로딩 중...</div>;
   if (error) return <div>오류: {error}</div>;
+
+  // 빈 상태 처리
+  if (repositories.length === 0) {
+    return (
+      <CardGrid>
+        <EmptyStateContainer>
+          <EmptyIcon src={repoIcon} alt="빈 저장소" />
+          <EmptyTitle>아직 저장소가 없습니다</EmptyTitle>
+          <EmptyDescription>
+            첫 번째 저장소를 만들어 프로젝트를 시작해보세요.<br />
+            문서와 파일을 체계적으로 관리할 수 있습니다.
+          </EmptyDescription>
+          <CreateButton onClick={handleCreateFirstRepository}>
+            첫 저장소 만들기
+          </CreateButton>
+        </EmptyStateContainer>
+      </CardGrid>
+    );
+  }
 
   return (
     <CardGrid>

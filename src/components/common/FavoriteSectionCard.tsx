@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import RepositoryCard, { FileType } from './RepositoryCard';
 import api from '../../api/axios';
+import favoriteIcon from '../../assets/clarity_favorite-line.svg';
 
 const CardGrid = styled.div`
   width: 100%;
@@ -13,6 +14,41 @@ const CardGrid = styled.div`
   @media (max-width: 1100px) {
     grid-template-columns: 1fr;
   }
+`;
+
+const EmptyStateContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+  grid-column: 1 / -1;
+`;
+
+const EmptyIcon = styled.img`
+  width: 80px;
+  height: 80px;
+  opacity: 0.3;
+  margin-bottom: 24px;
+`;
+
+const EmptyTitle = styled.h3`
+  font-family: 'Pretendard';
+  font-weight: 600;
+  font-size: 20px;
+  color: #666;
+  margin: 0 0 12px 0;
+`;
+
+const EmptyDescription = styled.p`
+  font-family: 'Pretendard';
+  font-weight: 400;
+  font-size: 16px;
+  color: #999;
+  margin: 0;
+  line-height: 1.5;
+  max-width: 400px;
 `;
 
 interface Repository {
@@ -83,6 +119,22 @@ const FavoriteSectionCard: React.FC = () => {
 
   if (loading) return <div>로딩 중...</div>;
   if (error) return <div>오류: {error}</div>;
+
+  // 즐겨찾기가 없을 때의 빈 상태 처리
+  if (favorites.length === 0) {
+    return (
+      <CardGrid>
+        <EmptyStateContainer>
+          <EmptyIcon src={favoriteIcon} alt="즐겨찾기 없음" />
+          <EmptyTitle>즐겨찾기한 저장소가 없습니다</EmptyTitle>
+          <EmptyDescription>
+            자주 사용하는 저장소를 즐겨찾기에 추가하여<br />
+            빠르게 접근할 수 있습니다.
+          </EmptyDescription>
+        </EmptyStateContainer>
+      </CardGrid>
+    );
+  }
 
   return (
     <CardGrid>
