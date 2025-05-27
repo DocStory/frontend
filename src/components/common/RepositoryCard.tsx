@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import folderIcon from '../../assets/folderIcon.svg';
 import dotIcon from '../../assets/dot.svg';
+import favoriteLineIcon from '../../assets/clarity_favorite-line.svg';
+import favoriteSolidIcon from '../../assets/clarity_favorite-solid.svg';
 
 export type FileType = 'hwp' | 'docx' | 'pdf';
 
@@ -9,8 +11,9 @@ interface RepositoryCardProps {
   fileTypes: FileType[];
   title: string;
   description?: string;
-  onDragHandleClick?: () => void;
   className?: string;
+  isFavorite?: boolean;
+  onFavoriteClick?: (isFavorite: boolean) => void;
 }
 
 const fileTypeBadgeColorMap: Record<FileType, { bg: string; text: string }> = {
@@ -101,22 +104,22 @@ const BadgeText = styled.span<{ $fileType: FileType }>`
   letter-spacing: -0.009em;
 `;
 
-const DragHandle = styled.button`
+const FavoriteButton = styled.button`
+  position: absolute;
+  top: 20px;
+  right: 20px;
   background: none;
   border: none;
-  padding: 0;
-  margin-left: 16px;
-  cursor: grab;
+  padding: 4px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 36px;
-  width: 24px;
-  outline: none;
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.1);
+  }
 
   &:focus {
     outline: 2px solid #4078FF;
@@ -128,11 +131,21 @@ const RepositoryCard: React.FC<RepositoryCardProps> = ({
   fileTypes,
   title,
   description,
-  onDragHandleClick,
   className = '',
+  isFavorite = false,
+  onFavoriteClick,
 }) => {
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onFavoriteClick?.(!isFavorite);
+  };
+
   return (
-    <Card className={className} tabIndex={0} aria-label={`저장소 카드: ${title}`}> 
+    <Card 
+      className={className} 
+      tabIndex={0} 
+      aria-label={`저장소 카드: ${title}`}
+    > 
       <IconWrapper>
         <img src={folderIcon} alt="폴더 아이콘" width={32} height={32} />
       </IconWrapper>
@@ -148,18 +161,17 @@ const RepositoryCard: React.FC<RepositoryCardProps> = ({
           ))}
         </BadgeGroup>
       </ContentSection>
-      <DragHandle
-        aria-label="드래그 핸들"
-        tabIndex={0}
-        onClick={onDragHandleClick}
-        onKeyDown={e => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            onDragHandleClick?.();
-          }
-        }}
+      <FavoriteButton
+        onClick={handleFavoriteClick}
+        aria-label={isFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"}
       >
-        <img src={dotIcon} alt="드래그 핸들 점" width={20} height={20} />
-      </DragHandle>
+        <img 
+          src={isFavorite ? favoriteSolidIcon : favoriteLineIcon} 
+          alt={isFavorite ? "즐겨찾기됨" : "즐겨찾기"} 
+          width={20} 
+          height={20} 
+        />
+      </FavoriteButton>
     </Card>
   );
 };
