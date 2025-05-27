@@ -7,7 +7,8 @@ export interface Repository {
   description: string;
   ownerNickname: string;
   myRole: string;
-  isFavorite: string;
+  isFavorite: boolean;
+  fileTypes?: string[];
 }
 
 interface ApiResponse {

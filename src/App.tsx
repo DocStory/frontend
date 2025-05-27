@@ -59,6 +59,7 @@ function App() {
                   <Route path="/repository" element={<AppLayout />}>
                     <Route index element={<RepositorySection />} />
                   </Route>
+                  <Route path="/repository/:repositoryId" element={<RepositoryHistoryPage />} />
                   <Route path="/new-repository" element={<AppLayout />}>
                     <Route index element={<NewRepositorySection />} />
                   </Route>

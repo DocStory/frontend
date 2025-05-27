@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import folderIcon from '../../assets/folderIcon.svg';
 import dotIcon from '../../assets/dot.svg';
@@ -8,6 +9,7 @@ import favoriteSolidIcon from '../../assets/clarity_favorite-solid.svg';
 export type FileType = 'hwp' | 'docx' | 'pdf';
 
 interface RepositoryCardProps {
+  id?: string;
   fileTypes: FileType[];
   title: string;
   description?: string;
@@ -141,6 +143,7 @@ const FavoriteButton = styled.button`
 `;
 
 const RepositoryCard: React.FC<RepositoryCardProps> = ({
+  id,
   fileTypes,
   title,
   description,
@@ -148,6 +151,19 @@ const RepositoryCard: React.FC<RepositoryCardProps> = ({
   isFavorite = false,
   onFavoriteClick,
 }) => {
+  const navigate = useNavigate();
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // 즐겨찾기 버튼 클릭 시에는 카드 클릭 이벤트 무시
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
+    
+    if (id) {
+      navigate(`/repository/${id}`);
+    }
+  };
+
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onFavoriteClick?.(!isFavorite);
@@ -158,6 +174,7 @@ const RepositoryCard: React.FC<RepositoryCardProps> = ({
       className={className} 
       tabIndex={0} 
       aria-label={`저장소 카드: ${title}`}
+      onClick={handleCardClick}
     > 
       <IconWrapper>
         <img src={folderIcon} alt="폴더 아이콘" width={32} height={32} />

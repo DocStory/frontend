@@ -1,15 +1,15 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import SideBar from '../common/SideBar';
 import RepoHeader from '../layout/RepoHeader';
 import RepositoryTile from '../layout/RepositoryTitle';
-import PhysicsRepoGraph from '../common/PhysicsRepoGraph';
+import { getRepositoryDetail, RepositoryDetail } from '../../api/repository';
 
 const PageContainer = styled.div`
   display: flex;
-  width: 100vw;
   height: 100vh;
-  overflow: hidden;
+  background: #f7faff;
 `;
 
 const MainContent = styled.div`
@@ -19,75 +19,101 @@ const MainContent = styled.div`
   overflow: hidden;
 `;
 
-const GraphContainer = styled.div`
+const ContentContainer = styled.div`
   flex: 1;
-  position: relative;
-  overflow: hidden;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Pretendard';
+  font-size: 18px;
+  color: #666;
 `;
 
-// 테스트용 데이터
-const testNodes = [
-  {
-    id: '1',
-    userName: '강욱이',
-    title: '프로젝트 생성',
-    description: '프로젝트 초기 설정 및 기본 구조 구성',
-    timeAgo: '2일 전',
-    isMain: true,
-    x: 100,
-    y: 100,
-  },
-  {
-    id: '2',
-    userName: '이강욱',
-    title: '프로젝트 기획서 작성',
-    description: '기본 컴포넌트 구현 및 스타일링',
-    timeAgo: '1일 전',
-    isMain: true,
-    x: 500,
-    y: 200,
-  },
-  {
-    id: '3',
-    userName: '서영진',
-    title: '기획서 오타 수정',
-    description: '문서 오타 및 오류 수정',
-    timeAgo: '3시간 전',
-    x: 300,
-    y: 400,
-  },
-  {
-    id: '4',
-    userName: '이강욱',
-    title: '기획서 문구 수정',
-    description: '프로젝트 초기 생성 파일에서 필요한 부분과 수정, 추가 해야 할 부분들을 추가했습니다.',
-    timeAgo: '10분 전',
-    isMain: true,
-    x: 700,
-    y: 300,
-  },
-];
-
-// 엣지 데이터
-const testEdges = [
-  { source: '1', target: '2' },
-  { source: '2', target: '3' },
-  { source: '3', target: '4' },
-];
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-family: 'Pretendard';
+  font-size: 18px;
+  color: #666;
+`;
 
 const RepositoryHistoryPage: React.FC = () => {
+  const { repositoryId } = useParams<{ repositoryId: string }>();
+  const [repositoryDetail, setRepositoryDetail] = useState<RepositoryDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchRepositoryDetail = async () => {
+    if (!repositoryId) {
+      setError('레포지토리 ID가 없습니다.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const detail = await getRepositoryDetail(repositoryId);
+      setRepositoryDetail(detail);
+    } catch (err) {
+      console.error('레포지토리 상세 정보 조회 실패:', err);
+      setError('레포지토리 정보를 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRepositoryDetail();
+  }, [repositoryId]);
+
+  if (loading) {
+    return (
+      <PageContainer>
+        <SideBar activeMenu="저장소" />
+        <LoadingContainer>
+          레포지토리 정보를 불러오는 중...
+        </LoadingContainer>
+      </PageContainer>
+    );
+  }
+
+  if (error || !repositoryDetail) {
+    return (
+      <PageContainer>
+        <SideBar activeMenu="저장소" />
+        <MainContent>
+          <RepoHeader hasNewNotification={true} />
+          <RepositoryTile 
+            title="오류 발생" 
+            subtitle={error || '레포지토리 정보를 찾을 수 없습니다.'} 
+          />
+          <ContentContainer>
+            레포지토리를 불러올 수 없습니다.
+          </ContentContainer>
+        </MainContent>
+      </PageContainer>
+    );
+  }
+
   return (
     <PageContainer>
       <SideBar activeMenu="저장소" />
       <MainContent>
         <RepoHeader hasNewNotification={true} />
         <RepositoryTile 
-          title="캡스톤 디자인" 
-          subtitle="2025 상반기 프로젝트" 
+          title={repositoryDetail.name} 
+          subtitle={repositoryDetail.description || '설명이 없습니다.'} 
         />
-        <GraphContainer>
-          <PhysicsRepoGraph nodes={testNodes} edges={testEdges} />
-        </GraphContainer>
+        <ContentContainer>
+          {/* 여기에 커밋 목록이 들어갈 예정입니다 - 팀원이 구현 */}
+          커밋 목록 영역
+          <br />
+          (팀원이 구현할 예정)
+        </ContentContainer>
       </MainContent>
     </PageContainer>
   );

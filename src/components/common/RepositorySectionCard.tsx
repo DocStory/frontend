@@ -85,100 +85,103 @@ interface Repository {
   ownerNickname: string;
   myRole: string;
   isFavorite: boolean;
+  fileTypes?: string[];
 }
 
 interface ApiResponse {
   code: number;
   message: string;
-  data: Repository;
+  data: Repository[];
 }
 
-const RepositoryCardGrid: React.FC = () => {
-  const { repositories: initialRepositories, loading, error, fetchRepositories } = useRepositories();
-  const [repositories, setRepositories] = useState<Repository[]>([]);
+const RepositorySectionCard: React.FC = () => {
+  const { repositories, loading, error, fetchRepositories } = useRepositories();
+  const [favoriteStates, setFavoriteStates] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
-    if (initialRepositories) {
-      setRepositories(initialRepositories);
-    }
-  }, [initialRepositories]);
-
-  // 컴포넌트 마운트 시와 포커스를 받을 때 목록 새로고침
   useEffect(() => {
     fetchRepositories();
-
-    const handleFocus = () => {
-      fetchRepositories();
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-    };
   }, [fetchRepositories]);
 
-  const handleFavoriteClick = async (repoId: string, isFavorite: boolean) => {
+  useEffect(() => {
+    const initialFavoriteStates = repositories.reduce((acc, repo) => {
+      acc[repo.id] = repo.isFavorite;
+      return acc;
+    }, {} as Record<string, boolean>);
+    setFavoriteStates(initialFavoriteStates);
+  }, [repositories]);
+
+  const handleFavoriteToggle = async (repositoryId: string, isFavorite: boolean) => {
     try {
       // 낙관적 업데이트
-      setRepositories(prev => 
-        prev.map(repo => 
-          repo.id === repoId ? { ...repo, isFavorite } : repo
-        )
-      );
+      setFavoriteStates(prev => ({
+        ...prev,
+        [repositoryId]: isFavorite
+      }));
 
+      // API 호출
       if (isFavorite) {
-        // 즐겨찾기 추가
-        const response = await api.post<ApiResponse>(`/api/repositories/${repoId}/favorite`);
-        if (response.data.code !== 100) {
-          throw new Error(response.data.message);
-        }
+        await api.post(`/api/repositories/${repositoryId}/favorite`);
       } else {
-        // 즐겨찾기 삭제
-        const response = await api.delete<ApiResponse>(`/api/repositories/${repoId}/favorite`);
-        if (response.data.code !== 100) {
-          throw new Error(response.data.message);
-        }
+        await api.delete(`/api/repositories/${repositoryId}/favorite`);
       }
-
-      // 성공 시 목록 새로고침
-      fetchRepositories();
     } catch (error) {
+      // 실패시 되돌리기
+      setFavoriteStates(prev => ({
+        ...prev,
+        [repositoryId]: !isFavorite
+      }));
       console.error('즐겨찾기 상태 변경 실패:', error);
-      
-      // 실패 시 원래 상태로 롤백
-      setRepositories(prev => 
-        prev.map(repo => 
-          repo.id === repoId ? { ...repo, isFavorite: !isFavorite } : repo
-        )
-      );
     }
   };
 
-  const handleCreateFirstRepository = () => {
-    // 헤더의 New Repository 버튼 클릭 시뮬레이션
-    const event = new CustomEvent('openNewRepositoryModal');
-    window.dispatchEvent(event);
+  // 백엔드 파일타입을 허용된 FileType으로 필터링하는 함수
+  const filterValidFileTypes = (fileTypes: string[]): ('hwp' | 'docx' | 'pdf')[] => {
+    const typeMapping: Record<string, 'hwp' | 'docx' | 'pdf'> = {
+      'HWP': 'hwp',
+      'HWPX': 'hwp',  // HWPX도 HWP로 처리
+      'DOC': 'docx',
+      'DOCX': 'docx',
+      'PDF': 'pdf',
+    };
+
+    const mappedTypes = fileTypes
+      .map(type => type.toUpperCase()) // 대문자로 변환
+      .map(type => typeMapping[type])  // 매핑 테이블에서 변환
+      .filter((type): type is 'hwp' | 'docx' | 'pdf' => type !== undefined); // undefined 제거
+
+    // 중복 제거하여 반환
+    return [...new Set(mappedTypes)];
   };
 
-  if (loading) return <div>로딩 중...</div>;
-  if (error) return <div>오류: {error}</div>;
+  if (loading) {
+    return (
+      <EmptyStateContainer>
+        <LoadingText>레포지토리를 불러오는 중...</LoadingText>
+      </EmptyStateContainer>
+    );
+  }
 
-  // 빈 상태 처리
+  if (error) {
+    return (
+      <EmptyStateContainer>
+        <EmptyTitle>오류가 발생했습니다</EmptyTitle>
+        <EmptyDescription>{error}</EmptyDescription>
+      </EmptyStateContainer>
+    );
+  }
+
   if (repositories.length === 0) {
     return (
-      <CardGrid>
-        <EmptyStateContainer>
-          <EmptyIcon src={repoIcon} alt="빈 저장소" />
-          <EmptyTitle>아직 저장소가 없습니다</EmptyTitle>
-          <EmptyDescription>
-            첫 번째 저장소를 만들어 프로젝트를 시작해보세요.<br />
-            문서와 파일을 체계적으로 관리할 수 있습니다.
-          </EmptyDescription>
-          <CreateButton onClick={handleCreateFirstRepository}>
-            첫 저장소 만들기
-          </CreateButton>
-        </EmptyStateContainer>
-      </CardGrid>
+      <EmptyStateContainer>
+        <EmptyIcon src={repoIcon} alt="레포지토리 없음" />
+        <EmptyTitle>아직 생성된 레포지토리가 없어요</EmptyTitle>
+        <EmptyDescription>
+          새로운 레포지토리를 생성하여 문서 관리를 시작해보세요.
+        </EmptyDescription>
+        <CreateButton onClick={() => window.location.href = '/new-repository'}>
+          레포지토리 생성하기
+        </CreateButton>
+      </EmptyStateContainer>
     );
   }
 
@@ -187,15 +190,24 @@ const RepositoryCardGrid: React.FC = () => {
       {repositories.map((repo) => (
         <RepositoryCard
           key={repo.id}
+          id={repo.id}
           title={repo.name}
           description={repo.description}
-          fileTypes={['pdf']} // TODO: 실제 fileTypes 정보가 있으면 반영
-          isFavorite={repo.isFavorite}
-          onFavoriteClick={(isFavorite) => handleFavoriteClick(repo.id, isFavorite)}
+          fileTypes={repo.fileTypes ? filterValidFileTypes(repo.fileTypes) : []}
+          isFavorite={favoriteStates[repo.id] || false}
+          onFavoriteClick={(isFavorite) => handleFavoriteToggle(repo.id, isFavorite)}
         />
       ))}
     </CardGrid>
   );
 };
 
-export default RepositoryCardGrid; 
+const LoadingText = styled.div`
+  font-family: 'Pretendard';
+  font-weight: 500;
+  font-size: 16px;
+  color: ${({ theme }) => theme.textSecondary};
+  text-align: center;
+`;
+
+export default RepositorySectionCard; 
