@@ -48,14 +48,12 @@ const ContentArea = styled.div`
 `;
 
 interface AppLayoutProps {
-  userName?: string;
   hasNewNotification?: boolean;
   children?: React.ReactNode;
   activeMenu?: string;
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({
-  userName = '홍길동',
   hasNewNotification = false,
 }) => {
   const location = useLocation();
@@ -84,7 +82,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   return (
     <Layout>
       <SidebarArea>
-        <SideBar activeMenu={activeMenu} onMenuClick={handleMenuClick} userName={userName} />
+        <SideBar activeMenu={activeMenu} onMenuClick={handleMenuClick} />
       </SidebarArea>
       <MainArea>
         <HeaderArea>
