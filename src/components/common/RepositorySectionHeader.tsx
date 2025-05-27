@@ -2,7 +2,10 @@ import React from 'react';
 import styled from 'styled-components';
 import settingIcon from '../../assets/repositorySettingIcon.svg';
 import Button from './Button';
-import { useNavigate } from 'react-router-dom';
+
+interface RepositorySectionHeaderProps {
+  onNewRepositoryClick?: () => void;
+}
 
 const HeaderWrapper = styled.div`
   width: 100%;
@@ -62,8 +65,9 @@ const NewRepositoryButton = styled(Button)`
   line-height: 1.2;
 `;
 
-const RepositorySectionHeader: React.FC = () => {
-  const navigate = useNavigate();
+const RepositorySectionHeader: React.FC<RepositorySectionHeaderProps> = ({ 
+  onNewRepositoryClick 
+}) => {
   return (
     <HeaderWrapper>
       <TitleRow>
@@ -76,7 +80,7 @@ const RepositorySectionHeader: React.FC = () => {
         <NewRepositoryButton
           variant="primary"
           size="small"
-          onClick={() => navigate('/new-repository')}
+          onClick={onNewRepositoryClick}
         >
           New Repository
         </NewRepositoryButton>
