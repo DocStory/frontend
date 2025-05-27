@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled, { css } from 'styled-components';
 import NotificationPanelItem from './NotificationPanelItem';
 import memberinviteIcon from '../../assets/memberinviteIcon.svg';
 import folderIcon from '../../assets/folderIcon.svg';
+import { getMyInvitations, acceptTeamInvite, rejectTeamInvite } from '../../api/teaminvite';
+import { UserInvitation } from '../../api/teaminvite/types';
 
 const Overlay = styled.div<{ isOpen: boolean }>`
   position: fixed;
@@ -43,10 +45,12 @@ const PanelTitle = styled.div`
 `;
 
 interface Notification {
-  id: number;
+  id: string;
   title: string;
   description: string;
   time: string;
+  type?: 'team_invite' | 'team_join';
+  inviteId?: string;
 }
 
 interface NotificationPanelProps {
@@ -55,27 +59,58 @@ interface NotificationPanelProps {
 }
 
 const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }) => {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: 1,
-      title: '새로운 멤버',
-      description: '김철수님이 새로 합류하셨습니다.',
-      time: '방금 전',
-    },
-    {
-      id: 2,
-      title: '새로운 저장소/파일 생성',
-      description: '공팀님의 저장소에서 새 저장소가 생성되었습니다.',
-      time: '1분 전',
-    },
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  const handleCloseItem = (id: number) => {
+  useEffect(() => {
+    if (isOpen) {
+      fetchInvitations();
+    }
+  }, [isOpen]);
+
+  const fetchInvitations = async () => {
+    try {
+      const response = await getMyInvitations();
+      const invitations = response.data || [];
+      
+      const inviteNotifications: Notification[] = invitations.map(invite => ({
+        id: invite.invitationId,
+        title: '팀 초대',
+        description: `${invite.inviterNickname}님이 ${invite.repositoryName} 저장소에 초대했습니다.`,
+        time: '방금 전',
+        type: 'team_invite',
+        inviteId: invite.invitationId
+      }));
+
+      setNotifications(inviteNotifications);
+    } catch (error) {
+      console.error('Failed to fetch invitations:', error);
+    }
+  };
+
+  const handleCloseItem = (id: string) => {
     setNotifications(notifications => notifications.filter(n => n.id !== id));
   };
 
+  const handleAcceptInvite = async (id: string) => {
+    try {
+      await acceptTeamInvite(id);
+      handleCloseItem(id);
+    } catch (error) {
+      console.error('Failed to accept invitation:', error);
+    }
+  };
+
+  const handleRejectInvite = async (id: string) => {
+    try {
+      await rejectTeamInvite(id);
+      handleCloseItem(id);
+    } catch (error) {
+      console.error('Failed to reject invitation:', error);
+    }
+  };
+
   const getIcon = (title: string) => {
-    if (title === '새로운 멤버') return memberinviteIcon;
+    if (title === '팀 초대' || title === '새로운 멤버') return memberinviteIcon;
     if (title === '새로운 저장소/파일 생성') return folderIcon;
     return memberinviteIcon;
   };
@@ -92,7 +127,10 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }
             title={n.title}
             description={n.description}
             time={n.time}
+            type={n.type}
             onClose={() => handleCloseItem(n.id)}
+            onAccept={n.type === 'team_invite' ? () => handleAcceptInvite(n.inviteId!) : undefined}
+            onReject={n.type === 'team_invite' ? () => handleRejectInvite(n.inviteId!) : undefined}
           />
         ))}
       </PanelWrapper>
