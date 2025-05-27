@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import settingIcon from '../../assets/repositorySettingIcon.svg';
 
 const HeaderWrapper = styled.div`
   width: 100%;
@@ -26,29 +25,6 @@ const Title = styled.h2`
   position: relative;
   top: 1px;
   transition: color 0.3s ease;
-`;
-
-const SettingButton = styled.button`
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  width: 40px;
-  height: 40px;
-  justify-content: center;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background-color: ${({ theme }) => theme.hoverBackground};
-  }
-`;
-
-const SettingIcon = styled.img`
-  width: 20px;
-  height: 20px;
 `;
 
 const RightArea = styled.div`
@@ -92,9 +68,6 @@ const HomeSectionHeader: React.FC = () => {
     <HeaderWrapper>
       <TitleRow>
         <Title>최근 활동</Title>
-        <SettingButton>
-          <SettingIcon src={settingIcon} alt="설정" />
-        </SettingButton>
       </TitleRow>
       <RightArea>
         <FilterSelect value={filter} onChange={e => setFilter(e.target.value)}>
