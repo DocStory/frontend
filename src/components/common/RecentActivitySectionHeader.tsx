@@ -21,10 +21,11 @@ const Title = styled.h2`
   font-family: 'Pretendard';
   font-weight: 800;
   font-size: 20px;
-  color: #292929;
+  color: ${({ theme }) => theme.text};
   margin: 0;
   position: relative;
   top: 1px;
+  transition: color 0.3s ease;
 `;
 
 const SettingButton = styled.button`
@@ -37,6 +38,12 @@ const SettingButton = styled.button`
   width: 40px;
   height: 40px;
   justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.hoverBackground};
+  }
 `;
 
 const SettingIcon = styled.img`
@@ -53,14 +60,29 @@ const RightArea = styled.div`
 const FilterSelect = styled.select`
   height: 32px;
   padding: 0 16px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid ${({ theme }) => theme.border};
   border-radius: 8px;
-  background: #fff;
+  background: ${({ theme }) => theme.inputBackground};
   font-family: 'Pretendard';
   font-size: 14px;
-  color: #292929;
+  color: ${({ theme }) => theme.text};
   outline: none;
   cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.borderLight};
+  }
+
+  &:focus {
+    border-color: ${({ theme }) => theme.primary};
+    box-shadow: 0 0 0 3px ${({ theme }) => theme.primary}20;
+  }
+
+  option {
+    background: ${({ theme }) => theme.cardBackground};
+    color: ${({ theme }) => theme.text};
+  }
 `;
 
 const HomeSectionHeader: React.FC = () => {

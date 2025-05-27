@@ -25,14 +25,21 @@ const fileTypeBadgeColorMap: Record<FileType, { bg: string; text: string }> = {
 const Card = styled.div`
   position: relative;
   display: flex;
-  align-items: flex-start;
-  background: #fff;
-  border-radius: 15px;
-  border: 2px solid #F0F0F0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  padding: 20px 24px;
-  min-width: 340px;
-  gap: 18px;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.cardBackground};
+  transition: all 0.2s ease;
+  cursor: pointer;
+  height: 160px;
+  
+  &:hover {
+    border-color: ${({ theme }) => theme.primary};
+    transform: translateY(-2px);
+    box-shadow: ${({ theme }) => theme.shadow};
+  }
 `;
 
 const IconWrapper = styled.div`
@@ -44,32 +51,38 @@ const IconWrapper = styled.div`
   flex-shrink: 0;
 `;
 
-const ContentSection = styled.div`
-  flex: 1;
+const Content = styled.div`
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  gap: 8px;
+  flex: 1;
 `;
 
-const Title = styled.div`
+const Title = styled.h3`
   font-family: Pretendard, 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  color: #6C9EFF;
-  white-space: nowrap;
+  font-size: 18px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.text};
+  margin: 0;
+  line-height: 1.2;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.3s ease;
 `;
 
-const Description = styled.div`
+const Description = styled.p`
   font-family: Pretendard, 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  color: #7C7C7C;
-  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 400;
+  color: ${({ theme }) => theme.textSecondary};
+  margin: 0;
+  line-height: 1.4;
   overflow: hidden;
-  text-overflow: ellipsis;
-  margin-top: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  transition: color 0.3s ease;
 `;
 
 const BadgeGroup = styled.div`
@@ -149,7 +162,7 @@ const RepositoryCard: React.FC<RepositoryCardProps> = ({
       <IconWrapper>
         <img src={folderIcon} alt="폴더 아이콘" width={32} height={32} />
       </IconWrapper>
-      <ContentSection>
+      <Content>
         <Title>{title}</Title>
         {description && <Description>{description}</Description>}
         <BadgeGroup>
@@ -160,7 +173,7 @@ const RepositoryCard: React.FC<RepositoryCardProps> = ({
             </FileTypeBadge>
           ))}
         </BadgeGroup>
-      </ContentSection>
+      </Content>
       <FavoriteButton
         onClick={handleFavoriteClick}
         aria-label={isFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"}

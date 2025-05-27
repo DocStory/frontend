@@ -43,36 +43,80 @@ const sizeStyles = {
 
 const variantStyles = {
   primary: css`
-    background: #6C9EFF;
+    background: ${({ theme }) => theme.primary};
     color: #FDFDFD;
     border: none;
-    &:hover:not(:disabled) { background: #4078FF; }
-    &:active:not(:disabled) { background: #2257C7; }
-    &:disabled { background: #B3CFFF; color: #FDFDFD; cursor: not-allowed; }
+    &:hover:not(:disabled) { 
+      background: ${({ theme }) => theme.primaryHover}; 
+    }
+    &:active:not(:disabled) { 
+      background: ${({ theme }) => theme.primaryHover}; 
+      filter: brightness(0.9);
+    }
+    &:disabled { 
+      background: ${({ theme }) => theme.textSecondary}; 
+      color: #FDFDFD; 
+      cursor: not-allowed; 
+    }
   `,
   secondary: css`
-    background: #FFFFFF;
-    color: #8CB3FF;
-    border: 2px solid #8CB3FF;
-    &:hover:not(:disabled) { background: #E6F0FF; border-color: #4078FF; color: #4078FF; }
-    &:active:not(:disabled) { background: #D0E3FF; border-color: #2257C7; color: #2257C7; }
-    &:disabled { background: #F5F7FA; color: #B3CFFF; border-color: #B3CFFF; cursor: not-allowed; }
+    background: ${({ theme }) => theme.cardBackground};
+    color: ${({ theme }) => theme.primary};
+    border: 2px solid ${({ theme }) => theme.primary};
+    &:hover:not(:disabled) { 
+      background: ${({ theme }) => theme.hoverBackground}; 
+      border-color: ${({ theme }) => theme.primaryHover}; 
+      color: ${({ theme }) => theme.primaryHover}; 
+    }
+    &:active:not(:disabled) { 
+      background: ${({ theme }) => theme.activeBackground}; 
+      border-color: ${({ theme }) => theme.primaryHover}; 
+      color: ${({ theme }) => theme.primaryHover}; 
+    }
+    &:disabled { 
+      background: ${({ theme }) => theme.surface}; 
+      color: ${({ theme }) => theme.textSecondary}; 
+      border-color: ${({ theme }) => theme.textSecondary}; 
+      cursor: not-allowed; 
+    }
   `,
   outline: css`
-    background: #FFFFFF;
-    color: #292929;
-    border: 2px solid #F0F0F0;
-    &:hover:not(:disabled) { background: #F5F7FA; border-color: #CBD5E1; }
-    &:active:not(:disabled) { background: #E5E7EB; border-color: #CBD5E1; }
-    &:disabled { background: #F5F7FA; color: #B3CFFF; border-color: #F0F0F0; cursor: not-allowed; }
+    background: ${({ theme }) => theme.cardBackground};
+    color: ${({ theme }) => theme.text};
+    border: 2px solid ${({ theme }) => theme.border};
+    &:hover:not(:disabled) { 
+      background: ${({ theme }) => theme.hoverBackground}; 
+      border-color: ${({ theme }) => theme.borderLight}; 
+    }
+    &:active:not(:disabled) { 
+      background: ${({ theme }) => theme.surface}; 
+      border-color: ${({ theme }) => theme.borderLight}; 
+    }
+    &:disabled { 
+      background: ${({ theme }) => theme.surface}; 
+      color: ${({ theme }) => theme.textSecondary}; 
+      border-color: ${({ theme }) => theme.border}; 
+      cursor: not-allowed; 
+    }
   `,
   danger: css`
-    background: #FF4D4F;
+    background: ${({ theme }) => theme.error};
     color: #FFF;
     border: none;
-    &:hover:not(:disabled) { background: #D9363E; }
-    &:active:not(:disabled) { background: #A5282C; }
-    &:disabled { background: #FFB3B5; color: #FFF; border: none; cursor: not-allowed; }
+    &:hover:not(:disabled) { 
+      background: ${({ theme }) => theme.error}; 
+      filter: brightness(0.9);
+    }
+    &:active:not(:disabled) { 
+      background: ${({ theme }) => theme.error}; 
+      filter: brightness(0.8);
+    }
+    &:disabled { 
+      background: ${({ theme }) => theme.textSecondary}; 
+      color: #FFF; 
+      border: none; 
+      cursor: not-allowed; 
+    }
   `,
 };
 
@@ -85,7 +129,7 @@ const StyledButton = styled.button<{
   justify-content: center;
   cursor: pointer;
   font-family: 'Pretendard', 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  transition: background 0.2s, color 0.2s, border 0.2s;
+  transition: all 0.2s ease;
   outline: none;
   ${(props) => sizeStyles[props.$size]}
   ${(props) => variantStyles[props.$variant]}

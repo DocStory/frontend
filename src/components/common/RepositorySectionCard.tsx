@@ -39,18 +39,21 @@ const EmptyTitle = styled.h3`
   font-family: 'Pretendard';
   font-weight: 600;
   font-size: 20px;
-  color: #666;
+  color: ${({ theme }) => theme.textSecondary};
   margin: 0 0 12px 0;
+  transition: color 0.3s ease;
 `;
 
 const EmptyDescription = styled.p`
   font-family: 'Pretendard';
   font-weight: 400;
   font-size: 16px;
-  color: #999;
+  color: ${({ theme }) => theme.textSecondary};
   margin: 0 0 32px 0;
   line-height: 1.5;
   max-width: 400px;
+  opacity: 0.8;
+  transition: color 0.3s ease;
 `;
 
 const CreateButton = styled.button`
@@ -58,7 +61,7 @@ const CreateButton = styled.button`
   font-weight: 600;
   font-size: 14px;
   color: #fff;
-  background: #4285f4;
+  background: ${({ theme }) => theme.primary};
   border: none;
   border-radius: 8px;
   padding: 12px 24px;
@@ -66,7 +69,7 @@ const CreateButton = styled.button`
   transition: all 0.2s ease;
 
   &:hover {
-    background: #3367d6;
+    background: ${({ theme }) => theme.primaryHover};
     transform: translateY(-1px);
   }
 

@@ -9,8 +9,9 @@ const Layout = styled.div`
   width: 100vw;
   height: 100vh;
   display: flex;
-  background: #f8f8f8;
+  background: ${({ theme }) => theme.background};
   overflow: hidden;
+  transition: background-color 0.3s ease;
 `;
 
 const SidebarArea = styled.div`
@@ -43,8 +44,9 @@ const ContentArea = styled.div`
   gap: 32px;
   overflow-y: auto;
   overflow-x: hidden;
-  background: #f8f8f8;
+  background: ${({ theme }) => theme.surface};
   padding: 30px 60px 30px 60px;
+  transition: background-color 0.3s ease;
 `;
 
 interface AppLayoutProps {

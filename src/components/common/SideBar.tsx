@@ -25,11 +25,12 @@ interface SideBarProps {
 const SidebarContainer = styled.div`
   width: 280px;
   height: 100vh;
-  background: #fff;
-  border-right: 1px solid #F0F0F0;
+  background: ${({ theme }) => theme.sidebarBackground};
+  border-right: 1px solid ${({ theme }) => theme.border};
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  transition: all 0.3s ease;
 `;
 
 const TopArea = styled.div`
@@ -43,7 +44,7 @@ const TopSection = styled.div`
   align-items: center;
   height: 72px;
   padding: 0 32px;
-  border-bottom: 1px solid #F0F0F0;
+  border-bottom: 1px solid ${({ theme }) => theme.border};
   gap: 12px;
 `;
 
@@ -55,7 +56,7 @@ const ProjectTitle = styled.div`
   font-family: 'Pretendard';
   font-weight: 800;
   font-size: 22px;
-  color: #6C9EFF;
+  color: ${({ theme }) => theme.primary};
   margin-left: 12px;
 `;
 
@@ -71,17 +72,19 @@ const MenuItemBox = styled.div<{active?: boolean}>`
   align-items: center;
   gap: 16px;
   padding: 12px 32px;
-  background: ${({active}) => active ? '#F6F7FB' : 'transparent'};
+  background: ${({active, theme}) => active ? theme.activeBackground : 'transparent'};
   border-radius: 8px;
   cursor: pointer;
   font-family: 'Pretendard';
   font-weight: ${({active}) => active ? 800 : 500};
   font-size: 16px;
-  color: ${({active}) => active ? '#3A5EFF' : '#61677F'};
-  transition: background 0.2s, color 0.2s;
+  color: ${({active, theme}) => active ? theme.primary : theme.textSecondary};
+  transition: all 0.2s ease;
+  margin: 0 16px;
+  
   &:hover {
-    background: #F6F7FB;
-    color: #3A5EFF;
+    background: ${({ theme }) => theme.hoverBackground};
+    color: ${({ theme }) => theme.primary};
   }
 `;
 
@@ -91,7 +94,7 @@ const MenuIcon = styled.img`
 `;
 
 const BottomSection = styled.div`
-  border-top: 1px solid #F0F0F0;
+  border-top: 1px solid ${({ theme }) => theme.border};
   padding: 20px 32px;
   display: flex;
   align-items: center;
@@ -108,7 +111,7 @@ const AvatarBox = styled.div`
   transition: background-color 0.2s ease;
   
   &:hover {
-    background-color: #F8FAFC;
+    background-color: ${({ theme }) => theme.hoverBackground};
   }
 `;
 
@@ -123,7 +126,7 @@ const UserName = styled.span`
   font-family: 'Pretendard';
   font-weight: 600;
   font-size: 15px;
-  color: #61677F;
+  color: ${({ theme }) => theme.text};
 `;
 
 const LogoutIconBox = styled.div`
@@ -135,7 +138,7 @@ const LogoutIconBox = styled.div`
   transition: background-color 0.2s ease;
   
   &:hover {
-    background-color: #F8FAFC;
+    background-color: ${({ theme }) => theme.hoverBackground};
   }
 `;
 
@@ -148,7 +151,7 @@ const LoadingText = styled.span`
   font-family: 'Pretendard';
   font-weight: 500;
   font-size: 14px;
-  color: #C4C4C4;
+  color: ${({ theme }) => theme.textSecondary};
 `;
 
 const SideBar: React.FC<SideBarProps> = ({ activeMenu = '홈', onMenuClick }) => {

@@ -10,8 +10,8 @@ interface ModalHeaderProps {
 
 const Header = styled.div<{ backgroundColor?: string }>`
   padding: 24px 33px;
-  border-bottom: 1px solid #cbd5e1;
-  background: ${props => props.backgroundColor || 'white'};
+  border-bottom: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme, backgroundColor }) => backgroundColor || theme.modalBackground};
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -24,7 +24,7 @@ const Title = styled.h2`
   font-size: 26px;
   line-height: 0.85em;
   letter-spacing: -0.007em;
-  color: #1e293b;
+  color: ${({ theme }) => theme.text};
   margin: 0;
 `;
 
@@ -36,10 +36,22 @@ const CloseButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.hoverBackground};
+  }
 
   img {
     width: 24px;
     height: 24px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+  }
+
+  &:hover img {
+    opacity: 1;
   }
 `;
 

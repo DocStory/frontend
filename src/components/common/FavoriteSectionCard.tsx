@@ -37,18 +37,21 @@ const EmptyTitle = styled.h3`
   font-family: 'Pretendard';
   font-weight: 600;
   font-size: 20px;
-  color: #666;
+  color: ${({ theme }) => theme.textSecondary};
   margin: 0 0 12px 0;
+  transition: color 0.3s ease;
 `;
 
 const EmptyDescription = styled.p`
   font-family: 'Pretendard';
   font-weight: 400;
   font-size: 16px;
-  color: #999;
+  color: ${({ theme }) => theme.textSecondary};
   margin: 0;
   line-height: 1.5;
   max-width: 400px;
+  opacity: 0.8;
+  transition: color 0.3s ease;
 `;
 
 interface Repository {

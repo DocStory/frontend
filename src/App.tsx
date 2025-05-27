@@ -14,6 +14,7 @@ import AuthService from './api/auth';
 import { UserProvider } from './contexts/UserContext';
 import { RepositoryProvider } from './contexts/RepositoryContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 // URL 파라미터 토큰 처리를 위한 래퍼 컴포넌트
 const TokenHandler: React.FC = () => {
@@ -66,33 +67,35 @@ function App() {
   
   return (
     <>
-      <GlobalStyle />
-      <ToastProvider>
-        <UserProvider>
-          <RepositoryProvider>
-            <BrowserRouter>
-              <TokenHandler />
-              <Routes>
-                <Route path="/" element={<LandingPage />} />
-                {/* 소셜 로그인 콜백 처리를 위한 라우트 추가 */}
-                <Route path="/login/callback" element={<LoginCallback />} />
-                <Route path="/home" element={<AppLayout />}>
-                  <Route index element={<HomePage />} />
-                </Route>
-                <Route path="/repository" element={<AppLayout />}>
-                  <Route index element={<RepositorySection />} />
-                </Route>
-                <Route path="/new-repository" element={<AppLayout />}>
-                  <Route index element={<NewRepositorySection />} />
-                </Route>
-                <Route path="/repo-tree" element={<RepoTreePage />} />
-                <Route path="/physics-test" element={<PhysicsGraphTestPage />} />
-                <Route path="/repository-history" element={<RepositoryHistoryPage />} />
-              </Routes>
-            </BrowserRouter>
-          </RepositoryProvider>
-        </UserProvider>
-      </ToastProvider>
+      <ThemeProvider>
+        <GlobalStyle />
+        <ToastProvider>
+          <UserProvider>
+            <RepositoryProvider>
+              <BrowserRouter>
+                <TokenHandler />
+                <Routes>
+                  <Route path="/" element={<LandingPage />} />
+                  {/* 소셜 로그인 콜백 처리를 위한 라우트 추가 */}
+                  <Route path="/login/callback" element={<LoginCallback />} />
+                  <Route path="/home" element={<AppLayout />}>
+                    <Route index element={<HomePage />} />
+                  </Route>
+                  <Route path="/repository" element={<AppLayout />}>
+                    <Route index element={<RepositorySection />} />
+                  </Route>
+                  <Route path="/new-repository" element={<AppLayout />}>
+                    <Route index element={<NewRepositorySection />} />
+                  </Route>
+                  <Route path="/repo-tree" element={<RepoTreePage />} />
+                  <Route path="/physics-test" element={<PhysicsGraphTestPage />} />
+                  <Route path="/repository-history" element={<RepositoryHistoryPage />} />
+                </Routes>
+              </BrowserRouter>
+            </RepositoryProvider>
+          </UserProvider>
+        </ToastProvider>
+      </ThemeProvider>
     </>
   );
 }

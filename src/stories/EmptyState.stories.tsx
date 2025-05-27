@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import styled from 'styled-components';
 import repoIcon from '../assets/repoIcon.svg';
 import favoriteIcon from '../assets/clarity_favorite-line.svg';
+import { ThemeProvider } from '../contexts/ThemeContext';
 
 const EmptyStateContainer = styled.div`
   display: flex;
@@ -25,18 +26,21 @@ const EmptyTitle = styled.h3`
   font-family: 'Pretendard';
   font-weight: 600;
   font-size: 20px;
-  color: #666;
+  color: ${({ theme }) => theme.textSecondary};
   margin: 0 0 12px 0;
+  transition: color 0.3s ease;
 `;
 
 const EmptyDescription = styled.p`
   font-family: 'Pretendard';
   font-weight: 400;
   font-size: 16px;
-  color: #999;
+  color: ${({ theme }) => theme.textSecondary};
   margin: 0 0 32px 0;
   line-height: 1.5;
   max-width: 400px;
+  opacity: 0.8;
+  transition: color 0.3s ease;
 `;
 
 const CreateButton = styled.button`
@@ -44,7 +48,7 @@ const CreateButton = styled.button`
   font-weight: 600;
   font-size: 14px;
   color: #fff;
-  background: #4285f4;
+  background: ${({ theme }) => theme.primary};
   border: none;
   border-radius: 8px;
   padding: 12px 24px;
@@ -52,7 +56,7 @@ const CreateButton = styled.button`
   transition: all 0.2s ease;
 
   &:hover {
-    background: #3367d6;
+    background: ${({ theme }) => theme.primaryHover};
     transform: translateY(-1px);
   }
 
@@ -77,36 +81,39 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   showButton = false,
   buttonText = '버튼',
   onButtonClick,
-}) => {
-  return (
-    <EmptyStateContainer>
-      <EmptyIcon src={icon} alt={title} />
-      <EmptyTitle>{title}</EmptyTitle>
-      <EmptyDescription dangerouslySetInnerHTML={{ __html: description }} />
-      {showButton && (
-        <CreateButton onClick={onButtonClick}>
-          {buttonText}
-        </CreateButton>
-      )}
-    </EmptyStateContainer>
-  );
-};
+}) => (
+  <EmptyStateContainer>
+    <EmptyIcon src={icon} alt="빈 상태" />
+    <EmptyTitle>{title}</EmptyTitle>
+    <EmptyDescription>{description}</EmptyDescription>
+    {showButton && (
+      <CreateButton onClick={onButtonClick}>
+        {buttonText}
+      </CreateButton>
+    )}
+  </EmptyStateContainer>
+);
 
-const meta: Meta<typeof EmptyState> = {
-  title: 'Components/EmptyState',
+const meta = {
+  title: 'Common/EmptyState',
   component: EmptyState,
+  tags: ['autodocs'],
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '데이터가 없을 때 표시되는 빈 상태 UI 컴포넌트입니다. 아이콘, 제목, 설명, 선택적 버튼을 포함할 수 있습니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     icon: {
+      description: '표시할 아이콘',
       control: 'text',
-      description: '빈 상태에 표시할 아이콘 경로',
     },
     title: {
-      control: 'text',
       description: '빈 상태 제목',
+      control: 'text',
     },
     description: {
       control: 'text',

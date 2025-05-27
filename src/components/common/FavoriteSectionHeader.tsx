@@ -21,10 +21,11 @@ const Title = styled.h2`
   font-family: 'Pretendard';
   font-weight: 800;
   font-size: 20px;
-  color: #292929;
+  color: ${({ theme }) => theme.text};
   margin: 0;
   position: relative;
   top: 1px;
+  transition: color 0.3s ease;
 `;
 
 const SettingButton = styled.button`
@@ -37,6 +38,12 @@ const SettingButton = styled.button`
   width: 40px;
   height: 40px;
   justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.hoverBackground};
+  }
 `;
 
 const SettingIcon = styled.img`
