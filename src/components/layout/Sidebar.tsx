@@ -1,11 +1,26 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import UserInfoModal from './UserInfoModal';
+import SettingsModal from './SettingsModal';
 import avatarIcon from '../../assets/avatar.svg';
-// import NavigationMenu from './NavigationMenu'; // 파일이 없으므로 주석 처리
+import Logo from '../../assets/logo.svg';
+import HomeIcon from '../../assets/homeIcon.svg';
+import RepoIcon from '../../assets/repoIcon.svg';
+import HelpIcon from '../../assets/helpIcon.svg';
+import SettingIcon from '../../assets/settingIcon.svg';
+import LogoutIcon from '../../assets/logoutIcon.png';
+
+interface MenuItem {
+  icon: React.ReactNode;
+  label: string;
+  active?: boolean;
+}
 
 interface SidebarProps {
   isCollapsed?: boolean;
+  activeMenu?: string;
+  onMenuClick?: (label: string) => void;
+  userName?: string;
   onUserNameChange?: (newName: string) => void;
 }
 
@@ -24,7 +39,7 @@ const LogoSection = styled.div`
   border-bottom: 1px solid #F0F0F0;
 `;
 
-const Logo = styled.h1`
+const LogoTitle = styled.h1`
   font-family: 'Pretendard';
   font-weight: 800;
   font-size: 22px;
@@ -36,6 +51,45 @@ const ContentArea = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
+  padding: 24px 0;
+`;
+
+const MenuSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 16px;
+`;
+
+const MenuItemBox = styled.div<{ active?: boolean; isCollapsed?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: ${props => props.isCollapsed ? '0' : '12px'};
+  padding: ${props => props.isCollapsed ? '12px' : '12px 16px'};
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  justify-content: ${props => props.isCollapsed ? 'center' : 'flex-start'};
+  
+  background-color: ${props => props.active ? '#F0F7FF' : 'transparent'};
+  color: ${props => props.active ? '#6C9EFF' : '#6B7280'};
+  
+  &:hover {
+    background-color: ${props => props.active ? '#F0F7FF' : '#F8FAFC'};
+  }
+  
+  font-family: 'Pretendard';
+  font-weight: 500;
+  font-size: 16px;
+`;
+
+const MenuIcon = styled.img`
+  width: 20px;
+  height: 20px;
+`;
+
+const MenuLabel = styled.span<{ isCollapsed?: boolean }>`
+  display: ${props => props.isCollapsed ? 'none' : 'block'};
 `;
 
 const UserProfileSection = styled.div<{ isCollapsed?: boolean }>`
@@ -86,9 +140,33 @@ const UserEmail = styled.div`
   line-height: 1.4;
 `;
 
-const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onUserNameChange }) => {
+const Sidebar: React.FC<SidebarProps> = ({ 
+  isCollapsed = false, 
+  activeMenu = '홈', 
+  onMenuClick, 
+  userName = '홍길동',
+  onUserNameChange 
+}) => {
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const [currentUserName, setCurrentUserName] = useState('홍길동');
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [currentUserName, setCurrentUserName] = useState(userName);
+
+  const menuList: MenuItem[] = [
+    { icon: <MenuIcon src={HomeIcon} alt="홈" />, label: '홈', active: activeMenu === '홈' },
+    { icon: <MenuIcon src={RepoIcon} alt="저장소" />, label: '저장소', active: activeMenu === '저장소' },
+    { icon: <MenuIcon src={HelpIcon} alt="도움말" />, label: '도움말', active: activeMenu === '도움말' },
+    { icon: <MenuIcon src={SettingIcon} alt="설정" />, label: '설정', active: activeMenu === '설정' },
+  ];
+
+  const handleMenuClick = (label: string) => {
+    if (label === '설정') {
+      setIsSettingsModalOpen(true);
+    } else {
+      if (onMenuClick) {
+        onMenuClick(label);
+      }
+    }
+  };
 
   const handleUserProfileClick = () => {
     setIsUserModalOpen(true);
@@ -96,6 +174,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onUserNameChange
 
   const handleCloseUserModal = () => {
     setIsUserModalOpen(false);
+  };
+
+  const handleCloseSettingsModal = () => {
+    setIsSettingsModalOpen(false);
   };
 
   const handleUserNameChange = (newName: string) => {
@@ -117,11 +199,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onUserNameChange
     <>
       <SidebarContainer isCollapsed={isCollapsed}>
         <LogoSection>
-          <Logo>DocStory</Logo>
+          <LogoTitle>DocStory</LogoTitle>
         </LogoSection>
         
         <ContentArea>
-          {/* 여기에 네비게이션 메뉴가 들어갈 예정 */}
+          <MenuSection>
+            {menuList.map((item) => (
+              <MenuItemBox
+                key={item.label}
+                active={item.active}
+                isCollapsed={isCollapsed}
+                onClick={() => handleMenuClick(item.label)}
+              >
+                {item.icon}
+                <MenuLabel isCollapsed={isCollapsed}>{item.label}</MenuLabel>
+              </MenuItemBox>
+            ))}
+          </MenuSection>
         </ContentArea>
 
         <UserProfileSection 
@@ -150,6 +244,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onUserNameChange
         phoneNumber={userData.phoneNumber}
         address={userData.address}
         onUserNameChange={handleUserNameChange}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={handleCloseSettingsModal}
       />
     </>
   );

@@ -8,6 +8,7 @@ import SettingIcon from '../../assets/settingIcon.svg';
 import LogoutIcon from '../../assets/logoutIcon.png';
 import Avatar from '../../assets/avatar.svg';
 import UserInfoModal from '../layout/UserInfoModal';
+import SettingsModal from '../layout/SettingsModal';
 
 interface MenuItem {
   icon: React.ReactNode;
@@ -150,6 +151,7 @@ const SideBar: React.FC<SideBarProps> = ({
   onUserNameChange 
 }) => {
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [currentUserName, setCurrentUserName] = useState(userName);
 
   const menuList: MenuItem[] = [
@@ -159,12 +161,26 @@ const SideBar: React.FC<SideBarProps> = ({
     { icon: <MenuIcon src={SettingIcon} alt="설정" />, label: '설정', active: activeMenu === '설정' },
   ];
 
+  const handleMenuClick = (label: string) => {
+    if (label === '설정') {
+      setIsSettingsModalOpen(true);
+    } else {
+      if (onMenuClick) {
+        onMenuClick(label);
+      }
+    }
+  };
+
   const handleUserProfileClick = () => {
     setIsUserModalOpen(true);
   };
 
   const handleCloseUserModal = () => {
     setIsUserModalOpen(false);
+  };
+
+  const handleCloseSettingsModal = () => {
+    setIsSettingsModalOpen(false);
   };
 
   const handleUserNameChange = (newName: string) => {
@@ -195,7 +211,7 @@ const SideBar: React.FC<SideBarProps> = ({
               <MenuItemBox
                 key={item.label}
                 active={item.active}
-                onClick={() => onMenuClick && onMenuClick(item.label)}
+                onClick={() => handleMenuClick(item.label)}
               >
                 {item.icon}
                 {item.label}
@@ -222,6 +238,11 @@ const SideBar: React.FC<SideBarProps> = ({
         phoneNumber={userData.phoneNumber}
         address={userData.address}
         onUserNameChange={handleUserNameChange}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={handleCloseSettingsModal}
       />
     </>
   );
