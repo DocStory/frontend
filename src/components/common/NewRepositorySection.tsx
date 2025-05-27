@@ -5,6 +5,7 @@ import { FiPlus, FiX, FiChevronDown } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import avatar from '../../assets/avatar.svg';
 import { createRepository, CreateRepositoryRequest } from '../../api/repository';
+import { useRepositories } from '../../contexts/RepositoryContext';
 
 const PageContainer = styled.div`
   display: flex;
@@ -296,6 +297,7 @@ const NewRepositorySection: React.FC = () => {
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { refreshRepositories } = useRepositories();
 
   // 임시 팀원 데이터
   const teamOptions = [
@@ -361,6 +363,10 @@ const NewRepositorySection: React.FC = () => {
 
       if (response.code === 100) {
         alert(`프로젝트 "${response.data.name}"가 성공적으로 생성되었습니다!`);
+        
+        // 레포지토리 목록 새로고침
+        await refreshRepositories();
+        
         navigate('/repository');
       } else {
         alert(`프로젝트 생성 실패: ${response.message}`);

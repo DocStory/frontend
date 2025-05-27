@@ -4,6 +4,8 @@ import Button from './Button';
 import ModalHeader from './ModalHeader';
 import { FiPlus, FiX } from 'react-icons/fi';
 import { createRepository, CreateRepositoryRequest } from '../../api/repository';
+import { useRepositories } from '../../contexts/RepositoryContext';
+import { useToastContext } from '../../contexts/ToastContext';
 
 interface NewRepositoryModalProps {
   isOpen: boolean;
@@ -222,6 +224,8 @@ const NewRepositoryModal: React.FC<NewRepositoryModalProps> = ({
   const [description, setDescription] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { refreshRepositories } = useRepositories();
+  const toast = useToastContext();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -238,7 +242,7 @@ const NewRepositoryModal: React.FC<NewRepositoryModalProps> = ({
     e.preventDefault();
     
     if (!title.trim()) {
-      alert('제목을 입력해주세요.');
+      toast.warning('제목을 입력해주세요.');
       return;
     }
 
@@ -253,7 +257,10 @@ const NewRepositoryModal: React.FC<NewRepositoryModalProps> = ({
       const response = await createRepository(repositoryData);
 
       if (response.code === 100) {
-        alert(`프로젝트 "${response.data.name}"가 성공적으로 생성되었습니다!`);
+        toast.success(`프로젝트 "${response.data.name}"가 성공적으로 생성되었습니다!`);
+        
+        // 레포지토리 목록 새로고침
+        await refreshRepositories();
         
         // 기존 onSubmit 콜백도 호출 (필요한 경우)
         if (onSubmit) {
@@ -271,11 +278,11 @@ const NewRepositoryModal: React.FC<NewRepositoryModalProps> = ({
         setSelectedFiles([]);
         onClose();
       } else {
-        alert(`프로젝트 생성 실패: ${response.message}`);
+        toast.error(`프로젝트 생성 실패: ${response.message}`);
       }
     } catch (error) {
       console.error('Repository creation error:', error);
-      alert('프로젝트 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+      toast.error('프로젝트 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
     } finally {
       setIsLoading(false);
     }
