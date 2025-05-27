@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import SideBar from '../common/SideBar';
 import RepoHeader from '../layout/RepoHeader';
@@ -42,9 +42,27 @@ const LoadingContainer = styled.div`
 
 const RepositoryHistoryPage: React.FC = () => {
   const { repositoryId } = useParams<{ repositoryId: string }>();
+  const navigate = useNavigate();
   const [repositoryDetail, setRepositoryDetail] = useState<RepositoryDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const handleMenuClick = (label: string) => {
+    switch (label) {
+      case '홈':
+        navigate('/home');
+        break;
+      case '저장소':
+        navigate('/repository');
+        break;
+      case '도움말':
+        // 도움말 페이지로 이동
+        break;
+      case '설정':
+        // 설정 페이지로 이동 (모달은 SideBar에서 처리)
+        break;
+    }
+  };
 
   const fetchRepositoryDetail = async () => {
     if (!repositoryId) {
@@ -73,7 +91,7 @@ const RepositoryHistoryPage: React.FC = () => {
   if (loading) {
     return (
       <PageContainer>
-        <SideBar activeMenu="저장소" />
+        <SideBar activeMenu="저장소" onMenuClick={handleMenuClick} />
         <LoadingContainer>
           레포지토리 정보를 불러오는 중...
         </LoadingContainer>
@@ -84,7 +102,7 @@ const RepositoryHistoryPage: React.FC = () => {
   if (error || !repositoryDetail) {
     return (
       <PageContainer>
-        <SideBar activeMenu="저장소" />
+        <SideBar activeMenu="저장소" onMenuClick={handleMenuClick} />
         <MainContent>
           <RepoHeader hasNewNotification={true} />
           <RepositoryTile 
@@ -101,7 +119,7 @@ const RepositoryHistoryPage: React.FC = () => {
 
   return (
     <PageContainer>
-      <SideBar activeMenu="저장소" />
+      <SideBar activeMenu="저장소" onMenuClick={handleMenuClick} />
       <MainContent>
         <RepoHeader hasNewNotification={true} />
         <RepositoryTile 
