@@ -5,6 +5,7 @@ import MemberList from '../common/MemberList';
 import ModalHeader from '../common/ModalHeader';
 import { getTeamMembers, updateTeamMemberRole, removeTeamMember } from '../../api/team';
 import { UUID } from '../../api/common/types';
+import { inviteUserToTeam } from '../../api/teaminvite';
 
 interface TeamInviteModalProps {
   isOpen: boolean;
@@ -112,8 +113,7 @@ const SendIcon = styled.img`
 const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
   isOpen,
   onClose,
-  onInvite,
-  repositoryId,
+  repositoryId = "1a728c51-4cca-43b5-a41e-08c1edcc33f6",
 }) => {
   const [email, setEmail] = useState('');
   const [members, setMembers] = useState<Array<{
@@ -128,13 +128,22 @@ const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
       const response = await getTeamMembers(repositoryId);
 
       if (response.data) {
-        const formattedMembers = response.data.map((member) => ({
+        const formattedMembers = response.data
+          .map((member) => ({
           id: member.userId,
           name: member.nickname,
           email: member.email,
           role: member.role.toLowerCase() as 'admin' | 'reviewer' | 'contributor',
-        }));
-        setMembers(formattedMembers);
+        }))
+
+        const sortedMembers = formattedMembers.sort((a, b) => {
+          if (a.role === 'admin' && b.role !== 'admin') return -1;
+          if (b.role === 'admin' && a.role !== 'admin') return 1;
+
+          return a.name.localeCompare(b.name, 'ko');
+        });
+
+        setMembers(sortedMembers);
       }
     } catch (error) {
       console.error('Failed to fetch team members:', error);
@@ -147,10 +156,19 @@ const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
     }
   }, [isOpen, repositoryId]);
 
-  const handleInvite = () => {
+
+  const handleInvite = async () => {
     if (email.trim()) {
-      onInvite(email);
-      setEmail('');
+      try {
+        await inviteUserToTeam({
+          repositoryId,
+          email: email.trim(),
+        });
+        setEmail('');
+        await fetchTeamMembers();
+      } catch (error) {
+        console.error('Failed to invite user:', error);
+      }
     }
   };
 
