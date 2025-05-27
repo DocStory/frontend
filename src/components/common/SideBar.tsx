@@ -46,6 +46,12 @@ const TopSection = styled.div`
   padding: 0 32px;
   border-bottom: 1px solid ${({ theme }) => theme.border};
   gap: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.hoverBackground};
+  }
 `;
 
 const LogoImg = styled.img`
@@ -188,6 +194,12 @@ const SideBar: React.FC<SideBarProps> = ({ activeMenu = '홈', onMenuClick }) =>
     setIsSettingsModalOpen(false);
   };
 
+  const handleLogoClick = () => {
+    if (onMenuClick) {
+      onMenuClick('홈');
+    }
+  };
+
   const getUserDisplayInfo = () => {
     if (loading) {
       return { name: '로딩 중...', avatar: Avatar, email: '' };
@@ -225,7 +237,7 @@ const SideBar: React.FC<SideBarProps> = ({ activeMenu = '홈', onMenuClick }) =>
     <>
       <SidebarContainer>
         <TopArea>
-          <TopSection>
+          <TopSection onClick={handleLogoClick}>
             <LogoImg src={Logo} alt="DocStory Logo" />
             <ProjectTitle>DocStory</ProjectTitle>
           </TopSection>
