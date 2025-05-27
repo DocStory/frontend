@@ -11,6 +11,7 @@ interface UserInfoModalProps {
   userEmail: string;
   phoneNumber: string;
   address: string;
+  profileImage?: string;
   onUserNameChange?: (newName: string) => void;
 }
 
@@ -244,12 +245,18 @@ const UserInfoModal: React.FC<UserInfoModalProps> = ({
   userEmail,
   phoneNumber,
   address,
+  profileImage,
   onUserNameChange,
 }) => {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(userName);
-  const [profileImage, setProfileImage] = useState<string>(avatarIcon);
+  const [profileImageState, setProfileImageState] = useState<string>(profileImage || avatarIcon);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // profileImage prop이 변경될 때 상태 업데이트
+  React.useEffect(() => {
+    setProfileImageState(profileImage || avatarIcon);
+  }, [profileImage]);
 
   const handleNameEdit = () => {
     setIsEditingName(true);
@@ -288,7 +295,7 @@ const UserInfoModal: React.FC<UserInfoModalProps> = ({
         const reader = new FileReader();
         reader.onload = (event) => {
           if (event.target?.result) {
-            setProfileImage(event.target.result as string);
+            setProfileImageState(event.target.result as string);
           }
         };
         reader.readAsDataURL(file);
@@ -323,7 +330,15 @@ const UserInfoModal: React.FC<UserInfoModalProps> = ({
           <ProfileSection>
             <AvatarSection>
               <AvatarWrapper>
-                <Avatar src={profileImage} alt="사용자 아바타" />
+                <Avatar 
+                  src={profileImageState} 
+                  alt="사용자 아바타"
+                  onError={(e) => {
+                    // 이미지 로드 실패 시 기본 아바타로 대체
+                    const target = e.target as HTMLImageElement;
+                    target.src = avatarIcon;
+                  }}
+                />
                 <AvatarEditButton onClick={handleProfileImageClick}>
                   <img src={profilePencilIcon} alt="프로필 편집" />
                 </AvatarEditButton>

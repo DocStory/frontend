@@ -4,6 +4,7 @@ export interface UserInfo {
   providerId: string;
   nickname: string;
   profileImage: string;
+  email?: string;
 }
 
 export interface UserApiResponse {
