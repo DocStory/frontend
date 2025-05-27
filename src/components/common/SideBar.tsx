@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import Logo from '../../assets/logo.svg';
 import HomeIcon from '../../assets/homeIcon.svg';
@@ -7,6 +7,7 @@ import HelpIcon from '../../assets/helpIcon.svg';
 import SettingIcon from '../../assets/settingIcon.svg';
 import LogoutIcon from '../../assets/logoutIcon.png';
 import Avatar from '../../assets/avatar.svg';
+import UserInfoModal from '../layout/UserInfoModal';
 
 interface MenuItem {
   icon: React.ReactNode;
@@ -18,6 +19,7 @@ interface SideBarProps {
   activeMenu?: string;
   onMenuClick?: (label: string) => void;
   userName?: string;
+  onUserNameChange?: (newName: string) => void;
 }
 
 const SidebarContainer = styled.div`
@@ -100,6 +102,14 @@ const AvatarBox = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background-color: #F8FAFC;
+  }
 `;
 
 const AvatarImg = styled.img`
@@ -119,6 +129,13 @@ const LogoutIconBox = styled.div`
   display: flex;
   align-items: center;
   cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background-color: #F8FAFC;
+  }
 `;
 
 const LogoutImg = styled.img`
@@ -126,7 +143,15 @@ const LogoutImg = styled.img`
   height: 24px;
 `;
 
-const SideBar: React.FC<SideBarProps> = ({ activeMenu = '홈', onMenuClick, userName = '홍길동' }) => {
+const SideBar: React.FC<SideBarProps> = ({ 
+  activeMenu = '홈', 
+  onMenuClick, 
+  userName = '홍길동',
+  onUserNameChange 
+}) => {
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [currentUserName, setCurrentUserName] = useState(userName);
+
   const menuList: MenuItem[] = [
     { icon: <MenuIcon src={HomeIcon} alt="홈" />, label: '홈', active: activeMenu === '홈' },
     { icon: <MenuIcon src={RepoIcon} alt="저장소" />, label: '저장소', active: activeMenu === '저장소' },
@@ -134,36 +159,71 @@ const SideBar: React.FC<SideBarProps> = ({ activeMenu = '홈', onMenuClick, user
     { icon: <MenuIcon src={SettingIcon} alt="설정" />, label: '설정', active: activeMenu === '설정' },
   ];
 
+  const handleUserProfileClick = () => {
+    setIsUserModalOpen(true);
+  };
+
+  const handleCloseUserModal = () => {
+    setIsUserModalOpen(false);
+  };
+
+  const handleUserNameChange = (newName: string) => {
+    setCurrentUserName(newName);
+    if (onUserNameChange) {
+      onUserNameChange(newName);
+    }
+  };
+
+  // 임시 사용자 데이터 (실제로는 props나 context에서 가져올 것)
+  const userData = {
+    name: currentUserName,
+    email: 'yourname@gmail.com',
+    phoneNumber: '010-1234-5678',
+    address: '서울특별시 강남구 테헤란로 123',
+  };
+
   return (
-    <SidebarContainer>
-      <TopArea>
-        <TopSection>
-          <LogoImg src={Logo} alt="DocStory Logo" />
-          <ProjectTitle>DocStory</ProjectTitle>
-        </TopSection>
-        <MenuSection>
-          {menuList.map((item) => (
-            <MenuItemBox
-              key={item.label}
-              active={item.active}
-              onClick={() => onMenuClick && onMenuClick(item.label)}
-            >
-              {item.icon}
-              {item.label}
-            </MenuItemBox>
-          ))}
-        </MenuSection>
-      </TopArea>
-      <BottomSection>
-        <AvatarBox>
-          <AvatarImg src={Avatar} alt="User Avatar" />
-          <UserName>{userName}</UserName>
-        </AvatarBox>
-        <LogoutIconBox title="로그아웃">
-          <LogoutImg src={LogoutIcon} alt="로그아웃" />
-        </LogoutIconBox>
-      </BottomSection>
-    </SidebarContainer>
+    <>
+      <SidebarContainer>
+        <TopArea>
+          <TopSection>
+            <LogoImg src={Logo} alt="DocStory Logo" />
+            <ProjectTitle>DocStory</ProjectTitle>
+          </TopSection>
+          <MenuSection>
+            {menuList.map((item) => (
+              <MenuItemBox
+                key={item.label}
+                active={item.active}
+                onClick={() => onMenuClick && onMenuClick(item.label)}
+              >
+                {item.icon}
+                {item.label}
+              </MenuItemBox>
+            ))}
+          </MenuSection>
+        </TopArea>
+        <BottomSection>
+          <AvatarBox onClick={handleUserProfileClick}>
+            <AvatarImg src={Avatar} alt="User Avatar" />
+            <UserName>{currentUserName}</UserName>
+          </AvatarBox>
+          <LogoutIconBox title="로그아웃">
+            <LogoutImg src={LogoutIcon} alt="로그아웃" />
+          </LogoutIconBox>
+        </BottomSection>
+      </SidebarContainer>
+
+      <UserInfoModal
+        isOpen={isUserModalOpen}
+        onClose={handleCloseUserModal}
+        userName={userData.name}
+        userEmail={userData.email}
+        phoneNumber={userData.phoneNumber}
+        address={userData.address}
+        onUserNameChange={handleUserNameChange}
+      />
+    </>
   );
 };
 
