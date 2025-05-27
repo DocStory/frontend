@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { GlobalStyle } from "./styles/GlobalStyle.ts";
 import LandingPage from './components/common/LandingPage';
 import RepoTreePage from './components/pages/RepoTreePage';
@@ -22,7 +22,7 @@ const TokenHandler: React.FC = () => {
   const location = useLocation();
   
   useEffect(() => {
-    // 현재 URL이 루트 페이지이고 토큰 파라미터가, 포함되어 있다면 처리
+    // 현재 URL이 루트 페이지이고 토큰 파라미터가 포함되어 있다면 처리
     if (location.pathname === '/' && location.search.includes('accessToken')) {
       const token = AuthService.getTokenFromUrl();
       
@@ -40,31 +40,6 @@ const TokenHandler: React.FC = () => {
 };
 
 function App() {
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // 앱 초기화 시 인증 상태 확인
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const isAuthenticated = await AuthService.isAuthenticated();
-        if (isAuthenticated) {
-          console.log('사용자가 로그인되어 있습니다.');
-        }
-      } catch (error) {
-        console.error('인증 상태 확인 중 오류 발생:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    checkAuth();
-  }, []);
-  
-  // 로딩 중인 경우 빈 화면 표시
-  if (isLoading) {
-    return <div>로딩 중...</div>;
-  }
-  
   return (
     <>
       <ThemeProvider>

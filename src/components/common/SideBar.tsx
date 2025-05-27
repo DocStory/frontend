@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Logo from '../../assets/logo.svg';
 import HomeIcon from '../../assets/homeIcon.svg';
@@ -10,6 +11,7 @@ import Avatar from '../../assets/avatar.svg';
 import UserInfoModal from '../layout/UserInfoModal';
 import SettingsModal from '../layout/SettingsModal';
 import { useUser } from '../../contexts/UserContext';
+import AuthService from '../../api/auth';
 
 interface MenuItem {
   icon: React.ReactNode;
@@ -161,6 +163,7 @@ const LoadingText = styled.span`
 `;
 
 const SideBar: React.FC<SideBarProps> = ({ activeMenu = '홈', onMenuClick }) => {
+  const navigate = useNavigate();
   const { userInfo, loading, error } = useUser();
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
@@ -197,6 +200,21 @@ const SideBar: React.FC<SideBarProps> = ({ activeMenu = '홈', onMenuClick }) =>
   const handleLogoClick = () => {
     if (onMenuClick) {
       onMenuClick('홈');
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      // 먼저 토큰 제거
+      localStorage.removeItem('accessToken');
+      // 서버에 로그아웃 요청
+      await AuthService.logout();
+      // React Router를 사용하여 랜딩 페이지로 이동
+      navigate('/', { replace: true });
+    } catch (error) {
+      console.error('로그아웃 중 오류 발생:', error);
+      // 에러가 발생해도 로그아웃 처리
+      navigate('/', { replace: true });
     }
   };
 
@@ -271,7 +289,12 @@ const SideBar: React.FC<SideBarProps> = ({ activeMenu = '홈', onMenuClick }) =>
               <UserName>{name}</UserName>
             )}
           </AvatarBox>
-          <LogoutIconBox title="로그아웃">
+          <LogoutIconBox 
+            title="로그아웃" 
+            onClick={handleLogout}
+            role="button"
+            aria-label="로그아웃"
+          >
             <LogoutImg src={LogoutIcon} alt="로그아웃" />
           </LogoutIconBox>
         </BottomSection>

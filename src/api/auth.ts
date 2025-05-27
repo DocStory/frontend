@@ -22,14 +22,13 @@ const AuthService = {
     }
   },
 
-  // 로그아웃 - 토큰 삭제
+  // 로그아웃 - 서버에 로그아웃 요청만 수행
   logout: async (): Promise<void> => {
     try {
-      await api.post('/api/auth/logout');
-      // 로컬 스토리지에서 토큰 제거
-      localStorage.removeItem('accessToken');
+      await api.post('/api/users/logout');
     } catch (error) {
       console.error('로그아웃 중 오류 발생:', error);
+      throw error;
     }
   },
 
