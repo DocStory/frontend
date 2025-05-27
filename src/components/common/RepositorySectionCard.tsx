@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import RepositoryCard, { FileType } from './RepositoryCard';
+import api from '../../api/axios';
 
 const CardGrid = styled.div`
   width: 100%;
@@ -15,50 +16,58 @@ const CardGrid = styled.div`
   }
 `;
 
-export interface Repository {
-  title: string;
+interface ApiRepository {
+  id: string;
+  name: string;
   description: string;
-  fileTypes: FileType[];
+  ownerNickname: string;
+  myRole: string;
+  isFavorite: string;
 }
 
-interface RepositoryCardGridProps {
-  repositories?: Repository[];
+interface ApiResponse {
+  code: number;
+  message: string;
+  data: ApiRepository[];
 }
 
-const defaultRepositories: Repository[] = [
-  {
-    title: 'AI 프로젝트',
-    description: 'AI 기반 문서 자동화 저장소',
-    fileTypes: ['hwp', 'docx', 'pdf'],
-  },
-  {
-    title: '팀 위키',
-    description: '팀원들과 함께 관리하는 위키 저장소',
-    fileTypes: ['docx', 'pdf'],
-  },
-  {
-    title: '회의록',
-    description: '주간 회의록 저장소',
-    fileTypes: ['hwp'],
-  },
-  {
-    title: '프로젝트 자료',
-    description: '프로젝트 관련 각종 자료 모음',
-    fileTypes: ['pdf', 'docx'],
-  },
-];
+const RepositoryCardGrid: React.FC = () => {
+  const [repositories, setRepositories] = useState<ApiRepository[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-const RepositoryCardGrid: React.FC<RepositoryCardGridProps> = ({ repositories = defaultRepositories }) => (
-  <CardGrid>
-    {repositories.map((repo, idx) => (
-      <RepositoryCard
-        key={idx}
-        title={repo.title}
-        description={repo.description}
-        fileTypes={repo.fileTypes}
-      />
-    ))}
-  </CardGrid>
-);
+  useEffect(() => {
+    const fetchRepositories = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await api.get<ApiResponse>('/api/repositories/my');
+        setRepositories(response.data.data);
+      } catch (err: any) {
+        console.error('내 레포지토리 목록 조회 실패:', err);
+        setError(err.response?.data?.message || err.message || '레포지토리 목록을 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRepositories();
+  }, []);
+
+  if (loading) return <div>로딩 중...</div>;
+  if (error) return <div>오류: {error}</div>;
+
+  return (
+    <CardGrid>
+      {repositories.map((repo) => (
+        <RepositoryCard
+          key={repo.id}
+          title={repo.name}
+          description={repo.description}
+          fileTypes={['pdf']} // TODO: 실제 fileTypes 정보가 있으면 반영
+        />
+      ))}
+    </CardGrid>
+  );
+};
 
 export default RepositoryCardGrid; 

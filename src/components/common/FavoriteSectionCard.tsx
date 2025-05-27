@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import RepositoryCard, { FileType } from './RepositoryCard';
+import api from '../../api/axios';
 
 const CardGrid = styled.div`
   width: 100%;
@@ -14,50 +15,58 @@ const CardGrid = styled.div`
   }
 `;
 
-export interface Favorite {
-  title: string;
+interface ApiFavorite {
+  id: string;
+  name: string;
   description: string;
-  fileTypes: FileType[];
+  ownerNickname: string;
+  myRole: string;
+  isFavorite: string;
 }
 
-interface FavoriteCardGridProps {
-  favorites?: Favorite[];
+interface ApiResponse {
+  code: number;
+  message: string;
+  data: ApiFavorite[];
 }
 
-const defaultFavorites: Favorite[] = [
-  {
-    title: 'AI 프로젝트',
-    description: 'AI 기반 문서 자동화 저장소',
-    fileTypes: ['hwp', 'docx', 'pdf'],
-  },
-  {
-    title: '팀 위키',
-    description: '팀원들과 함께 관리하는 위키 저장소',
-    fileTypes: ['docx', 'pdf'],
-  },
-  {
-    title: 'AI 프로젝트',
-    description: 'AI 기반 문서 자동화 저장소',
-    fileTypes: ['hwp', 'docx', 'pdf'],
-  },
-  {
-    title: '팀 위키',
-    description: '팀원들과 함께 관리하는 위키 저장소',
-    fileTypes: ['docx', 'pdf'],
-  },
-];
+const FavoriteSectionCard: React.FC = () => {
+  const [favorites, setFavorites] = useState<ApiFavorite[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-const FavoriteSectionCard: React.FC<FavoriteCardGridProps> = ({ favorites = defaultFavorites }) => (
-  <CardGrid>
-    {favorites.map((favorite, idx) => (
-      <RepositoryCard
-        key={idx}
-        title={favorite.title}
-        description={favorite.description}
-        fileTypes={favorite.fileTypes}
-      />
-    ))}
-  </CardGrid>
-);
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await api.get<ApiResponse>('/api/repositories/favorites');
+        setFavorites(response.data.data);
+      } catch (err: any) {
+        console.error('즐겨찾기 목록 조회 실패:', err);
+        setError(err.response?.data?.message || err.message || '즐겨찾기 목록을 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFavorites();
+  }, []);
+
+  if (loading) return <div>로딩 중...</div>;
+  if (error) return <div>오류: {error}</div>;
+
+  return (
+    <CardGrid>
+      {favorites.map((favorite) => (
+        <RepositoryCard
+          key={favorite.id}
+          title={favorite.name}
+          description={favorite.description}
+          fileTypes={['pdf']} // TODO: 실제 fileTypes 정보가 있으면 반영
+        />
+      ))}
+    </CardGrid>
+  );
+};
 
 export default FavoriteSectionCard; 
