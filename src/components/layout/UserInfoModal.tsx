@@ -248,6 +248,8 @@ const UserInfoModal: React.FC<UserInfoModalProps> = ({
 }) => {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(userName);
+  const [profileImage, setProfileImage] = useState<string>(avatarIcon);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleNameEdit = () => {
     setIsEditingName(true);
@@ -271,6 +273,28 @@ const UserInfoModal: React.FC<UserInfoModalProps> = ({
       handleNameSave();
     } else if (e.key === 'Escape') {
       handleNameCancel();
+    }
+  };
+
+  const handleProfileImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // 이미지 파일인지 확인
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            setProfileImage(event.target.result as string);
+          }
+        };
+        reader.readAsDataURL(file);
+      } else {
+        alert('이미지 파일만 업로드 가능합니다.');
+      }
     }
   };
 
@@ -299,10 +323,17 @@ const UserInfoModal: React.FC<UserInfoModalProps> = ({
           <ProfileSection>
             <AvatarSection>
               <AvatarWrapper>
-                <Avatar src={avatarIcon} alt="사용자 아바타" />
-                <AvatarEditButton>
+                <Avatar src={profileImage} alt="사용자 아바타" />
+                <AvatarEditButton onClick={handleProfileImageClick}>
                   <img src={profilePencilIcon} alt="프로필 편집" />
                 </AvatarEditButton>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleFileChange}
+                />
               </AvatarWrapper>
               
               <UserInfoSection>
