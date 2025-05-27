@@ -61,6 +61,7 @@ interface Repository {
   ownerNickname: string;
   myRole: string;
   isFavorite: boolean;
+  fileTypes?: string[];
 }
 
 interface ApiResponse {
@@ -120,6 +121,25 @@ const FavoriteSectionCard: React.FC = () => {
     }
   };
 
+  // 백엔드 파일타입을 허용된 FileType으로 필터링하는 함수
+  const filterValidFileTypes = (fileTypes: string[]): ('hwp' | 'docx' | 'pdf')[] => {
+    const typeMapping: Record<string, 'hwp' | 'docx' | 'pdf'> = {
+      'HWP': 'hwp',
+      'HWPX': 'hwp',  // HWPX도 HWP로 처리
+      'DOC': 'docx',
+      'DOCX': 'docx',
+      'PDF': 'pdf',
+    };
+
+    const mappedTypes = fileTypes
+      .map(type => type.toUpperCase()) // 대문자로 변환
+      .map(type => typeMapping[type])  // 매핑 테이블에서 변환
+      .filter((type): type is 'hwp' | 'docx' | 'pdf' => type !== undefined); // undefined 제거
+
+    // 중복 제거하여 반환
+    return [...new Set(mappedTypes)];
+  };
+
   if (loading) return <div>로딩 중...</div>;
   if (error) return <div>오류: {error}</div>;
 
@@ -144,9 +164,10 @@ const FavoriteSectionCard: React.FC = () => {
       {favorites.map((favorite) => (
         <RepositoryCard
           key={favorite.id}
+          id={favorite.id}
           title={favorite.name}
           description={favorite.description}
-          fileTypes={['pdf']} // TODO: 실제 fileTypes 정보가 있으면 반영
+          fileTypes={favorite.fileTypes ? filterValidFileTypes(favorite.fileTypes) : []}
           isFavorite={true}
           onFavoriteClick={(isFavorite) => handleFavoriteClick(favorite.id, isFavorite)}
         />
