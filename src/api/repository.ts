@@ -90,4 +90,33 @@ export const getRepositoryDetail = async (repositoryId: string): Promise<Reposit
     console.error('Failed to fetch repository detail:', error);
     throw error;
   }
+};
+
+export interface UpdateRepositoryRequest {
+  name: string;
+  description: string;
+}
+
+export interface UpdateRepositoryResponse {
+  code: number;
+  message: string;
+  data: {
+    id: string;
+    name: string;
+    description: string;
+    ownerNickname: string;
+  };
+}
+
+export const updateRepository = async (
+  repositoryId: string,
+  repositoryData: UpdateRepositoryRequest
+): Promise<UpdateRepositoryResponse> => {
+  try {
+    const response = await api.put<UpdateRepositoryResponse>(`/api/repositories/${repositoryId}`, repositoryData);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to update repository:', error);
+    throw error;
+  }
 }; 
