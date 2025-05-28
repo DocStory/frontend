@@ -4,7 +4,7 @@ import LandingPage from './components/common/LandingPage';
 import RepoTreePage from './components/pages/RepoTreePage';
 import PhysicsGraphTestPage from './components/pages/PhysicsGraphTestPage';
 import RepositoryHistoryPage from './components/pages/RepositoryHistoryPage';
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation, useParams } from 'react-router-dom';
 import HomePage from './components/pages/HomePage.tsx';
 import AppLayout from './components/layout/AppLayout';
 import RepositorySection from './components/common/RepositorySection';
@@ -33,6 +33,12 @@ const TokenHandler: React.FC = () => {
   }, [location, navigate]);
   
   return null;
+};
+
+// RepositoryHistoryPage를 위한 래퍼 컴포넌트
+const RepositoryHistoryWrapper: React.FC = () => {
+  const { repositoryId } = useParams<{ repositoryId: string }>();
+  return <RepositoryHistoryPage repositoryId={repositoryId} />;
 };
 
 function App() {
@@ -81,6 +87,7 @@ function App() {
           </Route>
           <Route path="/repo-tree" element={<RepoTreePage />} />
           <Route path="/physics-test" element={<PhysicsGraphTestPage />} />
+          <Route path="/repository/:repositoryId/history" element={<RepositoryHistoryWrapper />} />
           <Route path="/repository-history" element={<RepositoryHistoryPage />} />
         </Routes>
       </BrowserRouter>

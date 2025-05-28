@@ -7,7 +7,7 @@ const CARD_WIDTH = 335;
 const CARD_HEIGHT = 150;
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 2;
-const UPDATE_INTERVAL = 1000 / 30; // 30 FPS로 제한
+const UPDATE_INTERVAL = 1000 / 60; // 60 FPS로 증가
 
 interface NodeData {
   id: string;
@@ -19,6 +19,12 @@ interface NodeData {
   isMain?: boolean;
   x: number;
   y: number;
+  historyId?: string;
+  onDetailClick?: (historyId: string) => void;
+  currentUserId?: string;
+  historyCreatorId?: string;
+  onEditClick?: (historyId: string) => void;
+  onCreateClick?: (historyId?: string) => void;
 }
 
 interface EdgeData {
@@ -141,6 +147,12 @@ const MemoizedNode = memo(({ node, isDragging, onDragStart, onDrag, onDragEnd }:
       title={node.title}
       description={node.description}
       timeAgo={node.timeAgo}
+      historyId={node.historyId}
+      onDetailClick={node.onDetailClick}
+      currentUserId={node.currentUserId}
+      historyCreatorId={node.historyCreatorId}
+      onEditClick={node.onEditClick}
+      onCreateClick={node.onCreateClick}
     />
   </NodeWrapper>
 ));
@@ -256,13 +268,13 @@ const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }
         CARD_HEIGHT,
         {
           inertia: Infinity,
-          restitution: 0.3, // 반발력 감소
-          friction: 0.2,
-          frictionAir: 0.1,
-          frictionStatic: 0.2,
-          density: 0.001,
+          restitution: 0.1, // 반발력 더 감소
+          friction: 0.05, // 마찰력 감소
+          frictionAir: 0.05, // 공기 마찰 감소
+          frictionStatic: 0.1, // 정적 마찰 감소
+          density: 0.0005, // 밀도 감소
           isStatic: false,
-          sleepThreshold: 60, // 빨리 잠들도록
+          sleepThreshold: 30, // 더 빨리 잠들도록
         }
       );
     });
@@ -278,8 +290,8 @@ const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }
       return Matter.Constraint.create({
         bodyA: sourceBody,
         bodyB: targetBody,
-        stiffness: isMainEdge ? 0.08 : 0.05,
-        damping: isMainEdge ? 0.3 : 0.2,
+        stiffness: isMainEdge ? 0.04 : 0.02, // 강성 감소
+        damping: isMainEdge ? 0.5 : 0.4, // 댐핑 증가
         length: Math.sqrt(
           Math.pow(sourceBody.position.x - targetBody.position.x, 2) +
           Math.pow(sourceBody.position.y - targetBody.position.y, 2)
@@ -296,8 +308,11 @@ const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }
 
     // 최적화된 업데이트 루프
     function update(timestamp: number) {
-      if (timestamp - lastUpdateRef.current >= UPDATE_INTERVAL) {
-        Matter.Engine.update(engine, UPDATE_INTERVAL);
+      const deltaTime = timestamp - lastUpdateRef.current;
+      
+      if (deltaTime >= UPDATE_INTERVAL) {
+        // 더 부드러운 물리 시뮬레이션을 위해 작은 단위로 업데이트
+        Matter.Engine.update(engine, Math.min(deltaTime, 16.67)); // 최대 60fps
         
         setNodeStates(prev =>
           prev.map(node => {
@@ -328,6 +343,11 @@ const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }
   // 최적화된 드래그 핸들러
   const handleDragStart = useCallback((id: string, e: React.MouseEvent) => {
     setDraggingId(id);
+    const body = bodiesRef.current[id];
+    if (body) {
+      // 드래그 시작 시 물리 시뮬레이션 비활성화
+      Matter.Body.setStatic(body, true);
+    }
     e.preventDefault();
   }, []);
 
@@ -343,11 +363,16 @@ const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }
     const y = (e.clientY - rect.top - viewport.y) / viewport.scale - CARD_HEIGHT / 2;
     
     Matter.Body.setPosition(body, { x, y });
-    Matter.Body.setVelocity(body, { x: 0, y: 0 });
-    Matter.Body.setAngularVelocity(body, 0);
   }, [viewport]);
 
   const handleDragEnd = useCallback((id: string) => {
+    const body = bodiesRef.current[id];
+    if (body) {
+      // 드래그 종료 시 물리 시뮬레이션 재활성화
+      Matter.Body.setStatic(body, false);
+      Matter.Body.setVelocity(body, { x: 0, y: 0 });
+      Matter.Body.setAngularVelocity(body, 0);
+    }
     setDraggingId(null);
   }, []);
 

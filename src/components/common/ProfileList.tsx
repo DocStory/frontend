@@ -12,6 +12,10 @@ interface ProfileListProps {
   canEdit?: boolean;
   backgroundColor?: string;
   isRecentActivity?: boolean;
+  userProfileImage?: string;
+  onEditStart?: () => void;
+  onEditCancel?: () => void;
+  onEditSave?: () => void;
 }
 
 const ProfileListContainer = styled.div<{ backgroundColor?: string }>`
@@ -92,27 +96,39 @@ const ProfileList: React.FC<ProfileListProps> = ({
   canEdit = false,
   backgroundColor,
   isRecentActivity = false,
+  userProfileImage,
+  onEditStart,
+  onEditCancel,
+  onEditSave,
 }) => {
   let icon = null;
+  let handleIconClick = null;
+  
   if (isRecentActivity) {
     icon = <Icon src={statusIcon} alt='Status' />;
   } else if (isEditing) {
     icon = <Icon src={saveIcon} alt='Save' />;
+    handleIconClick = onEditSave;
   } else if (canEdit) {
     icon = <Icon src={pencilIcon} alt='Pencil' />;
+    handleIconClick = onEditStart;
   }
 
   return (
     <ProfileListContainer backgroundColor={backgroundColor}>
       <ProfileListContent>
         <UserInfo>
-          <Avatar src={avatar} alt='User Avatar' />
+          <Avatar src={userProfileImage || avatar} alt='User Avatar' />
           <TextContainer>
             <Title isRecentActivity={isRecentActivity}>{title}</Title>
             <Time isRecentActivity={isRecentActivity}>{time}</Time>
           </TextContainer>
         </UserInfo>
-        {icon && <IconButton>{icon}</IconButton>}
+        {icon && (
+          <IconButton onClick={handleIconClick || undefined}>
+            {icon}
+          </IconButton>
+        )}
       </ProfileListContent>
     </ProfileListContainer>
   );
