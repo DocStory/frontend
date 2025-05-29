@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import SideBar from '../common/SideBar';
@@ -19,6 +19,7 @@ import { getRepositoryDetail, updateRepository, RepositoryDetail, UpdateReposito
 import { useUser } from '../../contexts/UserContext';
 import { useToastContext } from '../../contexts/ToastContext';
 import pencilIcon from '../../assets/pencilIcon.svg';
+import repoIcon from '../../assets/repoIcon.svg';
 
 const PageContainer = styled.div`
   display: flex;
@@ -124,6 +125,66 @@ const LoadingContainer = styled.div`
   color: #666;
 `;
 
+const EmptyStateContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 80px 20px;
+  text-align: center;
+`;
+
+const EmptyIcon = styled.img`
+  width: 80px;
+  height: 80px;
+  opacity: 0.3;
+  margin-bottom: 24px;
+`;
+
+const EmptyTitle = styled.h3`
+  font-family: 'Pretendard';
+  font-weight: 600;
+  font-size: 20px;
+  color: ${({ theme }) => theme.textSecondary};
+  margin: 0 0 12px 0;
+  transition: color 0.3s ease;
+`;
+
+const EmptyDescription = styled.p`
+  font-family: 'Pretendard';
+  font-weight: 400;
+  font-size: 16px;
+  color: ${({ theme }) => theme.textSecondary};
+  margin: 0 0 32px 0;
+  line-height: 1.5;
+  max-width: 400px;
+  opacity: 0.8;
+  transition: color 0.3s ease;
+`;
+
+const CreateButton = styled.button`
+  font-family: 'Pretendard';
+  font-weight: 600;
+  font-size: 14px;
+  color: #fff;
+  background: ${({ theme }) => theme.primary};
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.primaryHover};
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
 const RepositoryHistoryPage: React.FC = () => {
   const { repositoryId } = useParams<{ repositoryId: string }>();
   const navigate = useNavigate();
@@ -164,6 +225,7 @@ const RepositoryHistoryPage: React.FC = () => {
   const [rootFiles, setRootFiles] = useState<HistoryFileResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   
   // 상대적인 시간 표시 함수
   const getRelativeTime = useCallback((dateString: string) => {
@@ -637,10 +699,22 @@ const RepositoryHistoryPage: React.FC = () => {
           onCreateClick={handleEditClick}
         />
         <GraphContainer>
-          <CanvasRepoGraph 
-            nodes={graphNodes} 
-            edges={graphEdges} 
-          />
+          {graphNodes.length === 0 ? (
+            <EmptyStateContainer>
+              <EmptyIcon src={repoIcon} alt="히스토리 없음" />
+              <EmptyTitle>아직 생성된 히스토리가 없어요</EmptyTitle>
+              <EmptyDescription>
+                첫 번째 히스토리를 생성하여 문서 관리를 시작해보세요.
+              </EmptyDescription>
+              <CreateButton onClick={() => handleHistoryCreateClick()}>
+                히스토리 생성하기
+              </CreateButton>
+            </EmptyStateContainer>
+          ) : (
+            <CanvasRepoGraph
+              nodes={graphNodes}
+            />
+          )}
         </GraphContainer>
       </MainContent>
 
