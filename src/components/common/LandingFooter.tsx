@@ -82,7 +82,7 @@ const LandingFooter: React.FC = () => (
     <Content>
       <Column>
         <LogoRow>
-          <LogoImg src="/assets/logo.svg" alt="DocStory 로고" />
+          <LogoImg src="/src/assets/logo.svg" alt="DocStory 로고" />
           <Brand>DocStory</Brand>
         </LogoRow>
         <Link href="mailto:contact@docstory.io">contact@docstory.io</Link>

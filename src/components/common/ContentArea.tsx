@@ -13,7 +13,8 @@ interface ContentProps {
 
 const ContentContainer = styled.div<{ isEditing?: boolean }>`
   padding: 24px 33px;
-  background: #F9FBFD;
+  background: ${({ isEditing, theme }) => (isEditing ? theme.cardBackground : theme.surface)};
+  transition: background-color 0.3s ease;
 `;
 
 const EditingContainer = styled.div`
@@ -26,7 +27,7 @@ const ContentTitle = styled.h3<{ isRecentActivity?: boolean }>`
   font-weight: 500;
   font-size: ${props => props.isRecentActivity ? '20px' : '26px'};
   line-height: 1.2;
-  color: #292929;
+  color: ${({ theme }) => theme.text};
   margin: 0 0 16px 0;
 `;
 
@@ -36,7 +37,7 @@ const ContentText = styled.p`
   font-size: 18px;
   line-height: 1.67em;
   letter-spacing: -0.007em;
-  color: #6d6d6d;
+  color: ${({ theme }) => theme.textSecondary};
   margin: 0;
 `;
 

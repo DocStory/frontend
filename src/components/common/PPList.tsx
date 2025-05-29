@@ -15,8 +15,9 @@ interface PPListProps {
 
 const PPListContainer = styled.div`
   padding: 24px 33px;
-  border-bottom: 1px solid #cbd5e1;
-  background: #f1f5f9;
+  border-bottom: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.surface};
+  transition: background-color 0.3s ease;
 `;
 
 const PPItemContainer = styled.div`
@@ -24,13 +25,18 @@ const PPItemContainer = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 12px;
-  border-top: 1px solid #d4dde7;
-  border-bottom: 1px solid #d4dde7;
+  border-top: 1px solid ${({ theme }) => theme.border};
+  border-bottom: 1px solid ${({ theme }) => theme.border};
   border-left: none;
   border-right: none;
   border-radius: 0;
   margin-bottom: 12px;
-  background: #f1f5f9;
+  background: ${({ theme }) => theme.cardBackground};
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.hoverBackground};
+  }
 `;
 
 const ItemTextInfo = styled.div`
@@ -46,7 +52,7 @@ const ItemName = styled.span`
   font-size: 22px;
   line-height: 1em;
   letter-spacing: -0.007em;
-  color: #323a48;
+  color: ${({ theme }) => theme.text};
 `;
 
 const ItemContent = styled.span`
@@ -55,7 +61,7 @@ const ItemContent = styled.span`
   font-size: 14px;
   line-height: 1.43em;
   letter-spacing: -0.006em;
-  color: #475569;
+  color: ${({ theme }) => theme.textSecondary};
   white-space: pre-wrap;
 `;
 
@@ -75,6 +81,11 @@ const StatusCircle = styled.div<{ $status?: 'close' | 'merge' | 'progress' }>`
         return '#94a3b8';
     }
   }};
+  transition: transform 0.2s ease;
+
+  ${PPItemContainer}:hover & {
+    transform: scale(1.1);
+  }
 `;
 
 const PPList: React.FC<PPListProps> = ({ items, onItemClick }) => {

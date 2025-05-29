@@ -1,6 +1,5 @@
 import React from 'react';
 import styled from 'styled-components';
-import settingIcon from '../../assets/repositorySettingIcon.svg';
 
 const HeaderWrapper = styled.div`
   width: 100%;
@@ -21,27 +20,11 @@ const Title = styled.h2`
   font-family: 'Pretendard';
   font-weight: 800;
   font-size: 20px;
-  color: #292929;
+  color: ${({ theme }) => theme.text};
   margin: 0;
   position: relative;
   top: 1px;
-`;
-
-const SettingButton = styled.button`
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  width: 40px;
-  height: 40px;
-  justify-content: center;
-`;
-
-const SettingIcon = styled.img`
-  width: 20px;
-  height: 20px;
+  transition: color 0.3s ease;
 `;
 
 const FavoriteSectionHeader: React.FC = () => {
@@ -49,9 +32,6 @@ const FavoriteSectionHeader: React.FC = () => {
     <HeaderWrapper>
       <TitleRow>
         <Title>즐겨찾기</Title>
-        <SettingButton>
-          <SettingIcon src={settingIcon} alt="설정" />
-        </SettingButton>
       </TitleRow>
     </HeaderWrapper>
   );

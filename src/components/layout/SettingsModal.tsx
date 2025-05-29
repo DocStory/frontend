@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import closeIcon from '../../assets/closeIcon.svg';
 import SettingsList from '../common/SettingsList.tsx';
 import ModalHeader from '../common/ModalHeader';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -15,7 +16,7 @@ const ModalOverlay = styled.div<{ isOpen: boolean }>`
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: ${({ theme }) => theme.overlay};
   display: ${(props) => (props.isOpen ? 'flex' : 'none')};
   justify-content: center;
   align-items: center;
@@ -23,14 +24,15 @@ const ModalOverlay = styled.div<{ isOpen: boolean }>`
 `;
 
 const ModalContent = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.modalBackground};
   width: 100%;
   max-width: 400px;
-  height: 650px;
+  height: 450px;
   border-radius: 16px;
   position: relative;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 20px 25px -5px ${({ theme }) => theme.shadow};
 `;
 
 const ContentWrapper = styled.div`
@@ -43,21 +45,31 @@ const ContentWrapper = styled.div`
   }
 
   &::-webkit-scrollbar-track {
-    background: #f5f5f5;
+    background: ${({ theme }) => theme.surface};
     border-radius: 4px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #ddd;
+    background: ${({ theme }) => theme.border};
     border-radius: 4px;
   }
 
   &::-webkit-scrollbar-thumb:hover {
-    background: #ccc;
+    background: ${({ theme }) => theme.textSecondary};
   }
 `;
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
+  const { mode, setTheme } = useTheme();
+
+  const handleThemeChange = (themeValue: string) => {
+    if (themeValue === '라이트') {
+      setTheme('light');
+    } else if (themeValue === '다크') {
+      setTheme('dark');
+    }
+  };
+
   const settingsItems = [
     {
       title: '알림 설정',
@@ -66,13 +78,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     },
     {
       title: '테마 설정',
-      value: '라이트',
+      value: mode === 'light' ? '라이트' : '다크',
       options: ['라이트', '다크'],
-    },
-    {
-      title: '언어',
-      value: '한국어',
-      options: ['한국어', 'English', '日本語', '中文'],
+      onChange: handleThemeChange,
     },
   ];
 

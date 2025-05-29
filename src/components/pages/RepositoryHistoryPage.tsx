@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import SideBar from '../common/SideBar';
 import RepoHeader from '../layout/RepoHeader';
@@ -7,18 +8,22 @@ import PhysicsRepoGraph from '../common/PhysicsRepoGraph';
 import TeamInviteModal from '../layout/TeamInviteModal';
 import ModalSimple from '../layout/ModalSimple';
 import Modal from '../layout/Modal';
+import EditRepositoryModal from '../common/EditRepositoryModal';
 import { getFilteredHistories, getHistoryRootFiles, getHistoryDetail, updateHistory, createHistory } from '../../api/history';
 import { HistoryListResponse, HistoryFileResponse, HistoryDetailResponse } from '../../api/history/types';
 import { UUID } from '../../api/common/types';
 import AuthService from '../../api/auth';
 import { createProposal, getProposalsByRepository, getProposalById } from '../../api/proposal';
 import ModalPPList from '../layout/ModalPPList';
+import { getRepositoryDetail, updateRepository, RepositoryDetail, UpdateRepositoryRequest } from '../../api/repository';
+import { useUser } from '../../contexts/UserContext';
+import { useToastContext } from '../../contexts/ToastContext';
+import pencilIcon from '../../assets/pencilIcon.svg';
 
 const PageContainer = styled.div`
   display: flex;
-  width: 100vw;
   height: 100vh;
-  overflow: hidden;
+  background: #f7faff;
 `;
 
 const MainContent = styled.div`
@@ -28,19 +33,92 @@ const MainContent = styled.div`
   overflow: hidden;
 `;
 
+const TitleSection = styled.div`
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 24px 58px;
+`;
+
+const TitleContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+`;
+
+const Title = styled.h1`
+  font-family: 'Pretendard';
+  font-weight: 700;
+  font-size: 26px;
+  color: #292929;
+  margin: 0;
+`;
+
+const EditButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: #f8f9fa;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #e9ecef;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  img {
+    width: 16px;
+    height: 16px;
+    opacity: 0.7;
+  }
+`;
+
+const Subtitle = styled.p`
+  font-family: 'Pretendard';
+  font-weight: 400;
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.62);
+  margin: 0;
+  letter-spacing: 0.94%;
+`;
+
 const GraphContainer = styled.div`
   flex: 1;
-  position: relative;
+  padding: 20px;
   overflow: hidden;
 `;
 
-interface RepositoryHistoryPageProps {
-  repositoryId?: UUID;
-}
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-family: 'Pretendard';
+  font-size: 18px;
+  color: #666;
+`;
 
-const RepositoryHistoryPage: React.FC<RepositoryHistoryPageProps> = React.memo(({ 
-  repositoryId = "1a728c51-4cca-43b5-a41e-08c1edcc33f6" 
-}) => {
+const RepositoryHistoryPage: React.FC = () => {
+  const { repositoryId } = useParams<{ repositoryId: string }>();
+  const navigate = useNavigate();
+  const { userInfo } = useUser();
+  const toast = useToastContext();
+  
+  // Repository Detail State
+  const [repositoryDetail, setRepositoryDetail] = useState<RepositoryDetail | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // History States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -68,7 +146,7 @@ const RepositoryHistoryPage: React.FC<RepositoryHistoryPageProps> = React.memo((
   const [rootFiles, setRootFiles] = useState<HistoryFileResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // 상대적인 시간 표시 함수
   const getRelativeTime = useCallback((dateString: string) => {
     const now = new Date();
@@ -85,355 +163,9 @@ const RepositoryHistoryPage: React.FC<RepositoryHistoryPageProps> = React.memo((
     return date.toLocaleDateString();
   }, []);
 
-  // 콜백 함수들을 useCallback으로 최적화
-  const handleTeamIconClick = useCallback(() => {
-    setIsModalOpen(true);
-  }, []);
-
-  const handleModalClose = useCallback(() => {
-    setIsModalOpen(false);
-  }, []);
-
-  const handleInvite = useCallback((email: string) => {
-    console.log('Invite requested for', email);
-  }, []);
-
-  // 히스토리 상세 조회 함수
-  const handleHistoryDetailClick = useCallback(async (historyId: string) => {
-    try {
-      setDetailLoading(true);
-      const response = await getHistoryDetail(repositoryId, historyId);
-      
-      if (response.code === 100 && response.data) {
-        setSelectedHistoryDetail(response.data);
-        setIsDetailModalOpen(true);
-      }
-    } catch (err) {
-      console.error('Failed to fetch history detail:', err);
-    } finally {
-      setDetailLoading(false);
-    }
-  }, [repositoryId]);
-
-  // 히스토리 편집 모드로 모달 열기
-  const handleHistoryEditClick = useCallback(async (historyId: string) => {
-    try {
-      setDetailLoading(true);
-      const response = await getHistoryDetail(repositoryId, historyId);
-      
-      if (response.code === 100 && response.data) {
-        setSelectedHistoryDetail(response.data);
-        setEditedTitle(response.data.title);
-        setEditedContent(response.data.content);
-        setIsEditing(true);
-        setIsDetailModalOpen(true);
-      }
-    } catch (err) {
-      console.error('Failed to fetch history detail:', err);
-    } finally {
-      setDetailLoading(false);
-    }
-  }, [repositoryId]);
-
-  // 상세 모달 닫기
-  const handleDetailModalClose = useCallback(() => {
-    setIsDetailModalOpen(false);
-    setSelectedHistoryDetail(null);
-    setIsEditing(false);
-    setEditedTitle('');
-    setEditedContent('');
-  }, []);
-
-  // 편집 시작
-  const handleEditStart = useCallback(() => {
-    if (selectedHistoryDetail) {
-      setEditedTitle(selectedHistoryDetail.title);
-      setEditedContent(selectedHistoryDetail.content);
-      setIsEditing(true);
-    }
-  }, [selectedHistoryDetail]);
-
-  // 편집 취소
-  const handleEditCancel = useCallback(() => {
-    setIsEditing(false);
-    setEditedTitle('');
-    setEditedContent('');
-  }, []);
-
-  // 편집 저장
-  const handleEditSave = useCallback(async () => {
-    if (!selectedHistoryDetail) return;
-
-    try {
-      const updateData = {
-        title: editedTitle,
-        content: editedContent
-      };
-
-      const response = await updateHistory(repositoryId, selectedHistoryDetail.Id, updateData);
-      
-      if (response.code === 100) {
-        // 성공적으로 업데이트된 경우 상세 정보 다시 가져오기
-        const updatedDetailResponse = await getHistoryDetail(repositoryId, selectedHistoryDetail.Id);
-        if (updatedDetailResponse.code === 100 && updatedDetailResponse.data) {
-          setSelectedHistoryDetail(updatedDetailResponse.data);
-        }
-        setIsEditing(false);
-        setEditedTitle('');
-        setEditedContent('');
-        
-        // 히스토리 목록도 다시 가져오기
-        const historiesResponse = await getFilteredHistories(repositoryId, undefined, 'all');
-        if (historiesResponse.code === 100 && historiesResponse.data) {
-          setHistories(historiesResponse.data);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to update history:', err);
-    }
-  }, [repositoryId, selectedHistoryDetail, editedTitle, editedContent]);
-
-  // 편집 권한 확인
-  const canEditHistory = useMemo(() => {
-    if (!currentUser || !selectedHistoryDetail) return false;
-    return currentUser.userId === selectedHistoryDetail.createdBy.providerId;
-  }, [currentUser, selectedHistoryDetail]);
-
-  // 히스토리 생성 모달 열기
-  const handleHistoryCreateClick = useCallback((historyId?: string) => {
-    // 선택된 히스토리를 찾아서 해당 히스토리의 fileId를 parentFileId로 사용
-    let targetParentFileId: string | null = null;
-    
-    if (historyId) {
-      // histories 배열에서 해당 히스토리를 찾기
-      for (const historyGroup of histories) {
-        const foundHistory = historyGroup.find(h => h.id === historyId);
-        if (foundHistory) {
-          targetParentFileId = foundHistory.fileId;
-          break;
-        }
-      }
-    }
-    
-    setParentFileId(targetParentFileId);
-    setCreateTitle('');
-    setCreateContent('');
-    setSelectedFiles([]);
-    setIsCreateModalOpen(true);
-  }, [histories]);
-
-  // Proposal 생성 모달 열기
-  const handleProposalCreateClick = useCallback((historyId: string) => {
-    setSelectedHistoryForProposal(historyId);
-    setProposalTitle('');
-    setProposalContent('');
-    setIsProposalModalOpen(true);
-  }, []);
-
-  // Proposal 모달 닫기
-  const handleProposalModalClose = useCallback(() => {
-    setIsProposalModalOpen(false);
-    setSelectedHistoryForProposal(null);
-    setProposalTitle('');
-    setProposalContent('');
-  }, []);
-
-  // Proposal 저장
-  const handleProposalSave = useCallback(async () => {
-    if (!proposalTitle.trim()) {
-      return;
-    }
-
-    if (!selectedHistoryForProposal) {
-      return;
-    }
-
-    try {
-      const proposalData = {
-        historyId: selectedHistoryForProposal,
-        title: proposalTitle,
-        ...(proposalContent.trim() && { description: proposalContent })
-      };
-
-      const response = await createProposal(proposalData);
-      
-      if (response.code === 100) {
-        // 성공적으로 생성된 경우 모달 닫기
-        handleProposalModalClose();
-      }
-    } catch (err) {
-      console.error('Failed to create proposal:', err);
-    }
-  }, [proposalTitle, proposalContent, selectedHistoryForProposal, handleProposalModalClose]);
-
-  // 생성 모달 닫기
-  const handleCreateModalClose = useCallback(() => {
-    setIsCreateModalOpen(false);
-    setParentFileId(null);
-    setCreateTitle('');
-    setCreateContent('');
-    setSelectedFiles([]);
-  }, []);
-
-  // 파일 선택 핸들러
-  const handleFileSelect = useCallback((files: FileList | null) => {
-    if (files && files.length > 0) {
-      // 첫 번째 파일만 선택
-      setSelectedFiles([files[0]]);
-    }
-  }, []);
-
-  // 파일 제거 핸들러
-  const handleFileRemove = useCallback((index: number) => {
-    setSelectedFiles([]);
-  }, []);
-
-  // 히스토리 생성 저장
-  const handleCreateSave = useCallback(async () => {
-    if (!createTitle.trim()) {
-      return;
-    }
-
-    if (selectedFiles.length === 0) {
-      return;
-    }
-
-    try {
-      const formData = new FormData();
-      
-      // JSON 데이터를 historyCreateRequest 파트로 추가
-      const historyCreateRequest = {
-        title: createTitle,
-        ...(createContent.trim() && { content: createContent }),
-        ...(parentFileId && { parentFileId: parentFileId })
-      };
-      
-      // JSON 파트를 올바른 Content-Type으로 추가
-      const historyCreateRequestJson = JSON.stringify(historyCreateRequest);
-      formData.append('historyCreateRequest', historyCreateRequestJson);
-
-      // 파일 추가
-      formData.append('file', selectedFiles[0]);
-
-      const response = await createHistory(repositoryId, formData);
-      
-      if (response.code === 100) {
-        // 성공적으로 생성된 경우 모달 닫기
-        handleCreateModalClose();
-        
-        // 히스토리 목록 다시 가져오기
-        const historiesResponse = await getFilteredHistories(repositoryId, undefined, 'all');
-        if (historiesResponse.code === 100 && historiesResponse.data) {
-          setHistories(historiesResponse.data);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to create history:', err);
-    }
-  }, [repositoryId, createTitle, createContent, parentFileId, selectedFiles, handleCreateModalClose]);
-
-  // Proposal 목록 모달 열기
-  const handleProposalListOpen = useCallback(async () => {
-    setIsProposalListModalOpen(true);
-    setProposalListLoading(true);
-    try {
-      const response = await getProposalsByRepository(repositoryId, 'ALL');
-      if (response.code === 100 && response.data) {
-        // API status -> frontend status 매핑 함수
-        const mapStatus = (apiStatus: string): 'progress' | 'merge' | 'close' => {
-          switch (apiStatus.toLowerCase()) {
-            case 'open':
-              return 'progress';
-            case 'merge':
-              return 'merge';
-            case 'close':
-              return 'close';
-            default:
-              return 'progress';
-          }
-        };
-        // API 응답을 ModalPPList의 PPItem 형식으로 변환
-        const formattedProposals = response.data.map(proposal => ({
-          id: proposal.id || proposal.proposalId,
-          Name: proposal.title,
-          content: proposal.description,
-          status: mapStatus(proposal.status)
-        }));
-        setProposalList(formattedProposals);
-      }
-    } catch (err) {
-      console.error('Failed to fetch proposals:', err);
-    } finally {
-      setProposalListLoading(false);
-    }
-  }, [repositoryId]);
-
-  // Proposal 목록 모달 닫기
-  const handleProposalListClose = useCallback(() => {
-    setIsProposalListModalOpen(false);
-  }, []);
-
-  // Proposal 상세 모달 열기
-  const handleProposalDetailOpen = useCallback(async (proposalId: string) => {
-    if (!proposalId) return;
-    setSelectedProposalId(proposalId);
-    setIsProposalDetailModalOpen(true);
-    try {
-      const response = await getProposalById(proposalId);
-      if (response.code === 100 && response.data) {
-        setSelectedProposalDetail(response.data);
-      } else {
-        setSelectedProposalDetail(null);
-      }
-    } catch (err) {
-      setSelectedProposalDetail(null);
-    }
-  }, []);
-
-  const handleProposalDetailClose = useCallback(() => {
-    setIsProposalDetailModalOpen(false);
-    setSelectedProposalId(null);
-    setSelectedProposalDetail(null);
-  }, []);
-
-  useEffect(() => {
-    const fetchHistoryData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // 토큰에서 사용자 정보 가져오기
-        const userFromToken = AuthService.getUserFromToken();
-        if (userFromToken) {
-          setCurrentUser(userFromToken);
-        }
-
-        const [rootFilesResponse, historiesResponse] = await Promise.all([
-          getHistoryRootFiles(repositoryId),
-          getFilteredHistories(repositoryId, undefined, 'all')
-        ]);
-
-        if (rootFilesResponse.code === 100 && rootFilesResponse.data) {
-          setRootFiles(rootFilesResponse.data);
-        }
-
-        if (historiesResponse.code === 100 && historiesResponse.data) {
-          setHistories(historiesResponse.data);
-        }
-      } catch (err) {
-        console.error('Failed to fetch history data:', err);
-        setError('히스토리 데이터를 불러오는데 실패했습니다.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHistoryData();
-  }, [repositoryId]);
-
   // API 데이터를 그래프 노드 형태로 변환 (useMemo로 최적화)
   const graphNodes = useMemo(() => {
-    if (!histories.length) return [];
+    if (!histories.length || !repositoryId) return [];
     
     const nodes: any[] = [];
 
@@ -526,19 +258,16 @@ const RepositoryHistoryPage: React.FC<RepositoryHistoryPageProps> = React.memo((
           isMain: history.historyStatus === 'MAIN' || (history.historyStatus as any) === 'NORMAL',
           fileLevel: history.fileLevel,
           historyId: history.id,
-          onDetailClick: handleHistoryDetailClick,
-          onEditClick: handleHistoryEditClick,
-          onCreateClick: handleHistoryCreateClick,
-          onProposalClick: handleProposalCreateClick,
+          onDetailClick: () => handleHistoryDetailClick(history.id),
+          onEditClick: () => handleHistoryEditClick(history.id),
+          onCreateClick: () => handleHistoryCreateClick(history.id),
+          onProposalClick: () => handleProposalCreateClick(history.id),
           currentUserId: currentUser?.userId,
           historyCreatorId: history.createdBy?.providerId,
-          // 같은 깊이 내에서 노드들을 균등하게 분산
           x: startX + (currentPosition * nodeWidth),
-          // 깊이별로 세로 간격 (루트가 위, 하위 깊이가 아래)
           y: 80 + (depth * 220),
         });
         
-        // 해당 깊이의 카운터 증가
         depthCounters[depth]++;
       });
 
@@ -546,7 +275,7 @@ const RepositoryHistoryPage: React.FC<RepositoryHistoryPageProps> = React.memo((
     });
 
     return nodes;
-  }, [histories, getRelativeTime, handleHistoryDetailClick, handleHistoryEditClick, handleHistoryCreateClick, handleProposalCreateClick, currentUser]);
+  }, [histories, getRelativeTime, currentUser, repositoryId]);
 
   // parentFileId 기반 엣지 생성 (useMemo로 최적화)
   const graphEdges = useMemo(() => {
@@ -584,66 +313,295 @@ const RepositoryHistoryPage: React.FC<RepositoryHistoryPageProps> = React.memo((
     return edges;
   }, [histories]);
 
-  // 로딩 상태 컴포넌트를 메모이제이션
-  const LoadingComponent = useMemo(() => (
-    <PageContainer>
-      <SideBar activeMenu="저장소" />
-      <MainContent>
-        <RepoHeader
-          hasNewNotification={true}
-          onTeamIconClick={handleTeamIconClick}
-        />
-        <RepositoryTile 
-          title="캡스톤 디자인" 
-          subtitle="2025 상반기 프로젝트" 
-        />
-        <GraphContainer>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-            로딩 중...
-          </div>
-        </GraphContainer>
-      </MainContent>
-    </PageContainer>
-  ), [handleTeamIconClick]);
+  // 히스토리 상세 조회 함수
+  const handleHistoryDetailClick = useCallback(async (historyId: string) => {
+    if (!repositoryId) return;
+    
+    try {
+      setDetailLoading(true);
+      const response = await getHistoryDetail(repositoryId, historyId);
+      
+      if (response.code === 100 && response.data) {
+        setSelectedHistoryDetail(response.data);
+        setIsDetailModalOpen(true);
+      }
+    } catch (err) {
+      console.error('Failed to fetch history detail:', err);
+    } finally {
+      setDetailLoading(false);
+    }
+  }, [repositoryId]);
 
-  // 에러 상태 컴포넌트를 메모이제이션
-  const ErrorComponent = useMemo(() => (
-    <PageContainer>
-      <SideBar activeMenu="저장소" />
-      <MainContent>
-        <RepoHeader
-          hasNewNotification={true}
-          onTeamIconClick={handleTeamIconClick}
-        />
-        <RepositoryTile 
-          title="캡스톤 디자인" 
-          subtitle="2025 상반기 프로젝트" 
-        />
-        <GraphContainer>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'red' }}>
-            {error}
-          </div>
-        </GraphContainer>
-      </MainContent>
-    </PageContainer>
-  ), [error, handleTeamIconClick]);
+  // 히스토리 편집 모드로 모달 열기
+  const handleHistoryEditClick = useCallback(async (historyId: string) => {
+    if (!repositoryId) return;
+    
+    try {
+      setDetailLoading(true);
+      const response = await getHistoryDetail(repositoryId, historyId);
+      
+      if (response.code === 100 && response.data) {
+        setSelectedHistoryDetail(response.data);
+        setEditedTitle(response.data.title);
+        setEditedContent(response.data.content);
+        setIsEditing(true);
+        setIsDetailModalOpen(true);
+      }
+    } catch (err) {
+      console.error('Failed to fetch history detail:', err);
+    } finally {
+      setDetailLoading(false);
+    }
+  }, [repositoryId]);
 
-  if (loading) return LoadingComponent;
-  if (error) return ErrorComponent;
+  // 히스토리 생성 모달 열기
+  const handleHistoryCreateClick = useCallback((historyId?: string) => {
+    // 선택된 히스토리를 찾아서 해당 히스토리의 fileId를 parentFileId로 사용
+    let targetParentFileId: string | null = null;
+    
+    if (historyId) {
+      // histories 배열에서 해당 히스토리를 찾기
+      for (const historyGroup of histories) {
+        const foundHistory = historyGroup.find(h => h.id === historyId);
+        if (foundHistory) {
+          targetParentFileId = foundHistory.fileId;
+          break;
+        }
+      }
+    }
+    
+    setParentFileId(targetParentFileId);
+    setCreateTitle('');
+    setCreateContent('');
+    setSelectedFiles([]);
+    setIsCreateModalOpen(true);
+  }, [histories]);
+
+  // Proposal 생성 모달 열기
+  const handleProposalCreateClick = useCallback((historyId: string) => {
+    setSelectedHistoryForProposal(historyId);
+    setProposalTitle('');
+    setProposalContent('');
+    setIsProposalModalOpen(true);
+  }, []);
+
+  // Proposal 목록 모달 열기
+  const handleProposalListOpen = useCallback(async () => {
+    if (!repositoryId) return;
+    
+    setIsProposalListModalOpen(true);
+    setProposalListLoading(true);
+    try {
+      const response = await getProposalsByRepository(repositoryId, 'ALL');
+      if (response.code === 100 && response.data) {
+        // API status -> frontend status 매핑 함수
+        const mapStatus = (apiStatus: string): 'progress' | 'merge' | 'close' => {
+          switch (apiStatus.toLowerCase()) {
+            case 'open':
+              return 'progress';
+            case 'merge':
+              return 'merge';
+            case 'close':
+              return 'close';
+            default:
+              return 'progress';
+          }
+        };
+        // API 응답을 ModalPPList의 PPItem 형식으로 변환
+        const formattedProposals = response.data.map(proposal => ({
+          id: proposal.proposalId,
+          Name: proposal.title,
+          content: proposal.description,
+          status: mapStatus(proposal.status)
+        }));
+        setProposalList(formattedProposals);
+      }
+    } catch (err) {
+      console.error('Failed to fetch proposals:', err);
+    } finally {
+      setProposalListLoading(false);
+    }
+  }, [repositoryId]);
+
+  // 메뉴 클릭 핸들러
+  const handleMenuClick = (label: string) => {
+    switch (label) {
+      case '홈':
+        navigate('/home');
+        break;
+      case '저장소':
+        navigate('/repository');
+        break;
+      case '도움말':
+        // 도움말 페이지로 이동
+        break;
+      case '설정':
+        // 설정 페이지로 이동
+        break;
+    }
+  };
+
+  // 레포지토리 상세 정보 조회
+  const fetchRepositoryDetail = async () => {
+    if (!repositoryId) {
+      setError('레포지토리 ID가 없습니다.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const detail = await getRepositoryDetail(repositoryId);
+      setRepositoryDetail(detail);
+
+      // 히스토리 데이터 가져오기
+      const historiesResponse = await getFilteredHistories(repositoryId, undefined, 'all');
+      if (historiesResponse.code === 100 && historiesResponse.data) {
+        setHistories(historiesResponse.data);
+      }
+
+      // 루트 파일 데이터 가져오기
+      const rootFilesResponse = await getHistoryRootFiles(repositoryId);
+      if (rootFilesResponse.code === 100 && rootFilesResponse.data) {
+        setRootFiles(rootFilesResponse.data);
+      }
+    } catch (err) {
+      console.error('데이터 조회 실패:', err);
+      setError('데이터를 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 레포지토리 수정 핸들러
+  const handleEditClick = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async (name: string, description: string) => {
+    if (!repositoryId || !repositoryDetail) return;
+
+    try {
+      setIsUpdating(true);
+      
+      const updateData: UpdateRepositoryRequest = {
+        name,
+        description,
+      };
+
+      const response = await updateRepository(repositoryId, updateData);
+      
+      if (response.code === 100) {
+        setRepositoryDetail(prev => prev ? {
+          ...prev,
+          name: response.data.name,
+          description: response.data.description,
+        } : null);
+        
+        setIsEditModalOpen(false);
+        toast.success('레포지토리가 성공적으로 수정되었습니다.');
+      } else {
+        toast.error(`수정 실패: ${response.message}`);
+      }
+    } catch (error) {
+      console.error('레포지토리 수정 실패:', error);
+      toast.error('레포지토리 수정 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // 현재 사용자가 어드민(레포지토리 소유자)인지 확인
+  const isAdmin = repositoryDetail && userInfo
+    ? repositoryDetail.owner.email === userInfo.email
+    : false;
+
+  // Proposal 상세 모달 열기
+  const handleProposalDetailOpen = useCallback(async (proposalId: string) => {
+    if (!proposalId) return;
+    setSelectedProposalId(proposalId);
+    setIsProposalDetailModalOpen(true);
+    try {
+      const response = await getProposalById(proposalId);
+      if (response.code === 100 && response.data) {
+        setSelectedProposalDetail(response.data);
+      } else {
+        setSelectedProposalDetail(null);
+      }
+    } catch (err) {
+      setSelectedProposalDetail(null);
+    }
+  }, []);
+
+  // 현재 사용자 정보 설정
+  useEffect(() => {
+    if (userInfo) {
+      setCurrentUser({
+        userId: userInfo.providerId,
+        nickname: userInfo.nickname || 'Unknown User',
+        email: userInfo.email || '',
+        profileImage: userInfo.profileImage
+      });
+    }
+  }, [userInfo]);
+
+  useEffect(() => {
+    fetchRepositoryDetail();
+  }, [repositoryId]);
+
+  if (loading) {
+    return (
+      <PageContainer>
+        <SideBar activeMenu="저장소" onMenuClick={handleMenuClick} />
+        <LoadingContainer>
+          레포지토리 정보를 불러오는 중...
+        </LoadingContainer>
+      </PageContainer>
+    );
+  }
+
+  if (error || !repositoryDetail) {
+    return (
+      <PageContainer>
+        <SideBar activeMenu="저장소" onMenuClick={handleMenuClick} />
+        <MainContent>
+          <RepoHeader hasNewNotification={true} />
+          <TitleSection>
+            <TitleContainer>
+              <Title>오류 발생</Title>
+            </TitleContainer>
+            <Subtitle>{error || '레포지토리 정보를 찾을 수 없습니다.'}</Subtitle>
+          </TitleSection>
+        </MainContent>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
-      <SideBar activeMenu="저장소" />
+      <SideBar activeMenu="저장소" onMenuClick={handleMenuClick} />
       <MainContent>
-        <RepoHeader
+        <RepoHeader 
           hasNewNotification={true}
-          onTeamIconClick={handleTeamIconClick}
+          onTeamIconClick={() => setIsModalOpen(true)}
           onRepoIconClick={handleProposalListOpen}
         />
-        <RepositoryTile 
-          title="캡스톤 디자인" 
-          subtitle="2025 상반기 프로젝트" 
-        />
+        <TitleSection>
+          <TitleContainer>
+            <Title>{repositoryDetail.name}</Title>
+            {isAdmin && (
+              <EditButton 
+                onClick={handleEditClick}
+                aria-label="레포지토리 수정"
+                title="레포지토리 수정"
+              >
+                <img src={pencilIcon} alt="수정" />
+              </EditButton>
+            )}
+          </TitleContainer>
+          <Subtitle>{repositoryDetail.description || '설명이 없습니다.'}</Subtitle>
+        </TitleSection>
         <GraphContainer>
           <PhysicsRepoGraph 
             nodes={graphNodes} 
@@ -652,172 +610,350 @@ const RepositoryHistoryPage: React.FC<RepositoryHistoryPageProps> = React.memo((
         </GraphContainer>
       </MainContent>
 
-      <TeamInviteModal
-        repositoryId={repositoryId}
-        isOpen={isModalOpen}
-        onClose={handleModalClose}
-        onInvite={handleInvite}
-      />
-
-      {isDetailModalOpen && selectedHistoryDetail && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <ModalSimple
-            headerTitle={selectedHistoryDetail.createdBy.nickname}
-            headerTime={selectedHistoryDetail.createAt ? new Date(selectedHistoryDetail.createAt).toLocaleDateString() : ''}
-            modalTitle="히스토리 상세 정보"
-            contentTitle={isEditing ? editedTitle : selectedHistoryDetail.title}
-            content={isEditing ? editedContent : selectedHistoryDetail.content}
-            items={selectedHistoryDetail.files.map(file => ({
-              Name: file.name,
-              date: file.fileType,
-              iconType: 'diff' as const
-            }))}
-            onClose={handleDetailModalClose}
-            isEditing={isEditing}
-            canEdit={canEditHistory}
-            onEditStart={handleEditStart}
-            onEditCancel={handleEditCancel}
-            onEditSave={handleEditSave}
-            onTitleChange={setEditedTitle}
-            onContentChange={setEditedContent}
+      {repositoryId && (
+        <>
+          <TeamInviteModal
+            repositoryId={repositoryId}
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            onInvite={() => {}}
           />
-        </div>
-      )}
 
-      {isCreateModalOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <ModalSimple
-            headerTitle={currentUser?.nickname || 'Unknown User'}
-            headerTime={new Date().toLocaleDateString()}
-            modalTitle="히스토리 생성"
-            contentTitle={createTitle}
-            content={createContent}
-            items={selectedFiles.map(file => ({
-              Name: file.name,
-              date: new Date().toLocaleDateString(),
-              iconType: 'upload' as const
-            }))}
-            onClose={handleCreateModalClose}
-            isEditing={true}
-            canEdit={true}
-            onEditStart={() => {}}
-            onEditCancel={handleCreateModalClose}
-            onEditSave={handleCreateSave}
-            onTitleChange={setCreateTitle}
-            onContentChange={setCreateContent}
-            onFileSelect={handleFileSelect}
-            onFileRemove={handleFileRemove}
-            isCreating={true}
+          <EditRepositoryModal
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            onSubmit={handleEditSubmit}
+            initialName={repositoryDetail.name}
+            initialDescription={repositoryDetail.description || ''}
+            loading={isUpdating}
           />
-        </div>
-      )}
 
-      {isProposalModalOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <ModalSimple
-            headerTitle={currentUser?.nickname || 'Unknown User'}
-            headerTime={new Date().toLocaleDateString()}
-            modalTitle="Proposal 생성"
-            contentTitle={proposalTitle}
-            content={proposalContent}
-            items={[]}
-            onClose={handleProposalModalClose}
-            isEditing={true}
-            canEdit={true}
-            onEditStart={() => {}}
-            onEditCancel={handleProposalModalClose}
-            onEditSave={handleProposalSave}
-            onTitleChange={setProposalTitle}
-            onContentChange={setProposalContent}
-            isCreating={false}
-            isProposal={true}
-          />
-        </div>
-      )}
+          {isDetailModalOpen && selectedHistoryDetail && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000
+            }}>
+              <ModalSimple
+                headerTitle={selectedHistoryDetail.createdBy.nickname}
+                headerTime={selectedHistoryDetail.createAt ? new Date(selectedHistoryDetail.createAt).toLocaleDateString() : ''}
+                modalTitle="히스토리 상세 정보"
+                contentTitle={isEditing ? editedTitle : selectedHistoryDetail.title}
+                content={isEditing ? editedContent : selectedHistoryDetail.content}
+                items={selectedHistoryDetail.files.map(file => ({
+                  Name: file.name,
+                  date: file.fileType,
+                  iconType: 'diff' as const
+                }))}
+                onClose={() => {
+                  setIsDetailModalOpen(false);
+                  setSelectedHistoryDetail(null);
+                  setIsEditing(false);
+                  setEditedTitle('');
+                  setEditedContent('');
+                }}
+                isEditing={isEditing}
+                canEdit={isAdmin}
+                onEditStart={() => {
+                  setIsEditing(true);
+                  setEditedTitle(selectedHistoryDetail.title);
+                  setEditedContent(selectedHistoryDetail.content);
+                }}
+                onEditCancel={() => {
+                  setIsEditing(false);
+                  setEditedTitle('');
+                  setEditedContent('');
+                }}
+                onEditSave={async () => {
+                  if (!selectedHistoryDetail) return;
 
-      {isProposalListModalOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <ModalPPList 
-            items={proposalList}
-            onClose={handleProposalListClose}
-            onProposalClick={handleProposalDetailOpen}
-          />
-        </div>
-      )}
+                  try {
+                    const updateData = {
+                      title: editedTitle,
+                      content: editedContent
+                    };
 
-      {isProposalDetailModalOpen && selectedProposalDetail && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <Modal
-            headerTitle={selectedProposalDetail.title}
-            headerTime={''}
-            modalTitle="Proposal 상세"
-            contentTitle={selectedProposalDetail.title}
-            content={selectedProposalDetail.description}
-            items={[]}
-            comments={[]}
-            onReject={handleProposalDetailClose}
-            onAccept={handleProposalDetailClose}
-            onClose={handleProposalDetailClose}
-          />
-        </div>
+                    const response = await updateHistory(repositoryId, selectedHistoryDetail.Id, updateData);
+                    
+                    if (response.code === 100) {
+                      // 성공적으로 업데이트된 경우 상세 정보 다시 가져오기
+                      const updatedDetailResponse = await getHistoryDetail(repositoryId, selectedHistoryDetail.Id);
+                      if (updatedDetailResponse.code === 100 && updatedDetailResponse.data) {
+                        setSelectedHistoryDetail(updatedDetailResponse.data);
+                      }
+                      setIsEditing(false);
+                      setEditedTitle('');
+                      setEditedContent('');
+                      
+                      // 히스토리 목록도 다시 가져오기
+                      const historiesResponse = await getFilteredHistories(repositoryId, undefined, 'all');
+                      if (historiesResponse.code === 100 && historiesResponse.data) {
+                        setHistories(historiesResponse.data);
+                      }
+                    }
+                  } catch (err) {
+                    console.error('Failed to update history:', err);
+                  }
+                }}
+                onTitleChange={setEditedTitle}
+                onContentChange={setEditedContent}
+              />
+            </div>
+          )}
+
+          {isCreateModalOpen && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000
+            }}>
+              <ModalSimple
+                headerTitle={currentUser?.nickname || 'Unknown User'}
+                headerTime={new Date().toLocaleDateString()}
+                modalTitle="히스토리 생성"
+                contentTitle={createTitle}
+                content={createContent}
+                items={selectedFiles.map(file => ({
+                  Name: file.name,
+                  date: new Date().toLocaleDateString(),
+                  iconType: 'upload' as const
+                }))}
+                onClose={() => {
+                  setIsCreateModalOpen(false);
+                  setParentFileId(null);
+                  setCreateTitle('');
+                  setCreateContent('');
+                  setSelectedFiles([]);
+                }}
+                isEditing={true}
+                canEdit={true}
+                onEditStart={() => {}}
+                onEditCancel={() => {
+                  setIsCreateModalOpen(false);
+                  setParentFileId(null);
+                  setCreateTitle('');
+                  setCreateContent('');
+                  setSelectedFiles([]);
+                }}
+                onEditSave={async () => {
+                  if (!createTitle.trim()) {
+                    return;
+                  }
+
+                  if (selectedFiles.length === 0) {
+                    return;
+                  }
+
+                  try {
+                    const formData = new FormData();
+                    
+                    // JSON 데이터를 historyCreateRequest 파트로 추가
+                    const historyCreateRequest = {
+                      title: createTitle,
+                      ...(createContent.trim() && { content: createContent }),
+                      ...(parentFileId && { parentFileId: parentFileId })
+                    };
+                    
+                    // JSON 파트를 올바른 Content-Type으로 추가
+                    const historyCreateRequestJson = JSON.stringify(historyCreateRequest);
+                    formData.append('historyCreateRequest', historyCreateRequestJson);
+
+                    // 파일 추가
+                    formData.append('file', selectedFiles[0]);
+
+                    const response = await createHistory(repositoryId, formData);
+                    
+                    if (response.code === 100) {
+                      // 성공적으로 생성된 경우 모달 닫기
+                      setIsCreateModalOpen(false);
+                      setParentFileId(null);
+                      setCreateTitle('');
+                      setCreateContent('');
+                      setSelectedFiles([]);
+                      
+                      // 히스토리 목록 다시 가져오기
+                      const historiesResponse = await getFilteredHistories(repositoryId, undefined, 'all');
+                      if (historiesResponse.code === 100 && historiesResponse.data) {
+                        setHistories(historiesResponse.data);
+                      }
+                    }
+                  } catch (err) {
+                    console.error('Failed to create history:', err);
+                  }
+                }}
+                onTitleChange={setCreateTitle}
+                onContentChange={setCreateContent}
+                onFileSelect={(files: FileList | null) => {
+                  if (files && files.length > 0) {
+                    // 첫 번째 파일만 선택
+                    setSelectedFiles([files[0]]);
+                  }
+                }}
+                onFileRemove={(index: number) => {
+                  setSelectedFiles([]);
+                }}
+                isCreating={true}
+              />
+            </div>
+          )}
+
+          {isProposalModalOpen && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000
+            }}>
+              <ModalSimple
+                headerTitle={currentUser?.nickname || 'Unknown User'}
+                headerTime={new Date().toLocaleDateString()}
+                modalTitle="Proposal 생성"
+                contentTitle={proposalTitle}
+                content={proposalContent}
+                items={[]}
+                onClose={() => {
+                  setIsProposalModalOpen(false);
+                  setSelectedHistoryForProposal(null);
+                  setProposalTitle('');
+                  setProposalContent('');
+                }}
+                isEditing={true}
+                canEdit={true}
+                onEditStart={() => {
+                  setIsEditing(true);
+                  setProposalTitle('');
+                  setProposalContent('');
+                }}
+                onEditCancel={() => {
+                  setIsEditing(false);
+                  setProposalTitle('');
+                  setProposalContent('');
+                }}
+                onEditSave={async () => {
+                  if (!proposalTitle.trim()) {
+                    return;
+                  }
+
+                  if (!selectedHistoryForProposal) {
+                    return;
+                  }
+
+                  try {
+                    const proposalData = {
+                      historyId: selectedHistoryForProposal,
+                      title: proposalTitle,
+                      ...(proposalContent.trim() && { description: proposalContent })
+                    };
+
+                    const response = await createProposal(proposalData);
+                    
+                    if (response.code === 100) {
+                      // 성공적으로 생성된 경우 모달 닫기
+                      setIsProposalModalOpen(false);
+                      setSelectedHistoryForProposal(null);
+                      setProposalTitle('');
+                      setProposalContent('');
+                    }
+                  } catch (err) {
+                    console.error('Failed to create proposal:', err);
+                  }
+                }}
+                onTitleChange={setProposalTitle}
+                onContentChange={setProposalContent}
+                isCreating={false}
+                isProposal={true}
+              />
+            </div>
+          )}
+
+          {isProposalListModalOpen && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000
+            }}>
+              <ModalPPList 
+                items={proposalList}
+                onClose={() => {
+                  setIsProposalListModalOpen(false);
+                }}
+                onProposalClick={(proposalId) => {
+                  handleProposalDetailOpen(proposalId);
+                }}
+              />
+            </div>
+          )}
+
+          {isProposalDetailModalOpen && selectedProposalDetail && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000
+            }}>
+              <Modal
+                headerTitle={selectedProposalDetail.title}
+                headerTime={''}
+                modalTitle="Proposal 상세"
+                contentTitle={selectedProposalDetail.title}
+                content={selectedProposalDetail.description}
+                items={[]}
+                comments={[]}
+                onReject={() => {
+                  setIsProposalDetailModalOpen(false);
+                  setSelectedProposalId(null);
+                  setSelectedProposalDetail(null);
+                }}
+                onAccept={() => {
+                  setIsProposalDetailModalOpen(false);
+                  setSelectedProposalId(null);
+                  setSelectedProposalDetail(null);
+                }}
+                onClose={() => {
+                  setIsProposalDetailModalOpen(false);
+                  setSelectedProposalId(null);
+                  setSelectedProposalDetail(null);
+                }}
+              />
+            </div>
+          )}
+        </>
       )}
     </PageContainer>
   );
-});
+};
 
 export default RepositoryHistoryPage; 

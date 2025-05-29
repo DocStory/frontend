@@ -15,18 +15,25 @@ interface RecentActivityCardProps {
 const ModalContainer = styled.div`
   width: 100%;
   min-height: 200px;
-  background: #ffffff;
+  background: ${({ theme }) => theme.cardBackground};
   border-radius: 15px;
-  border: 3px solid #cbd5e1;
+  border: 3px solid ${({ theme }) => theme.border};
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.primary};
+    box-shadow: ${({ theme }) => theme.shadow};
+  }
 `;
 
 const ContentWrapper = styled.div`
   flex: 1;
-  background: #ffffff;
+  background: ${({ theme }) => theme.cardBackground};
   margin-top: -15px;
+  transition: background-color 0.3s ease;
 `;
 
 const RecentActivityCard: React.FC<RecentActivityCardProps> = ({
@@ -44,7 +51,7 @@ const RecentActivityCard: React.FC<RecentActivityCardProps> = ({
         time={headerTime}
         isEditing={isEditing}
         canEdit={canEdit}
-        backgroundColor="#ffffff"
+        backgroundColor="transparent"
         isRecentActivity={true}
       />
       <ContentWrapper>
