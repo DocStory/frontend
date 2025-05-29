@@ -156,6 +156,20 @@ const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
     }
   }, [isOpen, repositoryId]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isOpen, onClose]);
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
 
   const handleInvite = async () => {
     if (email.trim()) {
@@ -190,9 +204,11 @@ const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <ModalContainer isOpen={isOpen}>
-      <ModalContent>
+    <ModalContainer isOpen={isOpen} onClick={handleOverlayClick} tabIndex={-1} aria-label="모달 오버레이">
+      <ModalContent onClick={e => e.stopPropagation()} tabIndex={0} aria-label="모달 내용">
         <ModalHeader title="멤버 초대" onClose={onClose}/>
         <ModalBody>
           <InputSection>

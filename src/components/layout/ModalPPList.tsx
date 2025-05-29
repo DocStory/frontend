@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import PPList from '../common/PPList';
 import FilterTab from '../common/FilterTab';
@@ -79,6 +79,19 @@ const StyledButton = styled(Button)`
   letter-spacing: -0.6%;
 `;
 
+const Overlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.15);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
 const ModalPPList: React.FC<ModalPPListProps> = ({ items, onClose, onProposalClick }) => {
   const [currentFilter, setCurrentFilter] = React.useState<'all' | 'progress' | 'completed'>('all');
 
@@ -92,38 +105,52 @@ const ModalPPList: React.FC<ModalPPListProps> = ({ items, onClose, onProposalCli
     return items.filter(item => item.status === 'merge' || item.status === 'close');
   }, [items, currentFilter]);
 
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && onClose) onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget && onClose) onClose();
+  };
+
   return (
-    <ModalPPListContainer>
-      <ModalHeader title="Proposal 목록" onClose={onClose || (() => {})} backgroundColor="#f1f5f9"/>
-      <FilterSection>
-        <StyledFilterTab
-          label='전체'
-          isActive={currentFilter === 'all'}
-          showLine={true}
-          onClick={() => handleFilterChange('all')}
-        />
-        <StyledFilterTab
-          label='진행중'
-          isActive={currentFilter === 'progress'}
-          showLine={true}
-          onClick={() => handleFilterChange('progress')}
-        />
-        <StyledFilterTab
-          label='완료'
-          isActive={currentFilter === 'completed'}
-          showLine={true}
-          onClick={() => handleFilterChange('completed')}
-        />
-      </FilterSection>
-      <ContentWrapper>
-        <PPList items={filteredItems} onItemClick={onProposalClick} />
-      </ContentWrapper>
-      <ButtonSection>
-        <StyledButton variant='primary' size='large'>
-          새로운 반영 저장하기
-        </StyledButton>
-      </ButtonSection>
-    </ModalPPListContainer>
+    <Overlay onClick={handleOverlayClick} tabIndex={-1} aria-label="모달 오버레이">
+      <ModalPPListContainer onClick={e => e.stopPropagation()} tabIndex={0} aria-label="모달 내용">
+        <ModalHeader title="Proposal 목록" onClose={onClose || (() => {})} backgroundColor="#f1f5f9"/>
+        <FilterSection>
+          <StyledFilterTab
+            label='전체'
+            isActive={currentFilter === 'all'}
+            showLine={true}
+            onClick={() => handleFilterChange('all')}
+          />
+          <StyledFilterTab
+            label='진행중'
+            isActive={currentFilter === 'progress'}
+            showLine={true}
+            onClick={() => handleFilterChange('progress')}
+          />
+          <StyledFilterTab
+            label='완료'
+            isActive={currentFilter === 'completed'}
+            showLine={true}
+            onClick={() => handleFilterChange('completed')}
+          />
+        </FilterSection>
+        <ContentWrapper>
+          <PPList items={filteredItems} onItemClick={onProposalClick} />
+        </ContentWrapper>
+        <ButtonSection>
+          <StyledButton variant='primary' size='large'>
+            새로운 반영 저장하기
+          </StyledButton>
+        </ButtonSection>
+      </ModalPPListContainer>
+    </Overlay>
   );
 };
 

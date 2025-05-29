@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import ProfileList from '../common/ProfileList.tsx';
 import ModalContent from '../common/ContentArea.tsx';
@@ -62,6 +62,19 @@ const SectionTitle = styled.h3`
   background: #f1f5f9;
 `;
 
+const Overlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.15);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
 const ModalSimple: React.FC<ModalSimpleProps> = ({
   headerTitle,
   headerTime,
@@ -83,40 +96,54 @@ const ModalSimple: React.FC<ModalSimpleProps> = ({
   isCreating = false,
   isProposal = false,
 }) => {
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && onClose) onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget && onClose) onClose();
+  };
+
   return (
-    <ModalContainer>
-      <ModalHeader title={modalTitle} onClose={onClose || (() => {})} backgroundColor="#f1f5f9"/>
-      <ProfileList
-        title={headerTitle}
-        time={headerTime}
-        isEditing={isEditing}
-        canEdit={canEdit}
-        backgroundColor="#f1f5f9"
-        userProfileImage={userProfileImage}
-        onEditStart={onEditStart}
-        onEditCancel={onEditCancel}
-        onEditSave={onEditSave}
-      />
-      <ContentWrapper>
-        <ModalContent
-          title={contentTitle}
-          content={content}
+    <Overlay onClick={handleOverlayClick} tabIndex={-1} aria-label="모달 오버레이">
+      <ModalContainer onClick={e => e.stopPropagation()} tabIndex={0} aria-label="모달 내용">
+        <ModalHeader title={modalTitle} onClose={onClose || (() => {})} backgroundColor="#f1f5f9"/>
+        <ProfileList
+          title={headerTitle}
+          time={headerTime}
           isEditing={isEditing}
-          isModifying={isEditing}
-          onTitleChange={onTitleChange}
-          onContentChange={onContentChange}
+          canEdit={canEdit}
+          backgroundColor="#f1f5f9"
+          userProfileImage={userProfileImage}
+          onEditStart={onEditStart}
+          onEditCancel={onEditCancel}
+          onEditSave={onEditSave}
         />
-        {!isProposal && (
-          <SectionTitle>{isCreating ? '파일 업로드' : '변경사항'}</SectionTitle>
-        )}
-        <ModalList 
-          items={items} 
-          onFileSelect={onFileSelect}
-          onFileRemove={onFileRemove}
-          isCreating={isCreating}
-        />
-      </ContentWrapper>
-    </ModalContainer>
+        <ContentWrapper>
+          <ModalContent
+            title={contentTitle}
+            content={content}
+            isEditing={isEditing}
+            isModifying={isEditing}
+            onTitleChange={onTitleChange}
+            onContentChange={onContentChange}
+          />
+          {!isProposal && (
+            <SectionTitle>{isCreating ? '파일 업로드' : '변경사항'}</SectionTitle>
+          )}
+          <ModalList 
+            items={items} 
+            onFileSelect={onFileSelect}
+            onFileRemove={onFileRemove}
+            isCreating={isCreating}
+          />
+        </ContentWrapper>
+      </ModalContainer>
+    </Overlay>
   );
 };
 
