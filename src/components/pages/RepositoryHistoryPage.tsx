@@ -147,7 +147,7 @@ const RepositoryHistoryPage: React.FC = () => {
   const [rootFiles, setRootFiles] = useState<HistoryFileResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  
   // 상대적인 시간 표시 함수
   const getRelativeTime = useCallback((dateString: string) => {
     const now = new Date();
@@ -265,6 +265,7 @@ const RepositoryHistoryPage: React.FC = () => {
           onProposalClick: () => handleProposalCreateClick(history.id),
           currentUserId: currentUser?.userId,
           historyCreatorId: history.createdBy?.providerId,
+          createdBy: history.createdBy,
           x: startX + (currentPosition * nodeWidth),
           y: 80 + (depth * 220),
         });
@@ -583,7 +584,7 @@ const RepositoryHistoryPage: React.FC = () => {
     <PageContainer>
       <SideBar activeMenu="저장소" onMenuClick={handleMenuClick} />
       <MainContent>
-        <RepoHeader 
+        <RepoHeader
           hasNewNotification={true}
           onTeamIconClick={() => setIsModalOpen(true)}
           onRepoIconClick={handleProposalListOpen}
@@ -606,16 +607,16 @@ const RepositoryHistoryPage: React.FC = () => {
         <GraphContainer>
           <CanvasRepoGraph 
             nodes={graphNodes} 
-            edges={graphEdges}
+            edges={graphEdges} 
           />
         </GraphContainer>
       </MainContent>
 
       {repositoryId && (
         <>
-          <TeamInviteModal
-            repositoryId={repositoryId}
-            isOpen={isModalOpen}
+      <TeamInviteModal
+        repositoryId={repositoryId}
+        isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
             onInvite={() => {}}
           />
@@ -627,32 +628,32 @@ const RepositoryHistoryPage: React.FC = () => {
             initialName={repositoryDetail.name}
             initialDescription={repositoryDetail.description || ''}
             loading={isUpdating}
-          />
+      />
 
-          {isDetailModalOpen && selectedHistoryDetail && (
-            <div style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000
-            }}>
-              <ModalSimple
-                headerTitle={selectedHistoryDetail.createdBy.nickname}
-                headerTime={selectedHistoryDetail.createAt ? new Date(selectedHistoryDetail.createAt).toLocaleDateString() : ''}
-                modalTitle="히스토리 상세 정보"
-                contentTitle={isEditing ? editedTitle : selectedHistoryDetail.title}
-                content={isEditing ? editedContent : selectedHistoryDetail.content}
-                items={selectedHistoryDetail.files.map(file => ({
-                  Name: file.name,
-                  date: file.fileType,
-                  iconType: 'diff' as const
-                }))}
+      {isDetailModalOpen && selectedHistoryDetail && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <ModalSimple
+            headerTitle={selectedHistoryDetail.createdBy.nickname}
+            headerTime={selectedHistoryDetail.createAt ? new Date(selectedHistoryDetail.createAt).toLocaleDateString() : ''}
+            modalTitle="히스토리 상세 정보"
+            contentTitle={isEditing ? editedTitle : selectedHistoryDetail.title}
+            content={isEditing ? editedContent : selectedHistoryDetail.content}
+            items={selectedHistoryDetail.files.map(file => ({
+              Name: file.name,
+              date: file.fileType,
+              iconType: 'diff' as const
+            }))}
                 onClose={() => {
                   setIsDetailModalOpen(false);
                   setSelectedHistoryDetail(null);
@@ -660,7 +661,7 @@ const RepositoryHistoryPage: React.FC = () => {
                   setEditedTitle('');
                   setEditedContent('');
                 }}
-                isEditing={isEditing}
+            isEditing={isEditing}
                 canEdit={isAdmin}
                 onEditStart={() => {
                   setIsEditing(true);
@@ -703,36 +704,36 @@ const RepositoryHistoryPage: React.FC = () => {
                     console.error('Failed to update history:', err);
                   }
                 }}
-                onTitleChange={setEditedTitle}
-                onContentChange={setEditedContent}
-              />
-            </div>
-          )}
+            onTitleChange={setEditedTitle}
+            onContentChange={setEditedContent}
+          />
+        </div>
+      )}
 
-          {isCreateModalOpen && (
-            <div style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000
-            }}>
-              <ModalSimple
-                headerTitle={currentUser?.nickname || 'Unknown User'}
-                headerTime={new Date().toLocaleDateString()}
-                modalTitle="히스토리 생성"
-                contentTitle={createTitle}
-                content={createContent}
-                items={selectedFiles.map(file => ({
-                  Name: file.name,
-                  date: new Date().toLocaleDateString(),
-                  iconType: 'upload' as const
-                }))}
+      {isCreateModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <ModalSimple
+            headerTitle={currentUser?.nickname || 'Unknown User'}
+            headerTime={new Date().toLocaleDateString()}
+            modalTitle="히스토리 생성"
+            contentTitle={createTitle}
+            content={createContent}
+            items={selectedFiles.map(file => ({
+              Name: file.name,
+              date: new Date().toLocaleDateString(),
+              iconType: 'upload' as const
+            }))}
                 onClose={() => {
                   setIsCreateModalOpen(false);
                   setParentFileId(null);
@@ -740,9 +741,9 @@ const RepositoryHistoryPage: React.FC = () => {
                   setCreateContent('');
                   setSelectedFiles([]);
                 }}
-                isEditing={true}
-                canEdit={true}
-                onEditStart={() => {}}
+            isEditing={true}
+            canEdit={true}
+            onEditStart={() => {}}
                 onEditCancel={() => {
                   setIsCreateModalOpen(false);
                   setParentFileId(null);
@@ -796,8 +797,8 @@ const RepositoryHistoryPage: React.FC = () => {
                     console.error('Failed to create history:', err);
                   }
                 }}
-                onTitleChange={setCreateTitle}
-                onContentChange={setCreateContent}
+            onTitleChange={setCreateTitle}
+            onContentChange={setCreateContent}
                 onFileSelect={(files: FileList | null) => {
                   if (files && files.length > 0) {
                     // 첫 번째 파일만 선택
@@ -807,39 +808,39 @@ const RepositoryHistoryPage: React.FC = () => {
                 onFileRemove={(index: number) => {
                   setSelectedFiles([]);
                 }}
-                isCreating={true}
-              />
-            </div>
-          )}
+            isCreating={true}
+          />
+        </div>
+      )}
 
-          {isProposalModalOpen && (
-            <div style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000
-            }}>
-              <ModalSimple
-                headerTitle={currentUser?.nickname || 'Unknown User'}
-                headerTime={new Date().toLocaleDateString()}
-                modalTitle="Proposal 생성"
-                contentTitle={proposalTitle}
-                content={proposalContent}
-                items={[]}
+      {isProposalModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <ModalSimple
+            headerTitle={currentUser?.nickname || 'Unknown User'}
+            headerTime={new Date().toLocaleDateString()}
+            modalTitle="Proposal 생성"
+            contentTitle={proposalTitle}
+            content={proposalContent}
+            items={[]}
                 onClose={() => {
                   setIsProposalModalOpen(false);
                   setSelectedHistoryForProposal(null);
                   setProposalTitle('');
                   setProposalContent('');
                 }}
-                isEditing={true}
-                canEdit={true}
+            isEditing={true}
+            canEdit={true}
                 onEditStart={() => {
                   setIsEditing(true);
                   setProposalTitle('');
@@ -879,60 +880,60 @@ const RepositoryHistoryPage: React.FC = () => {
                     console.error('Failed to create proposal:', err);
                   }
                 }}
-                onTitleChange={setProposalTitle}
-                onContentChange={setProposalContent}
-                isCreating={false}
-                isProposal={true}
-              />
-            </div>
-          )}
+            onTitleChange={setProposalTitle}
+            onContentChange={setProposalContent}
+            isCreating={false}
+            isProposal={true}
+          />
+        </div>
+      )}
 
-          {isProposalListModalOpen && (
-            <div style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000
-            }}>
-              <ModalPPList 
-                items={proposalList}
+      {isProposalListModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <ModalPPList 
+            items={proposalList}
                 onClose={() => {
                   setIsProposalListModalOpen(false);
                 }}
                 onProposalClick={(proposalId) => {
                   handleProposalDetailOpen(proposalId);
                 }}
-              />
-            </div>
-          )}
+          />
+        </div>
+      )}
 
-          {isProposalDetailModalOpen && selectedProposalDetail && (
-            <div style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000
-            }}>
-              <Modal
-                headerTitle={selectedProposalDetail.title}
-                headerTime={''}
-                modalTitle="Proposal 상세"
-                contentTitle={selectedProposalDetail.title}
-                content={selectedProposalDetail.description}
-                items={[]}
-                comments={[]}
+      {isProposalDetailModalOpen && selectedProposalDetail && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <Modal
+            headerTitle={selectedProposalDetail.title}
+            headerTime={''}
+            modalTitle="Proposal 상세"
+            contentTitle={selectedProposalDetail.title}
+            content={selectedProposalDetail.description}
+            items={[]}
+            comments={[]}
                 onReject={() => {
                   setIsProposalDetailModalOpen(false);
                   setSelectedProposalId(null);
@@ -948,8 +949,8 @@ const RepositoryHistoryPage: React.FC = () => {
                   setSelectedProposalId(null);
                   setSelectedProposalDetail(null);
                 }}
-              />
-            </div>
+          />
+        </div>
           )}
         </>
       )}

@@ -27,6 +27,12 @@ interface NodeData {
   onEditClick?: (historyId: string) => void;
   onCreateClick?: (historyId?: string) => void;
   onProposalClick?: (historyId: string) => void;
+  createdBy?: {
+    profileImage?: string;
+    nickname?: string;
+    providerId?: string;
+    email?: string;
+  };
 }
 
 interface EdgeData {
@@ -90,9 +96,6 @@ const ResetButton = styled.button`
 let textMeasureCanvas: HTMLCanvasElement | null = null;
 let textMeasureCtx: CanvasRenderingContext2D | null = null;
 
-// 이미지 캐시
-const imageCache = new Map<string, HTMLImageElement>();
-
 const getTextMeasureContext = (): CanvasRenderingContext2D => {
   if (!textMeasureCanvas) {
     textMeasureCanvas = document.createElement('canvas');
@@ -103,33 +106,39 @@ const getTextMeasureContext = (): CanvasRenderingContext2D => {
   return textMeasureCtx;
 };
 
-// 이미지 로딩 함수
-const loadImage = (src: string): Promise<HTMLImageElement> => {
-  return new Promise((resolve, reject) => {
-    if (imageCache.has(src)) {
-      resolve(imageCache.get(src)!);
-      return;
-    }
-    
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      imageCache.set(src, img);
-      resolve(img);
-    };
-    img.onerror = () => {
-      // 기본 아바타 이미지로 fallback
-      import('../../assets/avatar.svg').then(avatarModule => {
-        const defaultImg = new Image();
-        defaultImg.onload = () => {
-          imageCache.set(src, defaultImg);
-          resolve(defaultImg);
-        };
-        defaultImg.src = avatarModule.default;
-      }).catch(() => reject(new Error('Failed to load default avatar')));
-    };
-    img.src = src;
+// 프로필 이미지 처리 - SideBar와 정확히 동일한 로직
+const getProfileImageSrc = (node: NodeData): string => {
+  console.log(`🔍 ${node.userName} 전체 노드 데이터:`, JSON.stringify(node, null, 2));
+  
+  // 여러 경로에서 프로필 이미지 찾기
+  const profileImageSrc = node.profileImage || node.userAvatar || node.createdBy?.profileImage;
+  
+  console.log(`🔍 ${node.userName} 이미지 데이터 분석:`, {
+    profileImage: node.profileImage ? 'O' : 'X',
+    userAvatar: node.userAvatar ? 'O' : 'X',
+    createdByProfileImage: node.createdBy?.profileImage ? 'O' : 'X',
+    finalProfileImageSrc: profileImageSrc ? 'O' : 'X',
+    profileImageLength: node.profileImage?.length,
+    userAvatarLength: node.userAvatar?.length,
+    createdByProfileImageLength: node.createdBy?.profileImage?.length,
+    profileImageStart: node.profileImage?.substring(0, 30),
+    userAvatarStart: node.userAvatar?.substring(0, 30),
+    createdByProfileImageStart: node.createdBy?.profileImage?.substring(0, 30),
+    allKeys: Object.keys(node)
   });
+  
+  if (!profileImageSrc) {
+    console.log(`❌ ${node.userName} 모든 경로에서 프로필 이미지 데이터 없음`);
+    return ''; // 기본 아바타 이미지는 별도 처리
+  }
+  
+  // SideBar와 정확히 동일한 로직
+  const result = profileImageSrc.startsWith('data:') 
+    ? profileImageSrc 
+    : `data:image/jpeg;base64,${profileImageSrc}`;
+    
+  console.log(`✅ ${node.userName} 변환된 이미지 소스:`, result.substring(0, 50) + '...');
+  return result;
 };
 
 // 텍스트 줄바꿈 함수
@@ -212,7 +221,8 @@ const renderNode = (
   ctx: CanvasRenderingContext2D,
   node: NodeData,
   isHovered: boolean,
-  isDragging: boolean
+  isDragging: boolean,
+  imageRefs: { [key: string]: HTMLImageElement }
 ): void => {
   const x = node.x;
   const y = node.y;
@@ -322,36 +332,32 @@ const renderNode = (
   ctx.strokeStyle = '#ffffff';
   ctx.stroke();
   
-  // 프로필 이미지 렌더링 (캐시된 이미지가 있으면)
+  // 프로필 이미지 렌더링 (imageRefs에서 로드된 img 요소 사용)
+  const profileImageSrc = getProfileImageSrc(node);
   let avatarImage = null;
   
-  // 사용자 프로필 이미지 처리 (API 응답에서 profileImage 필드 사용)
-  const profileImageSrc = node.profileImage || node.userAvatar;
-  
-  if (profileImageSrc) {
-    // base64 데이터인 경우 data URL prefix 추가
-    let imageSrc = profileImageSrc;
-    if (profileImageSrc.startsWith('iVBORw0KGgo') || profileImageSrc.startsWith('/9j/')) {
-      // PNG 또는 JPEG base64 데이터
-      const mimeType = profileImageSrc.startsWith('iVBORw0KGgo') ? 'image/png' : 'image/jpeg';
-      imageSrc = `data:${mimeType};base64,${profileImageSrc}`;
-    }
-    
-    avatarImage = imageCache.get(imageSrc);
+  // 먼저 해당 노드의 프로필 이미지 찾기
+  if (profileImageSrc && imageRefs[node.id]) {
+    avatarImage = imageRefs[node.id];
+    console.log(`🖼️ ${node.userName} 프로필 이미지 발견`);
   }
   
-  // 사용자 아바타가 없거나 로딩되지 않았으면 기본 아바타 사용
-  if (!avatarImage) {
-    // 기본 아바타 이미지 찾기
-    for (const [key, img] of imageCache.entries()) {
-      if (key.includes('avatar.svg')) {
-        avatarImage = img;
-        break;
-      }
-    }
+  // 프로필 이미지가 없으면 기본 아바타 사용
+  if (!avatarImage && imageRefs['default-avatar']) {
+    avatarImage = imageRefs['default-avatar'];
+    console.log(`🔄 ${node.userName} 기본 아바타 사용`);
   }
   
-  if (avatarImage) {
+  console.log(`🎨 ${node.userName} 렌더링:`, {
+    hasProfileSrc: !!profileImageSrc,
+    hasAvatarImage: !!avatarImage,
+    imageComplete: avatarImage?.complete,
+    imageWidth: avatarImage?.naturalWidth
+  });
+  
+  // 이미지가 있는지 확인하고 그리기
+  if (avatarImage && avatarImage.complete && avatarImage.naturalWidth > 0) {
+    console.log(`✅ ${node.userName} 이미지 그리기 시작`);
     ctx.save();
     // 원형 클리핑 마스크
     ctx.beginPath();
@@ -359,7 +365,12 @@ const renderNode = (
     ctx.clip();
     
     // 이미지 그리기
-    ctx.drawImage(avatarImage, avatarX - 13, avatarY - 13, 26, 26);
+    try {
+      ctx.drawImage(avatarImage, avatarX - 13, avatarY - 13, 26, 26);
+      console.log(`✅ ${node.userName} 이미지 그리기 완료`);
+    } catch (error) {
+      console.error(`❌ ${node.userName} 아바타 그리기 실패:`, error);
+    }
     ctx.restore();
     
     // 보더 다시 그리기
@@ -368,6 +379,8 @@ const renderNode = (
     ctx.lineWidth = 1.5;
     ctx.strokeStyle = '#ffffff';
     ctx.stroke();
+  } else {
+    console.log(`⚠️ ${node.userName} 이미지 없음 - 기본 배경만 표시`);
   }
   
   // 아바타 그림자 효과 (box-shadow: 0 1px 2px 0 rgba(107, 110, 116, 0.04))
@@ -432,12 +445,17 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [imagesLoaded, setImagesLoaded] = useState<Set<string>>(new Set());
+  const [forceRender, setForceRender] = useState(0); // 강제 렌더링용
   const [dropdown, setDropdown] = useState<{ open: boolean; x: number; y: number; nodeId: string | null }>({ 
     open: false, 
     x: 0, 
     y: 0, 
     nodeId: null 
   });
+  
+  // 이미지 refs - 사이드바와 동일한 방식으로 img 태그 사용
+  const imageRefs = useRef<{ [key: string]: HTMLImageElement }>({});
   
   // Matter.js refs
   const engineRef = useRef<Matter.Engine | null>(null);
@@ -528,51 +546,71 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
     nodeStates.forEach(node => {
       const isHovered = hoveredNodeId === node.id;
       const isDragging = draggingId === node.id;
-      renderNode(ctx, node, isHovered, isDragging);
+      renderNode(ctx, node, isHovered, isDragging, imageRefs.current);
     });
     
     ctx.restore();
-  }, [nodeStates, edges, viewport, hoveredNodeId, draggingId]);
+  }, [nodeStates, edges, viewport, hoveredNodeId, draggingId, forceRender, imageRefs]);
   
   // nodes prop 변경 시 업데이트
   useEffect(() => {
     initialNodeStatesRef.current = nodes.map(n => ({ ...n }));
     setNodeStates(nodes);
-    
-    // 프로필 이미지 미리 로딩
-    const loadAvatars = async () => {
-      // 기본 아바타 이미지 로딩
-      try {
-        const avatarModule = await import('../../assets/avatar.svg');
-        await loadImage(avatarModule.default);
-      } catch (error) {
-        console.warn('기본 아바타 이미지를 로딩할 수 없습니다:', error);
-      }
-      
-      // 각 노드의 프로필 이미지 로딩
-      for (const node of nodes) {
-        const profileImageSrc = node.profileImage || node.userAvatar;
-        
-        if (profileImageSrc) {
-          try {
-            // base64 데이터인 경우 data URL prefix 추가
-            let imageSrc = profileImageSrc;
-            if (profileImageSrc.startsWith('iVBORw0KGgo') || profileImageSrc.startsWith('/9j/')) {
-              // PNG 또는 JPEG base64 데이터
-              const mimeType = profileImageSrc.startsWith('iVBORw0KGgo') ? 'image/png' : 'image/jpeg';
-              imageSrc = `data:${mimeType};base64,${profileImageSrc}`;
-            }
-            
-            await loadImage(imageSrc);
-          } catch (error) {
-            console.warn(`프로필 이미지를 로딩할 수 없습니다: ${profileImageSrc}`, error);
-          }
-        }
-      }
-    };
-    
-    loadAvatars();
   }, [nodes]);
+  
+  // 이미지 요소들을 미리 생성 (사이드바와 동일한 방식)
+  const createImageElements = useCallback(() => {
+    console.log('🔄 이미지 로딩 시작, 노드 수:', nodes.length);
+    
+    // 기본 아바타 이미지
+    try {
+      import('../../assets/avatar.svg').then(avatarModule => {
+        console.log('📦 기본 아바타 모듈 로드됨:', avatarModule.default);
+        const defaultImg = new Image();
+        defaultImg.onload = () => {
+          console.log('✅ 기본 아바타 이미지 로드 완료');
+          imageRefs.current['default-avatar'] = defaultImg;
+          setForceRender(prev => prev + 1);
+        };
+        defaultImg.onerror = (error) => {
+          console.error('❌ 기본 아바타 이미지 로드 실패:', error);
+        };
+        defaultImg.src = avatarModule.default;
+      }).catch(error => {
+        console.error('❌ 기본 아바타 모듈 로드 실패:', error);
+      });
+    } catch (error) {
+      console.warn('기본 아바타 이미지 로딩 실패:', error);
+    }
+    
+    // 각 노드의 프로필 이미지
+    nodes.forEach(node => {
+      const profileImageSrc = getProfileImageSrc(node);
+      console.log(`📸 ${node.userName} 프로필 이미지:`, profileImageSrc ? '있음' : '없음', profileImageSrc?.substring(0, 50));
+      
+      if (profileImageSrc && !imageRefs.current[node.id]) {
+        const img = new Image();
+        img.onload = () => {
+          console.log(`✅ ${node.userName} 프로필 이미지 로드 완료`);
+          imageRefs.current[node.id] = img;
+          setForceRender(prev => prev + 1); // 이미지 로드시마다 리렌더링
+        };
+        img.onerror = (error) => {
+          console.warn(`❌ ${node.userName} 프로필 이미지 로딩 실패:`, error);
+          // 실패시 기본 아바타 사용
+          if (imageRefs.current['default-avatar']) {
+            imageRefs.current[node.id] = imageRefs.current['default-avatar'];
+            setForceRender(prev => prev + 1);
+          }
+        };
+        img.src = profileImageSrc;
+      }
+    });
+  }, [nodes]);
+  
+  useEffect(() => {
+    createImageElements();
+  }, [createImageElements]);
   
   // Canvas 이벤트 핸들러들
   const handleCanvasMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
