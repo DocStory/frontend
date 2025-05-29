@@ -108,27 +108,10 @@ const getTextMeasureContext = (): CanvasRenderingContext2D => {
 
 // 프로필 이미지 처리 - SideBar와 정확히 동일한 로직
 const getProfileImageSrc = (node: NodeData): string => {
-  console.log(`🔍 ${node.userName} 전체 노드 데이터:`, JSON.stringify(node, null, 2));
-  
   // 여러 경로에서 프로필 이미지 찾기
   const profileImageSrc = node.profileImage || node.userAvatar || node.createdBy?.profileImage;
   
-  console.log(`🔍 ${node.userName} 이미지 데이터 분석:`, {
-    profileImage: node.profileImage ? 'O' : 'X',
-    userAvatar: node.userAvatar ? 'O' : 'X',
-    createdByProfileImage: node.createdBy?.profileImage ? 'O' : 'X',
-    finalProfileImageSrc: profileImageSrc ? 'O' : 'X',
-    profileImageLength: node.profileImage?.length,
-    userAvatarLength: node.userAvatar?.length,
-    createdByProfileImageLength: node.createdBy?.profileImage?.length,
-    profileImageStart: node.profileImage?.substring(0, 30),
-    userAvatarStart: node.userAvatar?.substring(0, 30),
-    createdByProfileImageStart: node.createdBy?.profileImage?.substring(0, 30),
-    allKeys: Object.keys(node)
-  });
-  
   if (!profileImageSrc) {
-    console.log(`❌ ${node.userName} 모든 경로에서 프로필 이미지 데이터 없음`);
     return ''; // 기본 아바타 이미지는 별도 처리
   }
   
@@ -137,7 +120,6 @@ const getProfileImageSrc = (node: NodeData): string => {
     ? profileImageSrc 
     : `data:image/jpeg;base64,${profileImageSrc}`;
     
-  console.log(`✅ ${node.userName} 변환된 이미지 소스:`, result.substring(0, 50) + '...');
   return result;
 };
 
@@ -339,25 +321,15 @@ const renderNode = (
   // 먼저 해당 노드의 프로필 이미지 찾기
   if (profileImageSrc && imageRefs[node.id]) {
     avatarImage = imageRefs[node.id];
-    console.log(`🖼️ ${node.userName} 프로필 이미지 발견`);
   }
   
   // 프로필 이미지가 없으면 기본 아바타 사용
   if (!avatarImage && imageRefs['default-avatar']) {
     avatarImage = imageRefs['default-avatar'];
-    console.log(`🔄 ${node.userName} 기본 아바타 사용`);
   }
-  
-  console.log(`🎨 ${node.userName} 렌더링:`, {
-    hasProfileSrc: !!profileImageSrc,
-    hasAvatarImage: !!avatarImage,
-    imageComplete: avatarImage?.complete,
-    imageWidth: avatarImage?.naturalWidth
-  });
   
   // 이미지가 있는지 확인하고 그리기
   if (avatarImage && avatarImage.complete && avatarImage.naturalWidth > 0) {
-    console.log(`✅ ${node.userName} 이미지 그리기 시작`);
     ctx.save();
     // 원형 클리핑 마스크
     ctx.beginPath();
@@ -367,7 +339,6 @@ const renderNode = (
     // 이미지 그리기
     try {
       ctx.drawImage(avatarImage, avatarX - 13, avatarY - 13, 26, 26);
-      console.log(`✅ ${node.userName} 이미지 그리기 완료`);
     } catch (error) {
       console.error(`❌ ${node.userName} 아바타 그리기 실패:`, error);
     }
@@ -379,8 +350,6 @@ const renderNode = (
     ctx.lineWidth = 1.5;
     ctx.strokeStyle = '#ffffff';
     ctx.stroke();
-  } else {
-    console.log(`⚠️ ${node.userName} 이미지 없음 - 기본 배경만 표시`);
   }
   
   // 아바타 그림자 효과 (box-shadow: 0 1px 2px 0 rgba(107, 110, 116, 0.04))
@@ -439,6 +408,7 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
   // States
   const [nodeStates, setNodeStates] = useState<NodeData[]>(nodes);
   const [viewport, setViewport] = useState(INITIAL_VIEWPORT);
+  const viewportRef = useRef(viewport);
   const [dragMode, setDragMode] = useState<number>(DRAG_NONE);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [isPanning, setIsPanning] = useState(false);
@@ -464,21 +434,54 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
   const initialNodeStatesRef = useRef<NodeData[]>(nodes.map(n => ({ ...n })));
   const animatingRef = useRef(false);
   
+  // 1. 패닝 애니메이션용 ref 추가
+  const panningAnimationId = useRef<number | null>(null);
+  
+  // 2. 패닝 루프 함수 정의
+  const startPanningLoop = useCallback(() => {
+    if (panningAnimationId.current === null) {
+      const loop = () => {
+        setForceRender(f => f + 1);
+        panningAnimationId.current = requestAnimationFrame(loop);
+      };
+      panningAnimationId.current = requestAnimationFrame(loop);
+    }
+  }, []);
+  const stopPanningLoop = useCallback(() => {
+    if (panningAnimationId.current !== null) {
+      cancelAnimationFrame(panningAnimationId.current);
+      panningAnimationId.current = null;
+    }
+  }, []);
+  
+  // 3. 패닝 시작 시 루프 시작
+  useEffect(() => {
+    if (dragMode === DRAG_PAN && isPanning) {
+      startPanningLoop();
+    } else {
+      stopPanningLoop();
+    }
+    // 패닝 상태가 바뀔 때마다 실행
+    return () => stopPanningLoop();
+  }, [dragMode, isPanning, startPanningLoop, stopPanningLoop]);
+  
   // 노드 위치를 화면 좌표로 변환
   const nodeToScreen = useCallback((node: { x: number; y: number }) => {
+    const v = viewportRef.current;
     return {
-      x: node.x * viewport.scale + viewport.x,
-      y: node.y * viewport.scale + viewport.y
+      x: node.x * v.scale + v.x,
+      y: node.y * v.scale + v.y
     };
-  }, [viewport]);
+  }, []);
   
   // 화면 좌표를 노드 좌표로 변환  
   const screenToNode = useCallback((screen: { x: number; y: number }) => {
+    const v = viewportRef.current;
     return {
-      x: (screen.x - viewport.x) / viewport.scale,
-      y: (screen.y - viewport.y) / viewport.scale
+      x: (screen.x - v.x) / v.scale,
+      y: (screen.y - v.y) / v.scale
     };
-  }, [viewport]);
+  }, []);
   
   // 마우스 위치에서 노드 찾기
   const getNodeAtPosition = useCallback((mouseX: number, mouseY: number): NodeData | null => {
@@ -529,8 +532,9 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
     ctx.save();
     
     // 뷰포트 변환 적용
-    ctx.translate(viewport.x, viewport.y);
-    ctx.scale(viewport.scale, viewport.scale);
+    const v = viewportRef.current;
+    ctx.translate(v.x, v.y);
+    ctx.scale(v.scale, v.scale);
     
     // 엣지 렌더링
     edges.forEach(edge => {
@@ -550,7 +554,7 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
     });
     
     ctx.restore();
-  }, [nodeStates, edges, viewport, hoveredNodeId, draggingId, forceRender, imageRefs]);
+  }, [nodeStates, edges, hoveredNodeId, draggingId, forceRender, imageRefs]);
   
   // nodes prop 변경 시 업데이트
   useEffect(() => {
@@ -651,39 +655,41 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
     }
   }, [getNodeAtPosition]);
   
+  // 4. 기존 handleCanvasMouseMove에서 setForceRender는 제거 (루프에서 처리)
   const handleCanvasMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-    
     // 호버 상태 업데이트
     if (dragMode === DRAG_NONE) {
       const nodeAtPos = getNodeAtPosition(mouseX, mouseY);
       setHoveredNodeId(nodeAtPos?.id || null);
     }
-    
     if (dragMode === DRAG_PAN && isPanning) {
-      // 시점 드래그
+      // 시점 드래그: ref만 변경 + 즉시 렌더링
       const dx = e.clientX - lastMousePos.x;
       const dy = e.clientY - lastMousePos.y;
-      setViewport(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
+      viewportRef.current = {
+        ...viewportRef.current,
+        x: viewportRef.current.x + dx,
+        y: viewportRef.current.y + dy
+      };
       setLastMousePos({ x: e.clientX, y: e.clientY });
+      render(); // 마우스 이동마다 즉시 렌더링
     } else if (dragMode === DRAG_NODE && draggingId) {
-      // 노드 드래그
+      // 노드 드래그는 기존대로
       const body = bodiesRef.current[draggingId];
       if (body) {
         const nodePos = screenToNode({ x: mouseX, y: mouseY });
-        // 드래그 시작 시 계산한 오프셋을 빼서 노드 위치 계산
         Matter.Body.setPosition(body, { 
           x: nodePos.x - dragOffset.x, 
           y: nodePos.y - dragOffset.y 
         });
       }
     }
-  }, [dragMode, isPanning, lastMousePos, draggingId, getNodeAtPosition, screenToNode, dragOffset]);
+  }, [dragMode, isPanning, lastMousePos, draggingId, getNodeAtPosition, screenToNode, dragOffset, render]);
   
   const handleCanvasMouseUp = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -715,6 +721,9 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
       }
     }
     
+    if (dragMode === DRAG_PAN) {
+      setViewport(viewportRef.current);
+    }
     setDragMode(DRAG_NONE);
     setDraggingId(null);
     setIsPanning(false);
@@ -853,21 +862,40 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
     bodiesRef.current = bodies;
     constraintsRef.current = constraints;
     
-    // 업데이트 루프
+    // 업데이트 루프 최적화
+    let lastStateUpdate = 0;
+    const STATE_UPDATE_INTERVAL = 33; // 30fps로 상태 업데이트 제한
+    
     const update = (now: number) => {
       const delta = now - lastUpdate;
       if (engine && delta > 0) {
         Matter.Engine.update(engine, Math.min(delta, 16.67));
         lastUpdate = now;
         
-        // 노드 상태 업데이트
-        setNodeStates(prev => 
-          prev.map(node => {
-            const body = bodies[node.id];
-            if (!body) return node;
-            return { ...node, x: body.position.x, y: body.position.y };
-          })
-        );
+        // 상태 업데이트를 30fps로 제한
+        if (now - lastStateUpdate > STATE_UPDATE_INTERVAL) {
+          lastStateUpdate = now;
+          setNodeStates(prev => {
+            const newNodes = prev.map(node => {
+              const body = bodies[node.id];
+              if (!body) return node;
+              
+              // 위치 변화가 미미하면 업데이트 생략
+              const dx = Math.abs(body.position.x - node.x);
+              const dy = Math.abs(body.position.y - node.y);
+              if (dx < 0.5 && dy < 0.5) return node;
+              
+              return { ...node, x: body.position.x, y: body.position.y };
+            });
+            
+            // 실제로 변경된 노드가 있는지 확인
+            const hasChanges = newNodes.some((node, i) => 
+              node.x !== prev[i].x || node.y !== prev[i].y
+            );
+            
+            return hasChanges ? newNodes : prev;
+          });
+        }
       }
       animationFrameRef.current = requestAnimationFrame(update);
     };
@@ -890,14 +918,46 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
     };
   }, [nodes, edges]);
   
-  // 렌더링 루프
+  // 렌더링 최적화 - 필요할 때만 렌더링
   useEffect(() => {
-    const renderLoop = () => {
-      render();
-      requestAnimationFrame(renderLoop);
+    let animationId: number;
+    let needsRender = true;
+    
+    const scheduleRender = () => {
+      if (needsRender) {
+        needsRender = false;
+        render();
+      }
+      animationId = requestAnimationFrame(scheduleRender);
     };
-    renderLoop();
-  }, [render]);
+    
+    // 상태 변경 시 렌더링 필요 표시
+    const markNeedsRender = () => {
+      needsRender = true;
+    };
+    
+    // 초기 렌더링
+    scheduleRender();
+    
+    // 뷰포트 변경 감지
+    const checkViewport = () => markNeedsRender();
+    const checkNodes = () => markNeedsRender();
+    
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    };
+  }, []);
+  
+  // 뷰포트나 노드 상태 변경 시 재렌더링 트리거
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      render();
+    }, 16); // 60fps 제한
+    
+    return () => clearTimeout(timeoutId);
+  }, [viewport, nodeStates, hoveredNodeId, draggingId]);
   
   // 리사이즈 핸들러
   useEffect(() => {
@@ -972,6 +1032,11 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
     document.addEventListener('mouseup', handleGlobalMouseUp);
     return () => document.removeEventListener('mouseup', handleGlobalMouseUp);
   }, [dragMode, draggingId]);
+  
+  // viewport 상태가 바뀔 때 ref도 동기화
+  useEffect(() => {
+    viewportRef.current = viewport;
+  }, [viewport]);
   
   return (
     <GraphContainer ref={containerRef}>
