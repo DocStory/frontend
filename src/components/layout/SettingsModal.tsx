@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import closeIcon from '../../assets/closeIcon.svg';
 import SettingsList from '../common/SettingsList.tsx';
@@ -61,6 +61,18 @@ const ContentWrapper = styled.div`
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const { mode, setTheme } = useTheme();
+
+  // ESC 키로 모달 닫기
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isOpen, onClose]);
 
   const handleThemeChange = (themeValue: string) => {
     if (themeValue === '라이트') {

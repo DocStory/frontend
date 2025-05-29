@@ -227,6 +227,18 @@ const NewRepositoryModal: React.FC<NewRepositoryModalProps> = ({
   const { refreshRepositories } = useRepositories();
   const toast = useToastContext();
 
+  // ESC 키로 모달 닫기
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isOpen]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
