@@ -61,21 +61,23 @@ const InputContainer = styled.div`
 `;
 
 const EmailInput = styled.input`
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #e0dad9;
+  font-family: 'Pretendard';
+  font-size: 16px;
+  padding: 12px 16px;
+  border: 1px solid #e1e5e9;
   border-radius: 8px;
-  font-size: 14px;
-  color: #1f2937;
-  font-family: 'Pretendard', sans-serif;
+  background: white;
+  color: #1a1a1a;
+  transition: border-color 0.2s ease;
+  flex: 1;
 
   &::placeholder {
-    color: #b3b3b3;
+    color: #9ca3af;
   }
 
   &:focus {
     outline: none;
-    border-color: #6c9eff;
+    border-color: #4078FF;
   }
 `;
 
