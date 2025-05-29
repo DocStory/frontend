@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 
 export interface PPItem {
+  id: string;
   Name: string;
   content: string;
   status?: 'close' | 'merge' | 'progress';
@@ -9,6 +10,7 @@ export interface PPItem {
 
 interface PPListProps {
   items: PPItem[];
+  onItemClick?: (id: string) => void;
 }
 
 const PPListContainer = styled.div`
@@ -75,11 +77,14 @@ const StatusCircle = styled.div<{ $status?: 'close' | 'merge' | 'progress' }>`
   }};
 `;
 
-const PPList: React.FC<PPListProps> = ({ items }) => {
+const PPList: React.FC<PPListProps> = ({ items, onItemClick }) => {
   return (
     <PPListContainer>
       {items.map((item, index) => (
-        <PPItemContainer key={index}>
+        <PPItemContainer key={item.id} onClick={() => {
+          console.log('PPList item clicked:', item.id);
+          if (onItemClick) onItemClick(item.id);
+        }} style={{ cursor: onItemClick ? 'pointer' : undefined }}>
           <ItemTextInfo>
             <ItemName>{item.Name}</ItemName>
             <ItemContent>{item.content}</ItemContent>

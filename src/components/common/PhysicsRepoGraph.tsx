@@ -25,6 +25,7 @@ interface NodeData {
   historyCreatorId?: string;
   onEditClick?: (historyId: string) => void;
   onCreateClick?: (historyId?: string) => void;
+  onProposalClick?: (historyId: string) => void;
 }
 
 interface EdgeData {
@@ -153,6 +154,7 @@ const MemoizedNode = memo(({ node, isDragging, onDragStart, onDrag, onDragEnd }:
       historyCreatorId={node.historyCreatorId}
       onEditClick={node.onEditClick}
       onCreateClick={node.onCreateClick}
+      onProposalClick={node.onProposalClick}
     />
   </NodeWrapper>
 ));

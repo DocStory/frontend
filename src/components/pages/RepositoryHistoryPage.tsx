@@ -6,10 +6,13 @@ import RepositoryTile from '../layout/RepositoryTitle';
 import PhysicsRepoGraph from '../common/PhysicsRepoGraph';
 import TeamInviteModal from '../layout/TeamInviteModal';
 import ModalSimple from '../layout/ModalSimple';
+import Modal from '../layout/Modal';
 import { getFilteredHistories, getHistoryRootFiles, getHistoryDetail, updateHistory, createHistory } from '../../api/history';
 import { HistoryListResponse, HistoryFileResponse, HistoryDetailResponse } from '../../api/history/types';
 import { UUID } from '../../api/common/types';
 import AuthService from '../../api/auth';
+import { createProposal, getProposalsByRepository, getProposalById } from '../../api/proposal';
+import ModalPPList from '../layout/ModalPPList';
 
 const PageContainer = styled.div`
   display: flex;
@@ -41,6 +44,13 @@ const RepositoryHistoryPage: React.FC<RepositoryHistoryPageProps> = React.memo((
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isProposalModalOpen, setIsProposalModalOpen] = useState(false);
+  const [isProposalListModalOpen, setIsProposalListModalOpen] = useState(false);
+  const [selectedProposalId, setSelectedProposalId] = useState<string | null>(null);
+  const [selectedProposalDetail, setSelectedProposalDetail] = useState<any | null>(null);
+  const [isProposalDetailModalOpen, setIsProposalDetailModalOpen] = useState(false);
+  const [proposalList, setProposalList] = useState<any[]>([]);
+  const [proposalListLoading, setProposalListLoading] = useState(false);
   const [selectedHistoryDetail, setSelectedHistoryDetail] = useState<HistoryDetailResponse | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<{ userId: string; nickname: string; email: string; profileImage?: string } | null>(null);
@@ -49,6 +59,9 @@ const RepositoryHistoryPage: React.FC<RepositoryHistoryPageProps> = React.memo((
   const [editedContent, setEditedContent] = useState('');
   const [createTitle, setCreateTitle] = useState('');
   const [createContent, setCreateContent] = useState('');
+  const [proposalTitle, setProposalTitle] = useState('');
+  const [proposalContent, setProposalContent] = useState('');
+  const [selectedHistoryForProposal, setSelectedHistoryForProposal] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [parentFileId, setParentFileId] = useState<string | null>(null);
   const [histories, setHistories] = useState<HistoryListResponse[][]>([]);
@@ -209,6 +222,50 @@ const RepositoryHistoryPage: React.FC<RepositoryHistoryPageProps> = React.memo((
     setIsCreateModalOpen(true);
   }, [histories]);
 
+  // Proposal 생성 모달 열기
+  const handleProposalCreateClick = useCallback((historyId: string) => {
+    setSelectedHistoryForProposal(historyId);
+    setProposalTitle('');
+    setProposalContent('');
+    setIsProposalModalOpen(true);
+  }, []);
+
+  // Proposal 모달 닫기
+  const handleProposalModalClose = useCallback(() => {
+    setIsProposalModalOpen(false);
+    setSelectedHistoryForProposal(null);
+    setProposalTitle('');
+    setProposalContent('');
+  }, []);
+
+  // Proposal 저장
+  const handleProposalSave = useCallback(async () => {
+    if (!proposalTitle.trim()) {
+      return;
+    }
+
+    if (!selectedHistoryForProposal) {
+      return;
+    }
+
+    try {
+      const proposalData = {
+        historyId: selectedHistoryForProposal,
+        title: proposalTitle,
+        ...(proposalContent.trim() && { description: proposalContent })
+      };
+
+      const response = await createProposal(proposalData);
+      
+      if (response.code === 100) {
+        // 성공적으로 생성된 경우 모달 닫기
+        handleProposalModalClose();
+      }
+    } catch (err) {
+      console.error('Failed to create proposal:', err);
+    }
+  }, [proposalTitle, proposalContent, selectedHistoryForProposal, handleProposalModalClose]);
+
   // 생성 모달 닫기
   const handleCreateModalClose = useCallback(() => {
     setIsCreateModalOpen(false);
@@ -274,6 +331,70 @@ const RepositoryHistoryPage: React.FC<RepositoryHistoryPageProps> = React.memo((
       console.error('Failed to create history:', err);
     }
   }, [repositoryId, createTitle, createContent, parentFileId, selectedFiles, handleCreateModalClose]);
+
+  // Proposal 목록 모달 열기
+  const handleProposalListOpen = useCallback(async () => {
+    setIsProposalListModalOpen(true);
+    setProposalListLoading(true);
+    try {
+      const response = await getProposalsByRepository(repositoryId, 'ALL');
+      if (response.code === 100 && response.data) {
+        // API status -> frontend status 매핑 함수
+        const mapStatus = (apiStatus: string): 'progress' | 'merge' | 'close' => {
+          switch (apiStatus.toLowerCase()) {
+            case 'open':
+              return 'progress';
+            case 'merge':
+              return 'merge';
+            case 'close':
+              return 'close';
+            default:
+              return 'progress';
+          }
+        };
+        // API 응답을 ModalPPList의 PPItem 형식으로 변환
+        const formattedProposals = response.data.map(proposal => ({
+          id: proposal.id || proposal.proposalId,
+          Name: proposal.title,
+          content: proposal.description,
+          status: mapStatus(proposal.status)
+        }));
+        setProposalList(formattedProposals);
+      }
+    } catch (err) {
+      console.error('Failed to fetch proposals:', err);
+    } finally {
+      setProposalListLoading(false);
+    }
+  }, [repositoryId]);
+
+  // Proposal 목록 모달 닫기
+  const handleProposalListClose = useCallback(() => {
+    setIsProposalListModalOpen(false);
+  }, []);
+
+  // Proposal 상세 모달 열기
+  const handleProposalDetailOpen = useCallback(async (proposalId: string) => {
+    if (!proposalId) return;
+    setSelectedProposalId(proposalId);
+    setIsProposalDetailModalOpen(true);
+    try {
+      const response = await getProposalById(proposalId);
+      if (response.code === 100 && response.data) {
+        setSelectedProposalDetail(response.data);
+      } else {
+        setSelectedProposalDetail(null);
+      }
+    } catch (err) {
+      setSelectedProposalDetail(null);
+    }
+  }, []);
+
+  const handleProposalDetailClose = useCallback(() => {
+    setIsProposalDetailModalOpen(false);
+    setSelectedProposalId(null);
+    setSelectedProposalDetail(null);
+  }, []);
 
   useEffect(() => {
     const fetchHistoryData = async () => {
@@ -408,6 +529,7 @@ const RepositoryHistoryPage: React.FC<RepositoryHistoryPageProps> = React.memo((
           onDetailClick: handleHistoryDetailClick,
           onEditClick: handleHistoryEditClick,
           onCreateClick: handleHistoryCreateClick,
+          onProposalClick: handleProposalCreateClick,
           currentUserId: currentUser?.userId,
           historyCreatorId: history.createdBy?.providerId,
           // 같은 깊이 내에서 노드들을 균등하게 분산
@@ -424,7 +546,7 @@ const RepositoryHistoryPage: React.FC<RepositoryHistoryPageProps> = React.memo((
     });
 
     return nodes;
-  }, [histories, getRelativeTime, handleHistoryDetailClick, handleHistoryEditClick, handleHistoryCreateClick, currentUser]);
+  }, [histories, getRelativeTime, handleHistoryDetailClick, handleHistoryEditClick, handleHistoryCreateClick, handleProposalCreateClick, currentUser]);
 
   // parentFileId 기반 엣지 생성 (useMemo로 최적화)
   const graphEdges = useMemo(() => {
@@ -516,6 +638,7 @@ const RepositoryHistoryPage: React.FC<RepositoryHistoryPageProps> = React.memo((
         <RepoHeader
           hasNewNotification={true}
           onTeamIconClick={handleTeamIconClick}
+          onRepoIconClick={handleProposalListOpen}
         />
         <RepositoryTile 
           title="캡스톤 디자인" 
@@ -569,24 +692,6 @@ const RepositoryHistoryPage: React.FC<RepositoryHistoryPageProps> = React.memo((
             onTitleChange={setEditedTitle}
             onContentChange={setEditedContent}
           />
-          <button
-            onClick={handleDetailModalClose}
-            style={{
-              position: 'absolute',
-              top: '20px',
-              right: '20px',
-              background: 'white',
-              border: 'none',
-              borderRadius: '50%',
-              width: '40px',
-              height: '40px',
-              cursor: 'pointer',
-              fontSize: '20px',
-              zIndex: 1001
-            }}
-          >
-            ×
-          </button>
         </div>
       )}
 
@@ -626,24 +731,89 @@ const RepositoryHistoryPage: React.FC<RepositoryHistoryPageProps> = React.memo((
             onFileRemove={handleFileRemove}
             isCreating={true}
           />
-          <button
-            onClick={handleCreateModalClose}
-            style={{
-              position: 'absolute',
-              top: '20px',
-              right: '20px',
-              background: 'white',
-              border: 'none',
-              borderRadius: '50%',
-              width: '40px',
-              height: '40px',
-              cursor: 'pointer',
-              fontSize: '20px',
-              zIndex: 1001
-            }}
-          >
-            ×
-          </button>
+        </div>
+      )}
+
+      {isProposalModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <ModalSimple
+            headerTitle={currentUser?.nickname || 'Unknown User'}
+            headerTime={new Date().toLocaleDateString()}
+            modalTitle="Proposal 생성"
+            contentTitle={proposalTitle}
+            content={proposalContent}
+            items={[]}
+            onClose={handleProposalModalClose}
+            isEditing={true}
+            canEdit={true}
+            onEditStart={() => {}}
+            onEditCancel={handleProposalModalClose}
+            onEditSave={handleProposalSave}
+            onTitleChange={setProposalTitle}
+            onContentChange={setProposalContent}
+            isCreating={false}
+            isProposal={true}
+          />
+        </div>
+      )}
+
+      {isProposalListModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <ModalPPList 
+            items={proposalList}
+            onClose={handleProposalListClose}
+            onProposalClick={handleProposalDetailOpen}
+          />
+        </div>
+      )}
+
+      {isProposalDetailModalOpen && selectedProposalDetail && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <Modal
+            headerTitle={selectedProposalDetail.title}
+            headerTime={''}
+            modalTitle="Proposal 상세"
+            contentTitle={selectedProposalDetail.title}
+            content={selectedProposalDetail.description}
+            items={[]}
+            comments={[]}
+            onReject={handleProposalDetailClose}
+            onAccept={handleProposalDetailClose}
+            onClose={handleProposalDetailClose}
+          />
         </div>
       )}
     </PageContainer>

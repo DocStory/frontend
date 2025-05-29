@@ -6,6 +6,7 @@ import Button from '../common/Button';
 import ModalHeader from '../common/ModalHeader';
 
 export interface PPItem {
+  id: string;
   Name: string;
   content: string;
   status: 'progress' | 'merge' | 'close';
@@ -13,6 +14,8 @@ export interface PPItem {
 
 interface ModalPPListProps {
   items: PPItem[];
+  onClose?: () => void;
+  onProposalClick?: (id: string) => void;
 }
 
 const ModalPPListContainer = styled.div`
@@ -76,7 +79,7 @@ const StyledButton = styled(Button)`
   letter-spacing: -0.6%;
 `;
 
-const ModalPPList: React.FC<ModalPPListProps> = ({ items }) => {
+const ModalPPList: React.FC<ModalPPListProps> = ({ items, onClose, onProposalClick }) => {
   const [currentFilter, setCurrentFilter] = React.useState<'all' | 'progress' | 'completed'>('all');
 
   const handleFilterChange = (filter: 'all' | 'progress' | 'completed') => {
@@ -91,7 +94,7 @@ const ModalPPList: React.FC<ModalPPListProps> = ({ items }) => {
 
   return (
     <ModalPPListContainer>
-      <ModalHeader title="Proposal 목록" onClose={() => {}} backgroundColor="#f1f5f9"/>
+      <ModalHeader title="Proposal 목록" onClose={onClose || (() => {})} backgroundColor="#f1f5f9"/>
       <FilterSection>
         <StyledFilterTab
           label='전체'
@@ -113,7 +116,7 @@ const ModalPPList: React.FC<ModalPPListProps> = ({ items }) => {
         />
       </FilterSection>
       <ContentWrapper>
-        <PPList items={filteredItems} />
+        <PPList items={filteredItems} onItemClick={onProposalClick} />
       </ContentWrapper>
       <ButtonSection>
         <StyledButton variant='primary' size='large'>

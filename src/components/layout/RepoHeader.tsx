@@ -40,15 +40,20 @@ const Icon = styled.img`
 interface RepoHeaderProps {
   hasNewNotification?: boolean;
   onTeamIconClick?: () => void;
+  onRepoIconClick?: () => void;
 }
 
-const RepoHeader: React.FC<RepoHeaderProps> = ({ hasNewNotification = false, onTeamIconClick, }) => (
+const RepoHeader: React.FC<RepoHeaderProps> = ({ 
+  hasNewNotification = false, 
+  onTeamIconClick,
+  onRepoIconClick,
+}) => (
   <HeaderContainer>
     <SearchBarWrapper>
       <SearchBar />
     </SearchBarWrapper>
     <Right>
-      <Icon src={RepoIcon} alt="레포" />
+      <Icon src={RepoIcon} alt="레포" onClick={onRepoIconClick} />
       <Icon src={TeamIcon} alt="팀" onClick={onTeamIconClick} />
       <Icon
         src={hasNewNotification ? NotiIcon : NotificationIcon}

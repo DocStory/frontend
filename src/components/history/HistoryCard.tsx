@@ -16,6 +16,7 @@ interface HistoryCardProps {
   historyCreatorId?: string;
   onEditClick?: (historyId: string) => void;
   onCreateClick?: (historyId?: string) => void;
+  onProposalClick?: (historyId: string) => void;
 }
 
 const Card = styled.div<{ $isMain: boolean; $isExpanded: boolean }>`
@@ -117,6 +118,7 @@ const HistoryCard: React.FC<HistoryCardProps> = ({
   historyCreatorId,
   onEditClick,
   onCreateClick,
+  onProposalClick,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [dropdown, setDropdown] = useState<{ open: boolean; x: number; y: number }>({ open: false, x: 0, y: 0 });
@@ -136,6 +138,8 @@ const HistoryCard: React.FC<HistoryCardProps> = ({
       onDetailClick(historyId);
     } else if (value === 'edit' && historyId && onEditClick) {
       onEditClick(historyId);
+    } else if (value === 'pp' && historyId && onProposalClick) {
+      onProposalClick(historyId);
     }
     // TODO: PP 요청 등 다른 동작들도 연결
   };

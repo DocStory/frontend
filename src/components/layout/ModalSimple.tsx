@@ -30,6 +30,7 @@ interface ModalSimpleProps {
   onFileSelect?: (files: FileList | null) => void;
   onFileRemove?: (index: number) => void;
   isCreating?: boolean;
+  isProposal?: boolean;
 }
 
 const ModalContainer = styled.div`
@@ -80,6 +81,7 @@ const ModalSimple: React.FC<ModalSimpleProps> = ({
   onFileSelect,
   onFileRemove,
   isCreating = false,
+  isProposal = false,
 }) => {
   return (
     <ModalContainer>
@@ -104,7 +106,9 @@ const ModalSimple: React.FC<ModalSimpleProps> = ({
           onTitleChange={onTitleChange}
           onContentChange={onContentChange}
         />
-        <SectionTitle>{isCreating ? '파일 업로드' : '변경사항'}</SectionTitle>
+        {!isProposal && (
+          <SectionTitle>{isCreating ? '파일 업로드' : '변경사항'}</SectionTitle>
+        )}
         <ModalList 
           items={items} 
           onFileSelect={onFileSelect}
