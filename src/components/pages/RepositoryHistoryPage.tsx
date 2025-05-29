@@ -20,6 +20,7 @@ import { useUser } from '../../contexts/UserContext';
 import { useToastContext } from '../../contexts/ToastContext';
 import pencilIcon from '../../assets/pencilIcon.svg';
 import repoIcon from '../../assets/repoIcon.svg';
+import HistoryDetailModal from '../common/HistoryDetailModal';
 
 const PageContainer = styled.div`
   display: flex;
@@ -757,83 +758,91 @@ const RepositoryHistoryPage: React.FC = () => {
       />
 
       {isDetailModalOpen && selectedHistoryDetail && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <ModalSimple
-            headerTitle={selectedHistoryDetail.createdBy.nickname}
-            headerTime={selectedHistoryDetail.createAt ? new Date(selectedHistoryDetail.createAt).toLocaleDateString() : ''}
-            modalTitle="히스토리 상세 정보"
-            contentTitle={isEditing ? editedTitle : selectedHistoryDetail.title}
-            content={isEditing ? editedContent : selectedHistoryDetail.content}
-            items={selectedHistoryDetail.files.map(file => ({
-              Name: file.name,
-              date: file.fileType,
-              iconType: 'diff' as const
-            }))}
-                onClose={() => {
-                  setIsDetailModalOpen(false);
-                  setSelectedHistoryDetail(null);
-                  setIsEditing(false);
-                  setEditedTitle('');
-                  setEditedContent('');
-                }}
-            isEditing={isEditing}
-                canEdit={isAdmin}
-                onEditStart={() => {
-                  setIsEditing(true);
-                  setEditedTitle(selectedHistoryDetail.title);
-                  setEditedContent(selectedHistoryDetail.content);
-                }}
-                onEditCancel={() => {
-                  setIsEditing(false);
-                  setEditedTitle('');
-                  setEditedContent('');
-                }}
-                onEditSave={async () => {
-                  if (!selectedHistoryDetail) return;
-
-                  try {
-                    const updateData = {
-                      title: editedTitle,
-                      content: editedContent
-                    };
-
-                    const response = await updateHistory(repositoryId, selectedHistoryDetail.Id, updateData);
-                    
-                    if (response.code === 100) {
-                      // 성공적으로 업데이트된 경우 상세 정보 다시 가져오기
-                      const updatedDetailResponse = await getHistoryDetail(repositoryId, selectedHistoryDetail.Id);
-                      if (updatedDetailResponse.code === 100 && updatedDetailResponse.data) {
-                        setSelectedHistoryDetail(updatedDetailResponse.data);
-                      }
-                      setIsEditing(false);
-                      setEditedTitle('');
-                      setEditedContent('');
-                      
-                      // 히스토리 목록도 다시 가져오기
-                      const historiesResponse = await getFilteredHistories(repositoryId, undefined, 'all');
-                      if (historiesResponse.code === 100 && historiesResponse.data) {
-                        setHistories(historiesResponse.data);
-                      }
-                    }
-                  } catch (err) {
-                    console.error('Failed to update history:', err);
-                  }
-                }}
-            onTitleChange={setEditedTitle}
-            onContentChange={setEditedContent}
-          />
-        </div>
+        <HistoryDetailModal
+          userName={selectedHistoryDetail.createdBy.nickname}
+          userProfileImage={selectedHistoryDetail.createdBy.profileImage}
+          createdAt={selectedHistoryDetail.createAt ? new Date(selectedHistoryDetail.createAt).toLocaleDateString() : ''}
+          title={isEditing ? editedTitle : selectedHistoryDetail.title}
+          content={isEditing ? editedContent : selectedHistoryDetail.content}
+          files={selectedHistoryDetail.files.map(file => ({
+            Name: file.name,
+            date: file.fileType,
+            iconType: 'diff' as const,
+            onCompareClick: () => {
+              alert('비교 기능은 추후 구현 예정');
+            },
+            onDownloadClick: () => {
+              // fetch로 blob 다운로드
+              const downloadFile = async () => {
+                try {
+                  const response = await fetch(`/api/files/download/${file.id}`);
+                  if (!response.ok) throw new Error('다운로드 실패');
+                  const blob = await response.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = file.name || 'download';
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  window.URL.revokeObjectURL(url);
+                } catch (err) {
+                  alert('파일 다운로드에 실패했습니다.');
+                }
+              };
+              downloadFile();
+            },
+          }))}
+          onClose={() => {
+            setIsDetailModalOpen(false);
+            setSelectedHistoryDetail(null);
+            setIsEditing(false);
+            setEditedTitle('');
+            setEditedContent('');
+          }}
+          canEdit={isAdmin}
+          isEditing={isEditing}
+          onEditStart={() => {
+            setIsEditing(true);
+            setEditedTitle(selectedHistoryDetail.title);
+            setEditedContent(selectedHistoryDetail.content);
+          }}
+          onEditCancel={() => {
+            setIsEditing(false);
+            setEditedTitle('');
+            setEditedContent('');
+          }}
+          onEditSave={async () => {
+            if (!selectedHistoryDetail) return;
+            try {
+              const updateData = {
+                title: editedTitle,
+                content: editedContent
+              };
+              // PATCH API 호출
+              const response = await updateHistory(repositoryId, selectedHistoryDetail.Id, updateData);
+              if (response.code === 100) {
+                // 성공 시 상세 정보 갱신
+                const updatedDetailResponse = await getHistoryDetail(repositoryId, selectedHistoryDetail.Id);
+                if (updatedDetailResponse.code === 100 && updatedDetailResponse.data) {
+                  setSelectedHistoryDetail(updatedDetailResponse.data);
+                }
+                setIsEditing(false);
+                setEditedTitle('');
+                setEditedContent('');
+                // 히스토리 목록도 다시 가져오기
+                const historiesResponse = await getFilteredHistories(repositoryId, undefined, 'all');
+                if (historiesResponse.code === 100 && historiesResponse.data) {
+                  setHistories(historiesResponse.data);
+                }
+              }
+            } catch (err) {
+              console.error('Failed to update history:', err);
+            }
+          }}
+          onTitleChange={setEditedTitle}
+          onContentChange={setEditedContent}
+        />
       )}
 
       {isCreateModalOpen && (
@@ -860,80 +869,67 @@ const RepositoryHistoryPage: React.FC = () => {
               date: new Date().toLocaleDateString(),
               iconType: 'upload' as const
             }))}
-                onClose={() => {
-                  setIsCreateModalOpen(false);
-                  setParentFileId(null);
-                  setCreateTitle('');
-                  setCreateContent('');
-                  setSelectedFiles([]);
-                }}
+            onClose={() => {
+              setIsCreateModalOpen(false);
+              setParentFileId(null);
+              setCreateTitle('');
+              setCreateContent('');
+              setSelectedFiles([]);
+            }}
             isEditing={true}
+            isModifying={true}
             canEdit={true}
             onEditStart={() => {}}
-                onEditCancel={() => {
+            onEditCancel={() => {
+              setIsCreateModalOpen(false);
+              setParentFileId(null);
+              setCreateTitle('');
+              setCreateContent('');
+              setSelectedFiles([]);
+            }}
+            onEditSave={async () => {
+              if (!createTitle.trim()) {
+                return;
+              }
+              if (selectedFiles.length === 0) {
+                return;
+              }
+              try {
+                const formData = new FormData();
+                const historyCreateRequest = {
+                  title: createTitle,
+                  ...(createContent.trim() && { content: createContent }),
+                  ...(parentFileId && { parentFileId: parentFileId })
+                };
+                const historyCreateRequestJson = JSON.stringify(historyCreateRequest);
+                formData.append('historyCreateRequest', historyCreateRequestJson);
+                formData.append('file', selectedFiles[0]);
+                const response = await createHistory(repositoryId, formData);
+                if (response.code === 100) {
                   setIsCreateModalOpen(false);
                   setParentFileId(null);
                   setCreateTitle('');
                   setCreateContent('');
                   setSelectedFiles([]);
-                }}
-                onEditSave={async () => {
-                  if (!createTitle.trim()) {
-                    return;
+                  const historiesResponse = await getFilteredHistories(repositoryId, undefined, 'all');
+                  if (historiesResponse.code === 100 && historiesResponse.data) {
+                    setHistories(historiesResponse.data);
                   }
-
-                  if (selectedFiles.length === 0) {
-                    return;
-                  }
-
-                  try {
-                    const formData = new FormData();
-                    
-                    // JSON 데이터를 historyCreateRequest 파트로 추가
-                    const historyCreateRequest = {
-                      title: createTitle,
-                      ...(createContent.trim() && { content: createContent }),
-                      ...(parentFileId && { parentFileId: parentFileId })
-                    };
-                    
-                    // JSON 파트를 올바른 Content-Type으로 추가
-                    const historyCreateRequestJson = JSON.stringify(historyCreateRequest);
-                    formData.append('historyCreateRequest', historyCreateRequestJson);
-
-                    // 파일 추가
-                    formData.append('file', selectedFiles[0]);
-
-                    const response = await createHistory(repositoryId, formData);
-                    
-                    if (response.code === 100) {
-                      // 성공적으로 생성된 경우 모달 닫기
-                      setIsCreateModalOpen(false);
-                      setParentFileId(null);
-                      setCreateTitle('');
-                      setCreateContent('');
-                      setSelectedFiles([]);
-                      
-                      // 히스토리 목록 다시 가져오기
-                      const historiesResponse = await getFilteredHistories(repositoryId, undefined, 'all');
-                      if (historiesResponse.code === 100 && historiesResponse.data) {
-                        setHistories(historiesResponse.data);
-                      }
-                    }
-                  } catch (err) {
-                    console.error('Failed to create history:', err);
-                  }
-                }}
+                }
+              } catch (err) {
+                console.error('Failed to create history:', err);
+              }
+            }}
             onTitleChange={setCreateTitle}
             onContentChange={setCreateContent}
-                onFileSelect={(files: FileList | null) => {
-                  if (files && files.length > 0) {
-                    // 첫 번째 파일만 선택
-                    setSelectedFiles([files[0]]);
-                  }
-                }}
-                onFileRemove={(index: number) => {
-                  setSelectedFiles([]);
-                }}
+            onFileSelect={(files: FileList | null) => {
+              if (files && files.length > 0) {
+                setSelectedFiles([files[0]]);
+              }
+            }}
+            onFileRemove={(index: number) => {
+              setSelectedFiles([]);
+            }}
             isCreating={true}
           />
         </div>

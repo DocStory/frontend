@@ -4,6 +4,7 @@ import ProfileList from '../common/ProfileList.tsx';
 import ModalContent from '../common/ContentArea.tsx';
 import ModalList from '../common/ModalList.tsx';
 import ModalHeader from '../common/ModalHeader';
+import Button from '../common/Button';
 
 interface ModalItem {
   Name: string;
@@ -16,6 +17,7 @@ interface ModalSimpleProps {
   headerTime: string;
   modalTitle: string;
   isEditing?: boolean;
+  isModifying?: boolean;
   canEdit?: boolean;
   contentTitle: string;
   content: string;
@@ -31,17 +33,33 @@ interface ModalSimpleProps {
   onFileRemove?: (index: number) => void;
   isCreating?: boolean;
   isProposal?: boolean;
+  onCreateSave?: () => void;
 }
 
-const ModalContainer = styled.div`
-  width: 1016px;
-  height: 740px;
-  background: #ffffff;
+const Overlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const Container = styled.div`
+  background: white;
+  width: 95%;
+  max-width: 900px;
+  max-height: 90vh;
   border-radius: 15px;
-  border: 3px solid #cbd5e1;
-  overflow: hidden;
+  border: 3px solid #CBD5E1;
+  position: relative;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 `;
 
 const ContentWrapper = styled.div`
@@ -62,17 +80,13 @@ const SectionTitle = styled.h3`
   background: #f1f5f9;
 `;
 
-const Overlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0,0,0,0.15);
-  z-index: 1000;
+const ButtonRow = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 24px 32px;
+  border-top: 1px solid #e5e7eb;
+  background: white;
 `;
 
 const ModalSimple: React.FC<ModalSimpleProps> = ({
@@ -80,6 +94,7 @@ const ModalSimple: React.FC<ModalSimpleProps> = ({
   headerTime,
   modalTitle,
   isEditing = false,
+  isModifying = false,
   canEdit = false,
   contentTitle,
   content,
@@ -95,6 +110,7 @@ const ModalSimple: React.FC<ModalSimpleProps> = ({
   onFileRemove,
   isCreating = false,
   isProposal = false,
+  onCreateSave,
 }) => {
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -110,28 +126,27 @@ const ModalSimple: React.FC<ModalSimpleProps> = ({
 
   return (
     <Overlay onClick={handleOverlayClick} tabIndex={-1} aria-label="모달 오버레이">
-      <ModalContainer onClick={e => e.stopPropagation()} tabIndex={0} aria-label="모달 내용">
-        <ModalHeader title={modalTitle} onClose={onClose || (() => {})} backgroundColor="#f1f5f9"/>
-        <ProfileList
-          title={headerTitle}
-          time={headerTime}
-          isEditing={isEditing}
-          canEdit={canEdit}
-          backgroundColor="#f1f5f9"
-          userProfileImage={userProfileImage}
-          onEditStart={onEditStart}
-          onEditCancel={onEditCancel}
-          onEditSave={onEditSave}
+      <Container onClick={(e) => e.stopPropagation()}>
+        <ModalHeader 
+          title={modalTitle} 
+          onClose={onClose}
         />
+        
         <ContentWrapper>
           <ModalContent
-            title={contentTitle}
+            headerTitle={headerTitle}
+            headerTime={headerTime}
+            contentTitle={contentTitle}
             content={content}
             isEditing={isEditing}
-            isModifying={isEditing}
+            isModifying={isModifying}
+            onEditStart={onEditStart}
+            onEditCancel={onEditCancel}
+            onEditSave={onEditSave}
             onTitleChange={onTitleChange}
             onContentChange={onContentChange}
           />
+          
           {!isProposal && (
             <SectionTitle>{isCreating ? '파일 업로드' : '변경사항'}</SectionTitle>
           )}
@@ -142,7 +157,35 @@ const ModalSimple: React.FC<ModalSimpleProps> = ({
             isCreating={isCreating}
           />
         </ContentWrapper>
-      </ModalContainer>
+        
+        <ButtonRow>
+          <Button
+            variant="secondary"
+            size="medium"
+            onClick={onEditCancel || onClose}
+          >
+            {isEditing ? '취소' : '닫기'}
+          </Button>
+          {isEditing && onEditSave && (
+            <Button
+              variant="primary"
+              size="medium"
+              onClick={onEditSave}
+            >
+              저장
+            </Button>
+          )}
+          {isCreating && onCreateSave && (
+            <Button
+              variant="primary"
+              size="medium"
+              onClick={onCreateSave}
+            >
+              생성하기
+            </Button>
+          )}
+        </ButtonRow>
+      </Container>
     </Overlay>
   );
 };

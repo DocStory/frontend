@@ -6,6 +6,7 @@ import ModalHeader from '../common/ModalHeader';
 import { getTeamMembers, updateTeamMemberRole, removeTeamMember } from '../../api/team';
 import { UUID } from '../../api/common/types';
 import { inviteUserToTeam } from '../../api/teaminvite';
+import Button from '../common/Button';
 
 interface TeamInviteModalProps {
   isOpen: boolean;
@@ -15,28 +16,29 @@ interface TeamInviteModalProps {
 }
 
 const ModalContainer = styled.div<{ isOpen: boolean }>`
-  display: ${({ isOpen }) => (isOpen ? 'block' : 'none')};
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.15);
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
   z-index: 1000;
+  display: ${({ isOpen }) => (isOpen ? 'flex' : 'none')};
+  align-items: center;
+  justify-content: center;
 `;
 
 const ModalContent = styled.div`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 444px;
-  height: 660px;
   background: white;
-  border-radius: 24px;
-  box-shadow: 0px 2px 30px 0px rgba(0, 0, 0, 0.15);
+  width: 95%;
+  max-width: 600px;
+  max-height: 90vh;
+  border-radius: 15px;
+  border: 3px solid #CBD5E1;
+  position: relative;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 `;
 
 const ModalBody = styled.div`
@@ -63,11 +65,11 @@ const InputContainer = styled.div`
 const EmailInput = styled.input`
   font-family: 'Pretendard';
   font-size: 16px;
-  padding: 12px 16px;
-  border: 1px solid #e1e5e9;
+  padding: 14px 16px;
+  border: 1.5px solid #e5e7eb;
   border-radius: 8px;
-  background: white;
-  color: #1a1a1a;
+  background: #fafafa;
+  color: #1f2937;
   transition: border-color 0.2s ease;
   flex: 1;
 
@@ -112,6 +114,13 @@ const SendIcon = styled.img`
   height: 16px;
 `;
 
+const ButtonRow = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+`;
+
 const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
   isOpen,
   onClose,
@@ -124,6 +133,7 @@ const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
     email: string;
     role: 'admin' | 'reviewer' | 'contributor';
   }>>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchTeamMembers = async () => {
     try {
@@ -176,6 +186,7 @@ const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
   const handleInvite = async () => {
     if (email.trim()) {
       try {
+        setIsLoading(true);
         await inviteUserToTeam({
           repositoryId,
           email: email.trim(),
@@ -184,6 +195,8 @@ const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
         await fetchTeamMembers();
       } catch (error) {
         console.error('Failed to invite user:', error);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -221,10 +234,6 @@ const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <SendButton onClick={handleInvite} disabled={!email.trim()}>
-                <SendIcon src={sendIcon} alt='send' />
-                초대하기
-              </SendButton>
             </InputContainer>
           </InputSection>
 
@@ -233,6 +242,25 @@ const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
             onRoleChange={handleRoleChange}
             onDelete={handleDelete}
           />
+
+          <ButtonRow>
+            <Button
+              variant="secondary"
+              size="medium"
+              onClick={onClose}
+              disabled={isLoading}
+            >
+              취소
+            </Button>
+            <Button
+              variant="primary"
+              size="medium"
+              onClick={handleInvite}
+              disabled={isLoading || !email.trim()}
+            >
+              {isLoading ? '초대 중...' : '초대하기'}
+            </Button>
+          </ButtonRow>
         </ModalBody>
       </ModalContent>
     </ModalContainer>

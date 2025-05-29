@@ -18,22 +18,62 @@ interface ModalPPListProps {
   onProposalClick?: (id: string) => void;
 }
 
-const ModalPPListContainer = styled.div`
-  width: 790px;
-  height: 750px;
-  background: #ffffff;
-  border-radius: 15px;
-  border: 3px solid #cbd5e1;
-  overflow: hidden;
+const Overlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 `;
 
-const ContentWrapper = styled.div`
-  flex: 1;
-  overflow-y: auto;
-  background: #f1f5f9;
-  min-height: 0;
+const Container = styled.div`
+  background: white;
+  width: 95%;
+  max-width: 800px;
+  max-height: 90vh;
+  border-radius: 15px;
+  border: 3px solid #CBD5E1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+`;
+
+const Header = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  border-bottom: 1px solid #e5e7eb;
+  background: white;
+`;
+
+const Title = styled.h2`
+  font-family: 'Pretendard';
+  font-weight: 700;
+  font-size: 24px;
+  color: #1f2937;
+  margin: 0;
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: #374151;
+  }
 `;
 
 const FilterSection = styled.div`
@@ -44,14 +84,6 @@ const FilterSection = styled.div`
   gap: 0;
   justify-content: center;
   flex-shrink: 0;
-`;
-
-const ButtonSection = styled.div`
-  padding: 24px 33px;
-  display: flex;
-  justify-content: center;
-  flex-shrink: 0;
-  background: #f1f5f9;
 `;
 
 const StyledFilterTab = styled(FilterTab)`
@@ -71,25 +103,20 @@ const StyledFilterTab = styled(FilterTab)`
   }
 `;
 
-const StyledButton = styled(Button)`
-  width: 686px;
-  height: 54px;
-  font-size: 22px;
-  line-height: 0.909em;
-  letter-spacing: -0.6%;
+const ContentWrapper = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  background: #f1f5f9;
+  min-height: 0;
 `;
 
-const Overlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0,0,0,0.15);
-  z-index: 1000;
+const ButtonRow = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 24px 32px;
+  border-top: 1px solid #e5e7eb;
+  background: white;
 `;
 
 const ModalPPList: React.FC<ModalPPListProps> = ({ items, onClose, onProposalClick }) => {
@@ -119,8 +146,14 @@ const ModalPPList: React.FC<ModalPPListProps> = ({ items, onClose, onProposalCli
 
   return (
     <Overlay onClick={handleOverlayClick} tabIndex={-1} aria-label="모달 오버레이">
-      <ModalPPListContainer onClick={e => e.stopPropagation()} tabIndex={0} aria-label="모달 내용">
-        <ModalHeader title="Proposal 목록" onClose={onClose || (() => {})} backgroundColor="#f1f5f9"/>
+      <Container onClick={(e) => e.stopPropagation()}>
+        <Header>
+          <Title>Proposal 목록</Title>
+          <CloseButton onClick={onClose} aria-label="모달 닫기">
+            ×
+          </CloseButton>
+        </Header>
+        
         <FilterSection>
           <StyledFilterTab
             label='전체'
@@ -144,12 +177,24 @@ const ModalPPList: React.FC<ModalPPListProps> = ({ items, onClose, onProposalCli
         <ContentWrapper>
           <PPList items={filteredItems} onItemClick={onProposalClick} />
         </ContentWrapper>
-        <ButtonSection>
-          <StyledButton variant='primary' size='large'>
-            새로운 반영 저장하기
-          </StyledButton>
-        </ButtonSection>
-      </ModalPPListContainer>
+        
+        <ButtonRow>
+          <Button
+            variant="secondary"
+            size="medium"
+            onClick={onClose}
+          >
+            닫기
+          </Button>
+          <Button
+            variant="primary"
+            size="medium"
+            onClick={() => onProposalClick && onProposalClick()}
+          >
+            새 Proposal 생성
+          </Button>
+        </ButtonRow>
+      </Container>
     </Overlay>
   );
 };
