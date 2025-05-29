@@ -118,11 +118,6 @@ const ModalPPList: React.FC<ModalPPListProps> = ({ items, onClose, onProposalCli
       <ContentWrapper>
         <PPList items={filteredItems} onItemClick={onProposalClick} />
       </ContentWrapper>
-      <ButtonSection>
-        <StyledButton variant='primary' size='large'>
-          새로운 반영 저장하기
-        </StyledButton>
-      </ButtonSection>
     </ModalPPListContainer>
   );
 };

@@ -1,8 +1,10 @@
 import { UUID } from '../common/types';
 
-export type ProposalStatus = 'OPEN' | 'IN_REVIEW' | 'CLOSED';
+export type ProposalStatus = 'OPEN' | 'CLOSED' | 'MERGED';
 
 export type ProposalFilterType = 'ALL' | 'OPEN' | 'CLOSED';
+
+export type FileType = 'HWP' | 'DOCX' | 'PDF' | 'HWPX';
 
 export interface ProposalCreateRequest {
   historyId: UUID;
@@ -11,8 +13,35 @@ export interface ProposalCreateRequest {
 }
 
 export interface ProposalResponse {
-  proposalId: UUID;
+  id: UUID;
   title: string;
   description: string;
+  status: ProposalStatus;
+}
+
+export interface ProposalDetailResponse {
+  id: UUID;
+  title: string;
+  description: string;
+  createdBy: {
+    providerId: string;
+    nickname: string;
+    profileImage: string;
+    email: string;
+  },
+  CreatedAt: string;
+  file: {
+    id: UUID;
+    name: string;
+    fileType: FileType;
+  };
+}
+
+export interface ProposalUpdateRequest {
+  title: string;
+  description?: string;
+}
+
+export interface ProposalStatusUpdateRequest {
   status: ProposalStatus;
 }

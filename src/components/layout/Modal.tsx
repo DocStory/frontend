@@ -32,6 +32,11 @@ interface ModalProps {
   onAccept: () => void;
   role?: string;
   onClose?: () => void;
+  onEditStart?: () => void;
+  onEditCancel?: () => void;
+  onEditSave?: () => void;
+  onTitleChange?: (title: string) => void;
+  onContentChange?: (content: string) => void;
 }
 
 const ModalContainer = styled.div`
@@ -77,6 +82,11 @@ const Modal: React.FC<ModalProps> = ({
   onAccept,
   role,
   onClose,
+  onEditStart,
+  onEditCancel,
+  onEditSave,
+  onTitleChange,
+  onContentChange,
 }) => {
   return (
     <ModalContainer>
@@ -87,12 +97,18 @@ const Modal: React.FC<ModalProps> = ({
         isEditing={isEditing}
         canEdit={canEdit}
         backgroundColor="#f1f5f9"
+        onEditStart={onEditStart}
+        onEditCancel={onEditCancel}
+        onEditSave={onEditSave}
       />
       <ContentWrapper>
         <ModalContent
           title={contentTitle}
           content={content}
           isEditing={isEditing}
+          isModifying={isEditing}
+          onTitleChange={onTitleChange}
+          onContentChange={onContentChange}
         />
         <SectionTitle>변경사항</SectionTitle>
         <ModalList items={items} />

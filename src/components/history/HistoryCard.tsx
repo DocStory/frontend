@@ -153,7 +153,7 @@ const HistoryCard: React.FC<HistoryCardProps> = ({
     { label: '생성하기', value: 'create' },
     { label: '자세히 보기', value: 'detail' },
     ...(canEdit ? [{ label: '수정하기', value: 'edit' }] : []),
-    { label: 'PP 요청', value: 'pp' },
+    ...(onProposalClick ? [{ label: 'PP 요청', value: 'pp' }] : []),
   ];
 
   return (

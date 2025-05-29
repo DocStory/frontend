@@ -13,12 +13,13 @@ import { getFilteredHistories, getHistoryRootFiles, getHistoryDetail, updateHist
 import { HistoryListResponse, HistoryFileResponse, HistoryDetailResponse } from '../../api/history/types';
 import { UUID } from '../../api/common/types';
 import AuthService from '../../api/auth';
-import { createProposal, getProposalsByRepository, getProposalById } from '../../api/proposal';
+import { createProposal, getProposalsByRepository, getProposalById, updateProposal, mergeProposal, updateProposalStatus } from '../../api/proposal';
 import ModalPPList from '../layout/ModalPPList';
 import { getRepositoryDetail, updateRepository, RepositoryDetail, UpdateRepositoryRequest } from '../../api/repository';
 import { useUser } from '../../contexts/UserContext';
 import { useToastContext } from '../../contexts/ToastContext';
 import pencilIcon from '../../assets/pencilIcon.svg';
+import { getUserAuthority } from '../../api/user';
 
 const PageContainer = styled.div`
   display: flex;
@@ -147,6 +148,7 @@ const RepositoryHistoryPage: React.FC = () => {
   const [rootFiles, setRootFiles] = useState<HistoryFileResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userAuthority, setUserAuthority] = useState<string | null>(null);
 
   // 상대적인 시간 표시 함수
   const getRelativeTime = useCallback((dateString: string) => {
@@ -400,9 +402,9 @@ const RepositoryHistoryPage: React.FC = () => {
           switch (apiStatus.toLowerCase()) {
             case 'open':
               return 'progress';
-            case 'merge':
+            case 'merged':
               return 'merge';
-            case 'close':
+            case 'closed':
               return 'close';
             default:
               return 'progress';
@@ -410,9 +412,9 @@ const RepositoryHistoryPage: React.FC = () => {
         };
         // API 응답을 ModalPPList의 PPItem 형식으로 변환
         const formattedProposals = response.data.map(proposal => ({
-          id: proposal.proposalId,
+          id: proposal.id,
           Name: proposal.title,
-          content: proposal.description,
+          content: proposal.description || '',
           status: mapStatus(proposal.status)
         }));
         setProposalList(formattedProposals);
@@ -524,16 +526,26 @@ const RepositoryHistoryPage: React.FC = () => {
     setSelectedProposalId(proposalId);
     setIsProposalDetailModalOpen(true);
     try {
+      // Proposal 목록에서 상태 정보 가져오기
+      const proposalFromList = proposalList.find(p => p.id === proposalId);
+      const proposalStatus = proposalFromList?.status === 'progress' ? 'OPEN' :
+                           proposalFromList?.status === 'merge' ? 'MERGED' :
+                           proposalFromList?.status === 'close' ? 'CLOSED' : 'OPEN';
+
       const response = await getProposalById(proposalId);
       if (response.code === 100 && response.data) {
-        setSelectedProposalDetail(response.data);
+        const proposalData = {
+          ...response.data,
+          status: proposalStatus
+        };
+        setSelectedProposalDetail(proposalData);
       } else {
         setSelectedProposalDetail(null);
       }
     } catch (err) {
       setSelectedProposalDetail(null);
     }
-  }, []);
+  }, [proposalList]);
 
   // 현재 사용자 정보 설정
   useEffect(() => {
@@ -546,6 +558,28 @@ const RepositoryHistoryPage: React.FC = () => {
       });
     }
   }, [userInfo]);
+
+  // 현재 사용자의 권한 확인
+  const checkUserAuthority = useCallback(async () => {
+    if (!repositoryId) return;
+
+    try {
+      const response = await getUserAuthority(repositoryId);
+      setUserAuthority(response.authority);
+    } catch (err) {
+      console.error('Failed to fetch user authority:', err);
+      setUserAuthority(null);
+    }
+  }, [repositoryId]);
+
+  useEffect(() => {
+    checkUserAuthority();
+  }, [repositoryId, checkUserAuthority]);
+
+  // 현재 사용자가 admin 또는 reviewer인지 확인
+  const canReviewProposal = useMemo(() => {
+    return userAuthority === 'ADMIN' || userAuthority === 'REVIEWER';
+  }, [userAuthority]);
 
   useEffect(() => {
     fetchRepositoryDetail();
@@ -926,28 +960,130 @@ const RepositoryHistoryPage: React.FC = () => {
               zIndex: 1000
             }}>
               <Modal
-                headerTitle={selectedProposalDetail.title}
-                headerTime={''}
+                headerTitle={selectedProposalDetail.createdBy.nickname}
+                headerTime={selectedProposalDetail.createdAt ? new Date(selectedProposalDetail.createdAt).toLocaleDateString() : ''}
                 modalTitle="Proposal 상세"
-                contentTitle={selectedProposalDetail.title}
-                content={selectedProposalDetail.description}
-                items={[]}
-                comments={[]}
-                onReject={() => {
-                  setIsProposalDetailModalOpen(false);
-                  setSelectedProposalId(null);
-                  setSelectedProposalDetail(null);
-                }}
-                onAccept={() => {
-                  setIsProposalDetailModalOpen(false);
-                  setSelectedProposalId(null);
-                  setSelectedProposalDetail(null);
-                }}
+                contentTitle={isEditing ? editedTitle : selectedProposalDetail.title}
+                content={isEditing ? editedContent : selectedProposalDetail.description}
+                items={[{
+                  Name: selectedProposalDetail.file.name,
+                  date: selectedProposalDetail.file.fileType,
+                  iconType: 'diff' as const
+                }]}
                 onClose={() => {
                   setIsProposalDetailModalOpen(false);
                   setSelectedProposalId(null);
                   setSelectedProposalDetail(null);
+                  setIsEditing(false);
+                  setEditedTitle('');
+                  setEditedContent('');
                 }}
+                isEditing={isEditing}
+                canEdit={isAdmin && selectedProposalDetail.status === 'OPEN'}
+                onEditStart={() => {
+                  setIsEditing(true);
+                  setEditedTitle(selectedProposalDetail.title);
+                  setEditedContent(selectedProposalDetail.description);
+                }}
+                onEditCancel={() => {
+                  setIsEditing(false);
+                  setEditedTitle('');
+                  setEditedContent('');
+                }}
+                onEditSave={async () => {
+                  if (!selectedProposalDetail) return;
+
+                  try {
+                    const updateData = {
+                      title: editedTitle,
+                      description: editedContent
+                    };
+
+                    const response = await updateProposal(selectedProposalDetail.id, updateData);
+                    
+                    if (response.code === 100) {
+                      const updatedDetailResponse = await getProposalById(selectedProposalDetail.id);
+                      if (updatedDetailResponse.code === 100 && updatedDetailResponse.data) {
+                        const updatedProposalData = {
+                          ...updatedDetailResponse.data,
+                          status: selectedProposalDetail.status
+                        };
+                        setSelectedProposalDetail(updatedProposalData);
+                      }
+                      setIsEditing(false);
+                      setEditedTitle('');
+                      setEditedContent('');
+                    }
+                  } catch (err) {
+                    console.error('Failed to update proposal:', err);
+                  }
+                }}
+                onTitleChange={setEditedTitle}
+                onContentChange={setEditedContent}
+                onReject={selectedProposalDetail.status === 'OPEN' ? async () => {
+                  if (isEditing) {
+                    setIsEditing(false);
+                    setEditedTitle('');
+                    setEditedContent('');
+                  } else {
+                    if (!selectedProposalDetail) return;
+                    
+                    try {
+                      const response = await updateProposalStatus(selectedProposalDetail.id, { status: 'CLOSED' });
+                      if (response.code === 100) {
+                        setIsProposalDetailModalOpen(false);
+                        setSelectedProposalId(null);
+                        setSelectedProposalDetail(null);
+                        // Proposal 목록 새로고침
+                        if (repositoryId) {
+                          const proposalsResponse = await getProposalsByRepository(repositoryId, 'ALL');
+                          if (proposalsResponse.code === 100 && proposalsResponse.data) {
+                            const formattedProposals = proposalsResponse.data.map(proposal => ({
+                              id: proposal.id,
+                              Name: proposal.title,
+                              content: proposal.description || '',
+                              status: proposal.status.toLowerCase() === 'open' ? 'progress' : 
+                                     proposal.status.toLowerCase() === 'merged' ? 'merge' : 'close'
+                            }));
+                            setProposalList(formattedProposals);
+                          }
+                        }
+                      }
+                    } catch (err) {
+                      console.error('Failed to reject proposal:', err);
+                    }
+                  }
+                } : () => {}}
+                onAccept={selectedProposalDetail.status === 'OPEN' ? async () => {
+                  if (!selectedProposalDetail) return;
+                  
+                  try {
+                    const response = await mergeProposal(selectedProposalDetail.id);
+                    if (response.code === 100) {
+                      setIsProposalDetailModalOpen(false);
+                      setSelectedProposalId(null);
+                      setSelectedProposalDetail(null);
+                      // Proposal 목록 새로고침
+                      if (repositoryId) {
+                        const proposalsResponse = await getProposalsByRepository(repositoryId, 'ALL');
+                        if (proposalsResponse.code === 100 && proposalsResponse.data) {
+                          const formattedProposals = proposalsResponse.data.map(proposal => ({
+                            id: proposal.id,
+                            Name: proposal.title,
+                            content: proposal.description || '',
+                            status: proposal.status.toLowerCase() === 'open' ? 'progress' : 
+                                   proposal.status.toLowerCase() === 'merged' ? 'merge' : 'close'
+                          }));
+                          setProposalList(formattedProposals);
+                        }
+                      }
+                    }
+                  } catch (err) {
+                    console.error('Failed to merge proposal:', err);
+                  }
+                } : () => {}}
+                comments={[]}
+                role={canReviewProposal && selectedProposalDetail.status === 'OPEN' ? 'admin' : undefined}
               />
             </div>
           )}

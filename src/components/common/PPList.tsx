@@ -16,7 +16,7 @@ interface PPListProps {
 const PPListContainer = styled.div`
   padding: 24px 33px;
   border-bottom: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.surface};
+  background: #f1f5f9;
   transition: background-color 0.3s ease;
 `;
 
@@ -31,11 +31,11 @@ const PPItemContainer = styled.div`
   border-right: none;
   border-radius: 0;
   margin-bottom: 12px;
-  background: ${({ theme }) => theme.cardBackground};
+  background: #f1f5f9;
   transition: all 0.2s ease;
 
   &:hover {
-    background: ${({ theme }) => theme.hoverBackground};
+    background: #e2e8f0;
   }
 `;
 
@@ -93,7 +93,6 @@ const PPList: React.FC<PPListProps> = ({ items, onItemClick }) => {
     <PPListContainer>
       {items.map((item, index) => (
         <PPItemContainer key={item.id} onClick={() => {
-          console.log('PPList item clicked:', item.id);
           if (onItemClick) onItemClick(item.id);
         }} style={{ cursor: onItemClick ? 'pointer' : undefined }}>
           <ItemTextInfo>
