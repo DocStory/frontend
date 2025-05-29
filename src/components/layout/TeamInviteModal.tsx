@@ -6,6 +6,7 @@ import ModalHeader from '../common/ModalHeader';
 import { getTeamMembers, updateTeamMemberRole, removeTeamMember } from '../../api/team';
 import { UUID } from '../../api/common/types';
 import { inviteUserToTeam } from '../../api/teaminvite';
+import { getUserAuthority } from '../../api/user';
 
 interface TeamInviteModalProps {
   isOpen: boolean;
@@ -122,6 +123,7 @@ const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
     email: string;
     role: 'admin' | 'reviewer' | 'contributor';
   }>>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const fetchTeamMembers = async () => {
     try {
@@ -151,6 +153,22 @@ const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
   };
 
   useEffect(() => {
+    const checkUserAuthority = async () => {
+      try {
+        const authority = await getUserAuthority(repositoryId);
+        setIsAdmin(authority.authority === 'ADMIN');
+      } catch (error) {
+        console.error('Failed to fetch user authority:', error);
+        setIsAdmin(false);
+      }
+    };
+
+    if (isOpen) {
+      checkUserAuthority();
+    }
+  }, [isOpen, repositoryId]);
+
+  useEffect(() => {
     if (isOpen) {
       fetchTeamMembers();
     }
@@ -174,7 +192,7 @@ const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
 
   const handleRoleChange = async (id: string, role: 'admin' | 'reviewer' | 'contributor') => {
     try {
-      await updateTeamMemberRole(repositoryId, id, { role: role.toUpperCase() });
+      await updateTeamMemberRole(repositoryId, id, { role: role.toUpperCase() as 'ADMIN' | 'REVIEWER' | 'CONTRIBUTOR' });
       await fetchTeamMembers();
     } catch (error) {
       console.error('Failed to update member role:', error);
@@ -214,6 +232,7 @@ const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
             members={members}
             onRoleChange={handleRoleChange}
             onDelete={handleDelete}
+            isAdmin={isAdmin}
           />
         </ModalBody>
       </ModalContent>
