@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
 import downloadIcon from '../../assets/downloadIcon.svg';
 import uploadIcon from '../../assets/uploadIcon.svg';
@@ -98,14 +98,14 @@ const Icon = styled.img<{ $large?: boolean }>`
   min-height: ${({ $large }) => ($large ? '36px' : '24px')};
 `;
 
-const FileUploadArea = styled.div`
+const FileUploadArea = styled.div<{ $isDragOver?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
-  border: 2px dashed #cbd5e1;
+  border: 2px dashed ${({ $isDragOver }) => $isDragOver ? '#4078FF' : '#cbd5e1'};
   border-radius: 8px;
-  background: #f8fafc;
+  background: ${({ $isDragOver }) => $isDragOver ? '#e8f1ff' : '#f8fafc'};
   cursor: pointer;
   margin-bottom: 16px;
   transition: border-color 0.2s, background-color 0.2s;
@@ -135,6 +135,7 @@ const ModalList: React.FC<ModalListProps> = ({
   isCreating = false 
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const handleFileUploadClick = () => {
     fileInputRef.current?.click();
@@ -143,6 +144,36 @@ const ModalList: React.FC<ModalListProps> = ({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (onFileSelect) {
+      onFileSelect(files);
+    }
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    
+    const files = e.dataTransfer.files;
+    if (onFileSelect && files.length > 0) {
       onFileSelect(files);
     }
   };
@@ -183,7 +214,14 @@ const ModalList: React.FC<ModalListProps> = ({
     <ModalListContainer>
       {isCreating && onFileSelect && (
         <>
-          <FileUploadArea onClick={handleFileUploadClick}>
+          <FileUploadArea 
+            onClick={handleFileUploadClick}
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            $isDragOver={isDragOver}
+          >
             <Icon src={uploadIcon} alt='Upload' />
             <FileUploadText>파일을 선택하거나 여기에 드래그하세요</FileUploadText>
           </FileUploadArea>
