@@ -200,6 +200,7 @@ const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }
   const initialViewportRef = useRef(INITIAL_VIEWPORT);
   const animatingRef = useRef(false);
   const initialNodeStatesRef = useRef<NodeData[]>(nodes.map(n => ({ ...n })));
+  const lastNodePositionsRef = useRef<{ [id: string]: { x: number; y: number } }>({});
 
   // nodes prop이 바뀌면 초기 노드 위치도 갱신
   useEffect(() => {
@@ -320,98 +321,116 @@ const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }
 
   // Matter.js 초기화 및 최적화
   useEffect(() => {
-    const engine = Matter.Engine.create({
-      gravity: { x: 0, y: 0 },
-      enableSleeping: true, // 정지된 물체 계산 제외
-    });
+    let rafId: number | null = null;
+    let lastUpdate = performance.now();
+    let lastRender = performance.now();
+    let engine: Matter.Engine | null = null;
+    let world: Matter.World | null = null;
+    let bodies: { [id: string]: Matter.Body } = {};
+    let constraints: Matter.Constraint[] = [];
 
-    // 물리 엔진 설정 최적화
-    engine.constraintIterations = 2; // 기본값 보다 낮춤
-    engine.positionIterations = 3; // 기본값 보다 낮춤
-    engine.velocityIterations = 3; // 기본값 보다 낮춤
-
-    engineRef.current = engine;
-
-    // 노드별 Body 생성
-    const bodies: { [id: string]: Matter.Body } = {};
-    nodes.forEach(node => {
-      bodies[node.id] = Matter.Bodies.rectangle(
-        node.x,
-        node.y,
-        CARD_WIDTH,
-        CARD_HEIGHT,
-        {
-          inertia: Infinity,
-          restitution: 0.1, // 반발력 더 감소
-          friction: 0.05, // 마찰력 감소
-          frictionAir: 0.05, // 공기 마찰 감소
-          frictionStatic: 0.1, // 정적 마찰 감소
-          density: 0.0005, // 밀도 감소
-          isStatic: false,
-          sleepThreshold: 30, // 더 빨리 잠들도록
-        }
-      );
-    });
-
-    // 최적화된 Constraint 설정
-    const constraints = edges.map(edge => {
-      const sourceBody = bodies[edge.source];
-      const targetBody = bodies[edge.target];
-      const sourceNode = nodes.find(n => n.id === edge.source);
-      const targetNode = nodes.find(n => n.id === edge.target);
-      const isMainEdge = sourceNode?.isMain && targetNode?.isMain;
-      
-      return Matter.Constraint.create({
-        bodyA: sourceBody,
-        bodyB: targetBody,
-        stiffness: isMainEdge ? 0.04 : 0.02, // 강성 감소
-        damping: isMainEdge ? 0.5 : 0.4, // 댐핑 증가
-        length: Math.sqrt(
-          Math.pow(sourceBody.position.x - targetBody.position.x, 2) +
-          Math.pow(sourceBody.position.y - targetBody.position.y, 2)
-        )
+    function setupEngine() {
+      engine = Matter.Engine.create({
+        gravity: { x: 0, y: 0 },
+        enableSleeping: true,
       });
-    });
+      engine.constraintIterations = 2;
+      engine.positionIterations = 3;
+      engine.velocityIterations = 3;
+      engineRef.current = engine;
 
-    const world = engine.world;
-    Matter.World.add(world, Object.values(bodies));
-    Matter.World.add(world, constraints);
-    
-    bodiesRef.current = bodies;
-    constraintsRef.current = constraints;
-
-    // 최적화된 업데이트 루프
-    function update(timestamp: number) {
-      const deltaTime = timestamp - lastUpdateRef.current;
-      
-      if (deltaTime >= UPDATE_INTERVAL) {
-        // 더 부드러운 물리 시뮬레이션을 위해 작은 단위로 업데이트
-        Matter.Engine.update(engine, Math.min(deltaTime, 16.67)); // 최대 60fps
-        
-        setNodeStates(prev =>
-          prev.map(node => {
-            const body = bodies[node.id];
-            return {
-              ...node,
-              x: body.position.x,
-              y: body.position.y,
-            };
-          })
+      bodies = {};
+      nodes.forEach(node => {
+        bodies[node.id] = Matter.Bodies.rectangle(
+          node.x,
+          node.y,
+          CARD_WIDTH,
+          CARD_HEIGHT,
+          {
+            inertia: Infinity,
+            restitution: 0.1,
+            friction: 0.05,
+            frictionAir: 0.05,
+            frictionStatic: 0.1,
+            density: 0.0005,
+            isStatic: false,
+            sleepThreshold: 30,
+          }
         );
-        
-        lastUpdateRef.current = timestamp;
-      }
-      
-      rafRef.current = requestAnimationFrame(update);
+      });
+      constraints = edges.map(edge => {
+        const sourceBody = bodies[edge.source];
+        const targetBody = bodies[edge.target];
+        const sourceNode = nodes.find(n => n.id === edge.source);
+        const targetNode = nodes.find(n => n.id === edge.target);
+        const isMainEdge = sourceNode?.isMain && targetNode?.isMain;
+        return Matter.Constraint.create({
+          bodyA: sourceBody,
+          bodyB: targetBody,
+          stiffness: isMainEdge ? 0.04 : 0.02,
+          damping: isMainEdge ? 0.5 : 0.4,
+          length: Math.sqrt(
+            Math.pow(sourceBody.position.x - targetBody.position.x, 2) +
+            Math.pow(sourceBody.position.y - targetBody.position.y, 2)
+          )
+        });
+      });
+      world = engine.world;
+      Matter.World.add(world, Object.values(bodies));
+      Matter.World.add(world, constraints);
+      bodiesRef.current = bodies;
+      constraintsRef.current = constraints;
     }
-    
-    rafRef.current = requestAnimationFrame(update);
+
+    function cleanupEngine() {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (world && engine) {
+        Matter.World.clear(world, false);
+        Matter.Engine.clear(engine);
+      }
+      if (bodies) Object.keys(bodies).forEach(id => delete bodies[id]);
+      if (constraints) constraints.length = 0;
+      engineRef.current = null;
+      bodiesRef.current = {};
+      constraintsRef.current = [];
+      world = null;
+      engine = null;
+    }
+
+    function startLoop() {
+      lastUpdate = performance.now();
+      lastRender = performance.now();
+      function update(now: number) {
+        const delta = now - lastUpdate;
+        if (engine) {
+          if (delta > 0) {
+            Matter.Engine.update(engine, Math.min(delta, 16.67));
+            lastUpdate = now;
+          }
+          // 항상 60fps로 setNodeStates (빈도 제한 제거)
+          setNodeStates(prev =>
+            prev.map(node => {
+              const body = bodies[node.id];
+              if (!body) return node;
+              lastNodePositionsRef.current[node.id] = { x: body.position.x, y: body.position.y };
+              return { ...node, x: body.position.x, y: body.position.y };
+            })
+          );
+          lastRender = now;
+        }
+        rafId = requestAnimationFrame(update);
+      }
+      rafId = requestAnimationFrame(update);
+    }
+
+    // 최초 엔진 세팅 및 루프 시작
+    setupEngine();
+    startLoop();
 
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      Matter.World.clear(world, false);
-      Matter.Engine.clear(engine);
+      cleanupEngine();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes, edges]);
 
   // 노드 위치만 초기화
