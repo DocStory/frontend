@@ -10,7 +10,7 @@ const HeaderContainer = styled.header`
   align-items: center;
   justify-content: space-between;
   background: ${({ theme }) => theme.headerBackground};
-  border-bottom: 3px solid ${({ theme }) => theme.border};
+  border-bottom: 1px solid ${({ theme }) => theme.border};
   padding: 0 32px;
   height: 64px;
   transition: all 0.3s ease;

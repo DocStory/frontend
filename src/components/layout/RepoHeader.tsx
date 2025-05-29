@@ -11,8 +11,8 @@ const HeaderContainer = styled.header`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
-  border-bottom: 3px solid #F0F0F0;
+  background: ${({ theme }) => theme.headerBackground};
+  border-bottom: 1px solid ${({ theme }) => theme.border};
   padding: 0 32px;
   height: 64px;
 `;
