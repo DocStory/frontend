@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import Button from './Button';
 import fileIcon from '../../assets/fileIcon.svg';
 import diffIcon from '../../assets/diffIcon.svg';
 import downloadIcon from '../../assets/downloadIcon.svg';
@@ -307,7 +308,7 @@ const FileActionButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
+  padding: 6px;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -323,34 +324,9 @@ const Footer = styled.div`
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding: 16px 32px;
+  padding: 20px 32px;
   border-top: 1px solid ${({ theme }) => theme.border};
   background: ${({ theme }) => theme.surface};
-`;
-
-const Button = styled.button<{ variant: 'primary' | 'secondary' }>`
-  font-family: 'Pretendard';
-  font-size: 14px;
-  font-weight: 600;
-  padding: 10px 20px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 80px;
-
-  background: ${({ variant, theme }) => variant === 'primary' ? theme.primary : theme.surface};
-  color: ${({ variant, theme }) => variant === 'primary' ? theme.background : theme.text};
-  border: ${({ variant, theme }) => variant === 'secondary' ? `1px solid ${theme.border}` : 'none'};
-
-  &:hover {
-    background: ${({ variant, theme }) => variant === 'primary' ? theme.primaryHover : theme.hoverBackground};
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
 `;
 
 const HistoryDetailModal: React.FC<HistoryDetailModalProps> = ({
