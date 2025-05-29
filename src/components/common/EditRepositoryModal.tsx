@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import Button from './Button';
+import ModalHeader from './ModalHeader';
+import { useToastContext } from '../../contexts/ToastContext';
 
 interface EditRepositoryModalProps {
   isOpen: boolean;
@@ -163,6 +166,7 @@ const EditRepositoryModal: React.FC<EditRepositoryModalProps> = ({
   initialDescription,
   loading = false,
 }) => {
+  const toast = useToastContext();
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
 
@@ -175,8 +179,19 @@ const EditRepositoryModal: React.FC<EditRepositoryModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (name.trim()) {
+    
+    if (!name.trim()) {
+      toast.warning('프로젝트 이름을 입력해주세요.');
+      return;
+    }
+    
+    try {
       await onSubmit(name.trim(), description.trim());
+      onClose();
+    } catch (error: any) {
+      console.error('Repository update error:', error);
+      const errorMessage = error.response?.data?.message || '저장소 정보 수정 중 오류가 발생했습니다.';
+      toast.error(errorMessage);
     }
   };
 

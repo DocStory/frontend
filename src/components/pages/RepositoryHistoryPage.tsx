@@ -822,6 +822,7 @@ const RepositoryHistoryPage: React.FC = () => {
               // PATCH API 호출
               const response = await updateHistory(repositoryId, selectedHistoryDetail.Id, updateData);
               if (response.code === 100) {
+                toast.success('히스토리가 성공적으로 수정되었습니다.');
                 // 성공 시 상세 정보 갱신
                 const updatedDetailResponse = await getHistoryDetail(repositoryId, selectedHistoryDetail.Id);
                 if (updatedDetailResponse.code === 100 && updatedDetailResponse.data) {
@@ -835,9 +836,12 @@ const RepositoryHistoryPage: React.FC = () => {
                 if (historiesResponse.code === 100 && historiesResponse.data) {
                   setHistories(historiesResponse.data);
                 }
+              } else {
+                toast.error(`히스토리 수정 실패: ${response.message}`);
               }
             } catch (err) {
               console.error('Failed to update history:', err);
+              toast.error('히스토리 수정 중 오류가 발생했습니다. 다시 시도해주세요.');
             }
           }}
           onTitleChange={setEditedTitle}
@@ -889,9 +893,11 @@ const RepositoryHistoryPage: React.FC = () => {
             }}
             onEditSave={async () => {
               if (!createTitle.trim()) {
+                toast.warning('제목을 입력해주세요.');
                 return;
               }
               if (selectedFiles.length === 0) {
+                toast.warning('파일을 첨부해주세요.');
                 return;
               }
               try {
@@ -906,6 +912,7 @@ const RepositoryHistoryPage: React.FC = () => {
                 formData.append('file', selectedFiles[0]);
                 const response = await createHistory(repositoryId, formData);
                 if (response.code === 100) {
+                  toast.success('히스토리가 성공적으로 생성되었습니다.');
                   setIsCreateModalOpen(false);
                   setParentFileId(null);
                   setCreateTitle('');
@@ -915,9 +922,12 @@ const RepositoryHistoryPage: React.FC = () => {
                   if (historiesResponse.code === 100 && historiesResponse.data) {
                     setHistories(historiesResponse.data);
                   }
+                } else {
+                  toast.error(`히스토리 생성 실패: ${response.message}`);
                 }
               } catch (err) {
                 console.error('Failed to create history:', err);
+                toast.error('히스토리 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
               }
             }}
             onTitleChange={setCreateTitle}
@@ -975,10 +985,12 @@ const RepositoryHistoryPage: React.FC = () => {
                 }}
                 onEditSave={async () => {
                   if (!proposalTitle.trim()) {
+                    toast.warning('제목을 입력해주세요.');
                     return;
                   }
 
                   if (!selectedHistoryForProposal) {
+                    toast.error('히스토리가 선택되지 않았습니다.');
                     return;
                   }
 
@@ -992,14 +1004,18 @@ const RepositoryHistoryPage: React.FC = () => {
                     const response = await createProposal(proposalData);
                     
                     if (response.code === 100) {
+                      toast.success('Proposal이 성공적으로 생성되었습니다.');
                       // 성공적으로 생성된 경우 모달 닫기
                       setIsProposalModalOpen(false);
                       setSelectedHistoryForProposal(null);
                       setProposalTitle('');
                       setProposalContent('');
+                    } else {
+                      toast.error(`Proposal 생성 실패: ${response.message}`);
                     }
                   } catch (err) {
                     console.error('Failed to create proposal:', err);
+                    toast.error('Proposal 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
                   }
                 }}
             onTitleChange={setProposalTitle}

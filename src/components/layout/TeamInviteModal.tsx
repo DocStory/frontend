@@ -7,6 +7,7 @@ import { getTeamMembers, updateTeamMemberRole, removeTeamMember } from '../../ap
 import { UUID } from '../../api/common/types';
 import { inviteUserToTeam } from '../../api/teaminvite';
 import Button from '../common/Button';
+import { useToastContext } from '../../contexts/ToastContext';
 
 interface TeamInviteModalProps {
   isOpen: boolean;
@@ -126,6 +127,7 @@ const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
   onClose,
   repositoryId = "1a728c51-4cca-43b5-a41e-08c1edcc33f6",
 }) => {
+  const toast = useToastContext();
   const [email, setEmail] = useState('');
   const [members, setMembers] = useState<Array<{
     id: string;
@@ -184,38 +186,56 @@ const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
   };
 
   const handleInvite = async () => {
-    if (email.trim()) {
-      try {
-        setIsLoading(true);
-        await inviteUserToTeam({
-          repositoryId,
-          email: email.trim(),
-        });
-        setEmail('');
-        await fetchTeamMembers();
-      } catch (error) {
-        console.error('Failed to invite user:', error);
-      } finally {
-        setIsLoading(false);
-      }
+    if (!email.trim()) {
+      toast.warning('이메일을 입력해주세요.');
+      return;
+    }
+    
+    if (!/\S+@\S+\.\S+/.test(email.trim())) {
+      toast.warning('올바른 이메일 형식을 입력해주세요.');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await inviteUserToTeam({
+        repositoryId,
+        email: email.trim(),
+      });
+      toast.success('팀원 초대가 성공적으로 완료되었습니다.');
+      setEmail('');
+      await fetchTeamMembers();
+    } catch (error: any) {
+      console.error('Failed to invite user:', error);
+      const errorMessage = error.response?.data?.message || '팀원 초대 중 오류가 발생했습니다.';
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleRoleChange = async (id: string, role: 'admin' | 'reviewer' | 'contributor') => {
     try {
-      await updateTeamMemberRole(repositoryId, id, { role: role.toUpperCase() });
+      const upperRole = role.toUpperCase() as 'ADMIN' | 'REVIEWER' | 'CONTRIBUTOR';
+      await updateTeamMemberRole(repositoryId, id, { role: upperRole });
+      toast.success('멤버 역할이 성공적으로 변경되었습니다.');
       await fetchTeamMembers();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update member role:', error);
+      const errorMessage = error.response?.data?.message || '멤버 역할 변경 중 오류가 발생했습니다.';
+      toast.error(errorMessage);
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await removeTeamMember(repositoryId, id);
+      toast.success('멤버가 성공적으로 제거되었습니다.');
       await fetchTeamMembers();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to remove team member:', error);
+      const errorMessage = error.response?.data?.message || '멤버 제거 중 오류가 발생했습니다.';
+      toast.error(errorMessage);
     }
   };
 

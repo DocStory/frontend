@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import RepositoryCard, { FileType } from './RepositoryCard';
 import { useRepositories } from '../../contexts/RepositoryContext';
+import { useToastContext } from '../../contexts/ToastContext';
 import api from '../../api/axios';
 import repoIcon from '../../assets/repoIcon.svg';
 
@@ -96,6 +97,7 @@ interface ApiResponse {
 
 const RepositorySectionCard: React.FC = () => {
   const { repositories, loading, error, fetchRepositories } = useRepositories();
+  const toast = useToastContext();
   const [favoriteStates, setFavoriteStates] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -121,8 +123,10 @@ const RepositorySectionCard: React.FC = () => {
       // API 호출
       if (isFavorite) {
         await api.post(`/api/repositories/${repositoryId}/favorite`);
+        toast.success('즐겨찾기에 추가되었습니다.');
       } else {
         await api.delete(`/api/repositories/${repositoryId}/favorite`);
+        toast.success('즐겨찾기에서 제거되었습니다.');
       }
     } catch (error) {
       // 실패시 되돌리기
@@ -131,6 +135,7 @@ const RepositorySectionCard: React.FC = () => {
         [repositoryId]: !isFavorite
       }));
       console.error('즐겨찾기 상태 변경 실패:', error);
+      toast.error('즐겨찾기 상태 변경에 실패했습니다. 다시 시도해주세요.');
     }
   };
 

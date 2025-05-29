@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import avatarIcon from '../../assets/avatar.svg';
 import profilePencilIcon from '../../assets/profilepencilIcon.svg';
 import ModalHeader from '../common/ModalHeader';
-import { toast } from 'react-toastify';
+import { useToastContext } from '../../contexts/ToastContext';
 import api from '../../api/axios';
 import { useUser } from '../../contexts/UserContext';
 
@@ -252,6 +252,7 @@ const UserInfoModal: React.FC<UserInfoModalProps> = ({
   onUserNameChange,
 }) => {
   const { refetchUser } = useUser();
+  const toast = useToastContext();
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(userName);
   const [profileImageState, setProfileImageState] = useState<string>(profileImage || avatarIcon);
@@ -291,14 +292,16 @@ const UserInfoModal: React.FC<UserInfoModalProps> = ({
         }
         setIsEditingName(false);
         toast.success('사용자 이름이 성공적으로 변경되었습니다.');
+        
+        // 사용자 정보 갱신
         await refetchUser();
       } else {
         toast.error(`이름 변경 실패: ${response.data.message || '알 수 없는 오류가 발생했습니다.'}`);
         setEditedName(userName);
       }
     } catch (error: any) {
-      console.error('사용자 이름 변경 중 오류 발생:', error);
-      toast.error(error.response?.data?.message || '사용자 이름 변경 중 오류가 발생했습니다.');
+      console.error('사용자 이름 변경 오류:', error);
+      toast.error('사용자 이름 변경 중 오류가 발생했습니다. 다시 시도해주세요.');
       setEditedName(userName);
     }
   };
@@ -326,57 +329,39 @@ const UserInfoModal: React.FC<UserInfoModalProps> = ({
       // 이미지 파일인지 확인
       if (file.type.startsWith('image/')) {
         try {
-          // 파일을 base64로 변환
-          const reader = new FileReader();
-          reader.onload = async (event) => {
-            if (event.target?.result) {
-              const base64String = event.target.result as string;
-              
-              try {
-                const formData = new FormData();
-                formData.append('updateUserRequest', JSON.stringify({
-                  nickname: userName // 현재 닉네임 유지
-                }));
-                
-                // base64 문자열을 Blob으로 변환
-                const byteString = atob(base64String.split(',')[1]);
-                const ab = new ArrayBuffer(byteString.length);
-                const ia = new Uint8Array(ab);
-                for (let i = 0; i < byteString.length; i++) {
-                  ia[i] = byteString.charCodeAt(i);
-                }
-                const blob = new Blob([ab], { type: file.type });
-                
-                // Blob을 File로 변환
-                const imageFile = new File([blob], file.name, { type: file.type });
-                formData.append('profileImage', imageFile);
+          const formData = new FormData();
+          formData.append('updateUserRequest', JSON.stringify({}));
+          formData.append('profileImage', file);
 
-                const response = await api.put('/api/users/me', formData, {
-                  headers: {
-                    'Content-Type': 'multipart/form-data'
-                  }
-                });
-
-                if (response.data.code === 100) {
-                  setProfileImageState(base64String);
-                  toast.success('프로필 이미지가 성공적으로 변경되었습니다.');
-                  await refetchUser();
-                } else {
-                  toast.error(`이미지 변경 실패: ${response.data.message || '알 수 없는 오류가 발생했습니다.'}`);
-                }
-              } catch (error: any) {
-                console.error('프로필 이미지 변경 중 오류 발생:', error);
-                toast.error(error.response?.data?.message || '프로필 이미지 변경 중 오류가 발생했습니다.');
-              }
+          const response = await api.put('/api/users/me', formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data'
             }
-          };
-          reader.readAsDataURL(file);
-        } catch (error) {
-          console.error('파일 읽기 오류:', error);
-          toast.error('파일을 읽는 중 오류가 발생했습니다.');
+          });
+
+          if (response.data.code === 100) {
+            // 파일을 미리보기용으로 읽기
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              if (event.target?.result) {
+                setProfileImageState(event.target.result as string);
+              }
+            };
+            reader.readAsDataURL(file);
+
+            toast.success('프로필 이미지가 성공적으로 변경되었습니다.');
+            
+            // 사용자 정보 갱신
+            await refetchUser();
+          } else {
+            toast.error(`프로필 이미지 변경 실패: ${response.data.message || '알 수 없는 오류가 발생했습니다.'}`);
+          }
+        } catch (error: any) {
+          console.error('프로필 이미지 변경 오류:', error);
+          toast.error('프로필 이미지 변경 중 오류가 발생했습니다. 다시 시도해주세요.');
         }
       } else {
-        toast.error('이미지 파일만 업로드 가능합니다.');
+        toast.warning('이미지 파일만 업로드할 수 있습니다.');
       }
     }
   };
