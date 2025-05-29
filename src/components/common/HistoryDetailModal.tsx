@@ -147,7 +147,7 @@ const TitleInput = styled.input`
 const ContentCard = styled.div`
   background: #f8fafc;
   border-radius: 12px;
-  margin: 12px 32px 0 32px;
+  margin: 12px 32px 24px 32px;
   padding: 20px 18px;
   font-family: 'Pretendard';
   font-size: 16px;
@@ -169,6 +169,7 @@ const ContentTextarea = styled.textarea`
   min-height: 120px;
   box-sizing: border-box;
   resize: vertical;
+  margin-bottom: 24px;
   &::placeholder {
     color: #9ca3af;
   }

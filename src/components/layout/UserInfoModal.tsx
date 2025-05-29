@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import styled from 'styled-components';
 import avatarIcon from '../../assets/avatar.svg';
 import profilePencilIcon from '../../assets/profilepencilIcon.svg';
 import ModalHeader from '../common/ModalHeader';
+import { toast } from 'react-toastify';
+import api from '../../api/axios';
+import { useUser } from '../../contexts/UserContext';
 
 interface UserInfoModalProps {
   isOpen: boolean;
@@ -248,10 +251,11 @@ const UserInfoModal: React.FC<UserInfoModalProps> = ({
   profileImage,
   onUserNameChange,
 }) => {
+  const { refetchUser } = useUser();
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(userName);
   const [profileImageState, setProfileImageState] = useState<string>(profileImage || avatarIcon);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // profileImage prop이 변경될 때 상태 업데이트
   React.useEffect(() => {
@@ -263,11 +267,40 @@ const UserInfoModal: React.FC<UserInfoModalProps> = ({
     setEditedName(userName);
   };
 
-  const handleNameSave = () => {
-    if (onUserNameChange && editedName.trim()) {
-      onUserNameChange(editedName.trim());
+  const handleNameSave = async () => {
+    if (editedName.trim() === userName) {
+      setIsEditingName(false);
+      return;
     }
-    setIsEditingName(false);
+
+    try {
+      const formData = new FormData();
+      formData.append('updateUserRequest', JSON.stringify({
+        nickname: editedName.trim()
+      }));
+
+      const response = await api.put('/api/users/me', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (response.data.code === 100) {
+        if (onUserNameChange) {
+          onUserNameChange(editedName.trim());
+        }
+        setIsEditingName(false);
+        toast.success('사용자 이름이 성공적으로 변경되었습니다.');
+        await refetchUser();
+      } else {
+        toast.error(`이름 변경 실패: ${response.data.message || '알 수 없는 오류가 발생했습니다.'}`);
+        setEditedName(userName);
+      }
+    } catch (error: any) {
+      console.error('사용자 이름 변경 중 오류 발생:', error);
+      toast.error(error.response?.data?.message || '사용자 이름 변경 중 오류가 발생했습니다.');
+      setEditedName(userName);
+    }
   };
 
   const handleNameCancel = () => {
@@ -287,20 +320,63 @@ const UserInfoModal: React.FC<UserInfoModalProps> = ({
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       // 이미지 파일인지 확인
       if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            setProfileImageState(event.target.result as string);
-          }
-        };
-        reader.readAsDataURL(file);
+        try {
+          // 파일을 base64로 변환
+          const reader = new FileReader();
+          reader.onload = async (event) => {
+            if (event.target?.result) {
+              const base64String = event.target.result as string;
+              
+              try {
+                const formData = new FormData();
+                formData.append('updateUserRequest', JSON.stringify({
+                  nickname: userName // 현재 닉네임 유지
+                }));
+                
+                // base64 문자열을 Blob으로 변환
+                const byteString = atob(base64String.split(',')[1]);
+                const ab = new ArrayBuffer(byteString.length);
+                const ia = new Uint8Array(ab);
+                for (let i = 0; i < byteString.length; i++) {
+                  ia[i] = byteString.charCodeAt(i);
+                }
+                const blob = new Blob([ab], { type: file.type });
+                
+                // Blob을 File로 변환
+                const imageFile = new File([blob], file.name, { type: file.type });
+                formData.append('profileImage', imageFile);
+
+                const response = await api.put('/api/users/me', formData, {
+                  headers: {
+                    'Content-Type': 'multipart/form-data'
+                  }
+                });
+
+                if (response.data.code === 100) {
+                  setProfileImageState(base64String);
+                  toast.success('프로필 이미지가 성공적으로 변경되었습니다.');
+                  await refetchUser();
+                } else {
+                  toast.error(`이미지 변경 실패: ${response.data.message || '알 수 없는 오류가 발생했습니다.'}`);
+                }
+              } catch (error: any) {
+                console.error('프로필 이미지 변경 중 오류 발생:', error);
+                toast.error(error.response?.data?.message || '프로필 이미지 변경 중 오류가 발생했습니다.');
+              }
+            }
+          };
+          reader.readAsDataURL(file);
+        } catch (error) {
+          console.error('파일 읽기 오류:', error);
+          toast.error('파일을 읽는 중 오류가 발생했습니다.');
+        }
       } else {
-        alert('이미지 파일만 업로드 가능합니다.');
+        toast.error('이미지 파일만 업로드 가능합니다.');
       }
     }
   };
