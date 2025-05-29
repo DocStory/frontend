@@ -136,6 +136,7 @@ const MemoizedNode = memo(({ node, isDragging, onDragStart, onDrag, onDragEnd }:
     y={node.y}
     isDragging={isDragging}
     style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}
+    data-node-id={node.id}
     onMouseDown={e => onDragStart(node.id, e)}
     onMouseMove={e => isDragging && onDrag(node.id, e)}
     onMouseUp={() => onDragEnd(node.id)}
@@ -178,12 +179,17 @@ const MemoizedEdge = memo(({ source, target, isMain }: {
 
 MemoizedEdge.displayName = 'MemoizedEdge';
 
+const DRAG_NONE = 0;
+const DRAG_PAN = 1;
+const DRAG_NODE = 2;
+
 const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }) => {
   const [nodeStates, setNodeStates] = useState<NodeData[]>(nodes);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [viewport, setViewport] = useState(INITIAL_VIEWPORT);
   const [isPanning, setIsPanning] = useState(false);
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
+  const [dragMode, setDragMode] = useState<number>(DRAG_NONE); // 0: 없음, 1: 시점, 2: 노드
   
   const engineRef = useRef<Matter.Engine | null>(null);
   const bodiesRef = useRef<{ [id: string]: Matter.Body }>({});
@@ -225,33 +231,91 @@ const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }
     };
   }, [viewport]);
 
-  // 최적화된 패닝 핸들러
+  // 마우스 다운 핸들러 (드래그 모드 결정)
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
+    // 노드 드래그 중이면 시점 드래그 불가
+    if (dragMode === DRAG_NODE) return;
+    // 우클릭(2) 또는 space/ctrl/meta/alt/shift 키 → 시점 드래그
+    if (
+      e.button === 2 ||
+      e.ctrlKey || e.metaKey || e.altKey || e.shiftKey ||
+      (e.nativeEvent && (e.nativeEvent as any).code === 'Space')
+    ) {
       setIsPanning(true);
+      setDragMode(DRAG_PAN);
       setLastMousePos({ x: e.clientX, y: e.clientY });
+      return;
     }
-  }, []);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isPanning) return;
-    
-    const dx = e.clientX - lastMousePos.x;
-    const dy = e.clientY - lastMousePos.y;
-    
-    requestAnimationFrame(() => {
-      setViewport(prev => ({
-        ...prev,
-        x: prev.x + dx,
-        y: prev.y + dy
-      }));
-    });
-    
+    // 노드 위에서만 노드 드래그
+    const nodeElem = (e.target as HTMLElement).closest('[data-node-id]');
+    if (nodeElem) {
+      // 시점 드래그 시작하지 않음 (노드 드래그는 MemoizedNode에서 처리)
+      return;
+    }
+    // 그 외는 시점 드래그
+    setIsPanning(true);
+    setDragMode(DRAG_PAN);
     setLastMousePos({ x: e.clientX, y: e.clientY });
-  }, [isPanning, lastMousePos]);
+  }, [dragMode]);
 
-  const handleMouseUp = useCallback(() => {
-    setIsPanning(false);
+  // 노드 드래그 핸들러
+  const handleDragStart = useCallback((id: string, e: React.MouseEvent) => {
+    setDraggingId(id);
+    setDragMode(DRAG_NODE);
+    const body = bodiesRef.current[id];
+    if (body) {
+      Matter.Body.setStatic(body, true);
+    }
+    e.stopPropagation();
+    e.preventDefault();
+  }, []);
+  const handleDrag = useCallback((id: string, e: React.MouseEvent) => {
+    if (dragMode !== DRAG_NODE) return;
+    const body = bodiesRef.current[id];
+    if (!body) return;
+    const container = (e.target as HTMLElement).closest('[data-graph-container]') as HTMLElement;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const x = (e.clientX - rect.left - viewport.x) / viewport.scale - CARD_WIDTH / 2;
+    const y = (e.clientY - rect.top - viewport.y) / viewport.scale - CARD_HEIGHT / 2;
+    Matter.Body.setPosition(body, { x, y });
+  }, [dragMode, viewport]);
+  const handleDragEnd = useCallback((id: string) => {
+    if (dragMode !== DRAG_NODE) return;
+    const body = bodiesRef.current[id];
+    if (body) {
+      Matter.Body.setStatic(body, false);
+      Matter.Body.setVelocity(body, { x: 0, y: 0 });
+      Matter.Body.setAngularVelocity(body, 0);
+    }
+    setDraggingId(null);
+    setDragMode(DRAG_NONE);
+  }, [dragMode]);
+
+  // 마우스 무브 핸들러
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (dragMode === DRAG_PAN && isPanning) {
+      const dx = e.clientX - lastMousePos.x;
+      const dy = e.clientY - lastMousePos.y;
+      requestAnimationFrame(() => {
+        setViewport(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
+      });
+      setLastMousePos({ x: e.clientX, y: e.clientY });
+    } else if (dragMode === DRAG_NODE && draggingId) {
+      const body = bodiesRef.current[draggingId];
+      if (!body) return;
+      const container = (e.target as HTMLElement).closest('[data-graph-container]') as HTMLElement;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const x = (e.clientX - rect.left - viewport.x) / viewport.scale - CARD_WIDTH / 2;
+      const y = (e.clientY - rect.top - viewport.y) / viewport.scale - CARD_HEIGHT / 2;
+      Matter.Body.setPosition(body, { x, y });
+    }
+  }, [dragMode, isPanning, lastMousePos, draggingId, viewport]);
+
+  // 우클릭 메뉴 방지
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
   }, []);
 
   // Matter.js 초기화 및 최적화
@@ -350,42 +414,6 @@ const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }
     };
   }, [nodes, edges]);
 
-  // 최적화된 드래그 핸들러
-  const handleDragStart = useCallback((id: string, e: React.MouseEvent) => {
-    setDraggingId(id);
-    const body = bodiesRef.current[id];
-    if (body) {
-      // 드래그 시작 시 물리 시뮬레이션 비활성화
-      Matter.Body.setStatic(body, true);
-    }
-    e.preventDefault();
-  }, []);
-
-  const handleDrag = useCallback((id: string, e: React.MouseEvent) => {
-    const body = bodiesRef.current[id];
-    if (!body) return;
-
-    const container = (e.target as HTMLElement).closest('[data-graph-container]') as HTMLElement;
-    if (!container) return;
-    const rect = container.getBoundingClientRect();
-    
-    const x = (e.clientX - rect.left - viewport.x) / viewport.scale - CARD_WIDTH / 2;
-    const y = (e.clientY - rect.top - viewport.y) / viewport.scale - CARD_HEIGHT / 2;
-    
-    Matter.Body.setPosition(body, { x, y });
-  }, [viewport]);
-
-  const handleDragEnd = useCallback((id: string) => {
-    const body = bodiesRef.current[id];
-    if (body) {
-      // 드래그 종료 시 물리 시뮬레이션 재활성화
-      Matter.Body.setStatic(body, false);
-      Matter.Body.setVelocity(body, { x: 0, y: 0 });
-      Matter.Body.setAngularVelocity(body, 0);
-    }
-    setDraggingId(null);
-  }, []);
-
   // 노드 위치만 초기화
   const handleResetNodes = useCallback(() => {
     if (animatingRef.current) return;
@@ -434,14 +462,33 @@ const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }
     requestAnimationFrame(animate);
   }, [nodeStates]);
 
+  // handleMouseUp을 document 전역에 등록
+  useEffect(() => {
+    const onUp = () => {
+      if (dragMode === DRAG_PAN) {
+        setIsPanning(false);
+      } else if (dragMode === DRAG_NODE && draggingId) {
+        const body = bodiesRef.current[draggingId];
+        if (body) {
+          Matter.Body.setStatic(body, false);
+          Matter.Body.setVelocity(body, { x: 0, y: 0 });
+          Matter.Body.setAngularVelocity(body, 0);
+        }
+        setDraggingId(null);
+      }
+      setDragMode(DRAG_NONE);
+    };
+    document.addEventListener('mouseup', onUp);
+    return () => document.removeEventListener('mouseup', onUp);
+  }, [dragMode, draggingId]);
+
   return (
-    <GraphContainer 
+    <GraphContainer
       ref={containerRef}
       data-graph-container
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
+      onContextMenu={handleContextMenu}
     >
       <ResetButton
         onClick={handleResetNodes}
