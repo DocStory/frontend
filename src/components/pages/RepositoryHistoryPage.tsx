@@ -23,7 +23,8 @@ import pencilIcon from '../../assets/pencilIcon.svg';
 const PageContainer = styled.div`
   display: flex;
   height: 100vh;
-  background: #f7faff;
+  background: #fff;
+  overflow: hidden;
 `;
 
 const MainContent = styled.div`
@@ -31,6 +32,7 @@ const MainContent = styled.div`
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: #fff;
 `;
 
 const TitleSection = styled.div`
@@ -95,6 +97,15 @@ const GraphContainer = styled.div`
   flex: 1;
   padding: 20px;
   overflow: hidden;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  > div {
+    width: 100%;
+    height: 100%;
+  }
 `;
 
 const LoadingContainer = styled.div`
