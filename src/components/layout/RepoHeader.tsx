@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme } from 'styled-components';
 import SearchBar from '../common/SearchBar';
 import NotificationIcon from '../../assets/notificationIcon.svg';
 import NotiIcon from '../../assets/notiIcon.svg';
@@ -32,33 +32,20 @@ const Right = styled.div`
   gap: 32px;
 `;
 
-const Icon = styled.img<{ $isDark: boolean }>`
+const Icon = styled.img`
   width: 32px;
   height: 32px;
   cursor: pointer;
-  transition: opacity 0.2s ease;
-  
-  &:hover {
-    opacity: 0.8;
-  }
-  
-  /* 다크모드에서 아이콘 색상 조정 */
-  filter: ${({ $isDark }) => $isDark ? 'brightness(0.9) contrast(1.1)' : 'none'};
+  ${({ theme }) => theme.mode === 'dark' ? 'filter: invert(1);' : ''}
 `;
 
 interface RepoHeaderProps {
-  hasNewNotification?: boolean;
   onTeamIconClick?: () => void;
   onRepoIconClick?: () => void;
 }
 
-const RepoHeader: React.FC<RepoHeaderProps> = ({ 
-  hasNewNotification = false, 
-  onTeamIconClick,
-  onRepoIconClick,
-}) => {
-  const { mode } = useTheme();
-  const isDark = mode === 'dark';
+const RepoHeader: React.FC<RepoHeaderProps> = ({ onTeamIconClick, onRepoIconClick }) => {
+  const theme = useTheme();
 
   return (
     <HeaderContainer>
@@ -66,13 +53,9 @@ const RepoHeader: React.FC<RepoHeaderProps> = ({
         <SearchBar />
       </SearchBarWrapper>
       <Right>
-        <Icon src={RepoIcon} alt="레포" onClick={onRepoIconClick} $isDark={isDark} />
-        <Icon src={TeamIcon} alt="팀" onClick={onTeamIconClick} $isDark={isDark} />
-        <Icon
-          src={hasNewNotification ? NotiIcon : NotificationIcon}
-          alt="알림"
-          $isDark={isDark}
-        />
+        <Icon src={RepoIcon} alt="프로포절" onClick={onRepoIconClick} />
+        <Icon src={TeamIcon} alt="팀" onClick={onTeamIconClick} />
+        <Icon src={NotiIcon} alt="알림" />
       </Right>
     </HeaderContainer>
   );

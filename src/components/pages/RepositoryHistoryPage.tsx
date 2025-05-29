@@ -164,7 +164,6 @@ const Subtitle = styled.p`
 const GraphContainer = styled.div`
   flex: 1;
   width: 100%;
-  max-width: 100vw;
   min-width: 0;
   height: calc(100vh - 180px);
   overflow-x: hidden;
@@ -175,14 +174,11 @@ const GraphContainer = styled.div`
   box-sizing: border-box;
 `;
 
-const LoadingContainer = styled.div`
+const CenterContainer = styled.div`
+  flex: 1;
   display: flex;
-  justify-content: center;
   align-items: center;
-  height: 100vh;
-  font-family: 'Pretendard';
-  font-size: 18px;
-  color: ${({ theme }) => theme.textSecondary};
+  justify-content: center;
 `;
 
 const EmptyStateContainer = styled.div`
@@ -374,7 +370,7 @@ const RepositoryHistoryPage: React.FC = () => {
           description: history.content,
           timeAgo: history.createdAt ? getRelativeTime(history.createdAt) : 'Unknown',
           isMain: history.historyStatus === 'MAIN',
-          isAbandoned: history.historyStatus === 'ABAND',
+          isAbandoned: history.historyStatus === 'ABANDONED',
           fileLevel: history.fileLevel,
           historyId: history.id,
           onDetailClick: () => handleHistoryDetailClick(history.id),
@@ -676,9 +672,32 @@ const RepositoryHistoryPage: React.FC = () => {
     return (
       <PageContainer>
         <SideBar activeMenu="저장소" onMenuClick={handleMenuClick} />
-        <LoadingContainer>
-          레포지토리 정보를 불러오는 중...
-        </LoadingContainer>
+        <MainContent>
+          <RepoHeader
+            onTeamIconClick={() => setIsModalOpen(true)}
+            onRepoIconClick={handleProposalListOpen}
+          />
+          <RepositoryTile
+            title="로딩 중..."
+            subtitle="레포지토리 정보를 불러오는 중입니다."
+            onTabChange={() => {}}
+            onCreateClick={() => {}}
+          />
+          <GraphContainer>
+            <CenterContainer>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                fontFamily: 'Pretendard',
+                fontSize: '18px',
+                color: 'var(--text-secondary)',
+              }}>
+                레포지토리 정보를 불러오는 중...
+              </div>
+            </CenterContainer>
+          </GraphContainer>
+        </MainContent>
       </PageContainer>
     );
   }
@@ -688,7 +707,10 @@ const RepositoryHistoryPage: React.FC = () => {
       <PageContainer>
         <SideBar activeMenu="저장소" onMenuClick={handleMenuClick} />
         <MainContent>
-          <RepoHeader hasNewNotification={true} />
+          <RepoHeader
+            onTeamIconClick={() => setIsModalOpen(true)}
+            onRepoIconClick={handleProposalListOpen}
+          />
           <TitleSection>
             <TitleContainer>
               <Title>오류 발생</Title>
@@ -705,7 +727,6 @@ const RepositoryHistoryPage: React.FC = () => {
       <SideBar activeMenu="저장소" onMenuClick={handleMenuClick} />
       <MainContent>
         <RepoHeader
-          hasNewNotification={true}
           onTeamIconClick={() => setIsModalOpen(true)}
           onRepoIconClick={handleProposalListOpen}
         />
@@ -716,17 +737,17 @@ const RepositoryHistoryPage: React.FC = () => {
             if (!allHistories.length) return;
             let filtered: HistoryListResponse[][] = [];
             switch (tab) {
-              case '전체보기':
+              case '전체':
                 filtered = allHistories;
                 break;
               case '주요':
                 filtered = allHistories.map((group: HistoryListResponse[]) => group.filter(h => h.historyStatus === 'MAIN')).filter((g: HistoryListResponse[]) => g.length > 0);
                 break;
               case '하위':
-                filtered = allHistories.map((group: HistoryListResponse[]) => group.filter(h => h.historyStatus === 'SUB')).filter((g: HistoryListResponse[]) => g.length > 0);
+                filtered = allHistories.map((group: HistoryListResponse[]) => group.filter(h => h.historyStatus === 'NORMAL')).filter((g: HistoryListResponse[]) => g.length > 0);
                 break;
               case '폐기':
-                filtered = allHistories.map((group: HistoryListResponse[]) => group.filter(h => h.historyStatus === 'ABAND')).filter((g: HistoryListResponse[]) => g.length > 0);
+                filtered = allHistories.map((group: HistoryListResponse[]) => group.filter(h => h.historyStatus === 'ABANDONED')).filter((g: HistoryListResponse[]) => g.length > 0);
                 break;
               case '필터':
                 filtered = allHistories;
@@ -738,36 +759,38 @@ const RepositoryHistoryPage: React.FC = () => {
         />
         <GraphContainer>
           {graphNodes.length === 0 ? (
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: '400px',
-              padding: '40px',
-              textAlign: 'center',
-              background: 'transparent',
-            }}>
-              <h2 style={{ fontFamily: 'Pretendard', fontWeight: 700, fontSize: 24, color: 'var(--text-color)', marginBottom: 12 }}>아직 생성된 히스토리가 없어요</h2>
-              <p style={{ fontFamily: 'Pretendard', fontWeight: 400, fontSize: 16, color: 'var(--text-secondary)', marginBottom: 32 }}>첫 번째 히스토리를 생성하여 문서 관리를 시작해보세요.</p>
-              <button
-                onClick={() => handleHistoryCreateClick()}
-                style={{
-                  padding: '12px 24px',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  fontFamily: 'Pretendard',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  color: '#fff',
-                  background: '#4078FF',
-                }}
-              >
-                히스토리 생성하기
-              </button>
-            </div>
+            <CenterContainer>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '400px',
+                padding: '40px',
+                textAlign: 'center',
+                background: 'transparent',
+              }}>
+                <h2 style={{ fontFamily: 'Pretendard', fontWeight: 700, fontSize: 24, color: 'var(--text-color)', marginBottom: 12 }}>아직 생성된 히스토리가 없어요</h2>
+                <p style={{ fontFamily: 'Pretendard', fontWeight: 400, fontSize: 16, color: 'var(--text-secondary)', marginBottom: 32 }}>첫 번째 히스토리를 생성하여 문서 관리를 시작해보세요.</p>
+                <button
+                  onClick={() => handleHistoryCreateClick()}
+                  style={{
+                    padding: '12px 24px',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    fontFamily: 'Pretendard',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    color: '#fff',
+                    background: '#4078FF',
+                  }}
+                >
+                  히스토리 생성하기
+                </button>
+              </div>
+            </CenterContainer>
           ) : (
             <CanvasRepoGraph 
               nodes={graphNodes} 

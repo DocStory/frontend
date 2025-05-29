@@ -25,7 +25,7 @@ const TabButton = styled.button<{ isActive: boolean; label: string }>`
   letter-spacing: 0.4px;
   text-transform: ${(props) =>
     props.label === '필터' ? 'capitalize' : 'uppercase'};
-  color: ${(props) => (props.isActive ? '#6C9EFF' : 'rgba(0, 0, 0, 0.6)')};
+  color: ${(props) => (props.isActive ? props.theme.primary : props.theme.textSecondary)};
   background: none;
   border: none;
   padding: 9px 16px;
@@ -34,7 +34,7 @@ const TabButton = styled.button<{ isActive: boolean; label: string }>`
   transition: color 0.2s ease;
 
   &:hover {
-    color: #6c9eff;
+    color: ${({ theme }) => theme.primary};
   }
 `;
 
@@ -43,7 +43,7 @@ const ActiveLine = styled.div`
   bottom: -2px;
   width: 100%;
   height: 2px;
-  background-color: #6c9eff;
+  background-color: ${({ theme }) => theme.primary};
 `;
 
 const FilterTab: React.FC<FilterTabProps> = ({

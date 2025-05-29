@@ -140,26 +140,26 @@ const Modal: React.FC<ModalProps> = ({
       <Container onClick={(e) => e.stopPropagation()}>
         <ModalHeader title={modalTitle} onClose={onClose} />
         
-        <ProfileList
-          title={headerTitle}
-          time={headerTime}
-          isEditing={isEditing}
-          canEdit={canEdit}
+      <ProfileList
+        title={headerTitle}
+        time={headerTime}
+        isEditing={isEditing}
+        canEdit={canEdit}
           userProfileImage={userProfileImage}
           onEditStart={onEditStart}
           onEditCancel={onEditCancel}
           onEditSave={onEditSave}
-        />
+      />
         
-        <ContentWrapper>
-          <ModalContent
-            title={contentTitle}
-            content={content}
-            isEditing={isEditing}
+      <ContentWrapper>
+        <ModalContent
+          title={contentTitle}
+          content={content}
+          isEditing={isEditing}
             isModifying={isEditing}
             onTitleChange={onTitleChange}
             onContentChange={onContentChange}
-          />
+        />
           
           <SectionTitle>{isCreating ? '파일 업로드' : '변경사항'}</SectionTitle>
           <ModalList 

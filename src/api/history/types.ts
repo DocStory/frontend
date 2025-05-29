@@ -37,7 +37,7 @@ export interface HistoryListResponse {
   createdAt: string;
   fileId: UUID;
   parentFileId?: UUID;
-  historyStatus: 'MAIN' | 'SUB' | 'ABAND';
+  historyStatus: 'MAIN' | 'NORMAL' | 'ABANDONED';
 }
 
 export interface HistoryFileResponse {

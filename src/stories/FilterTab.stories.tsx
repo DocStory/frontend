@@ -18,7 +18,7 @@ type Story = StoryObj<typeof FilterTab>;
 
 export const Default: Story = {
   args: {
-    label: '전체보기',
+    label: '전체',
     isActive: false,
     showLine: false,
   },
@@ -26,7 +26,7 @@ export const Default: Story = {
 
 export const Active: Story = {
   args: {
-    label: '전체보기',
+    label: '전체',
     isActive: true,
     showLine: false,
   },
@@ -34,7 +34,7 @@ export const Active: Story = {
 
 export const WithLine: Story = {
   args: {
-    label: '전체보기',
+    label: '전체',
     isActive: true,
     showLine: true,
   },

@@ -138,25 +138,25 @@ const ModalSimple: React.FC<ModalSimpleProps> = ({
             headerTime={headerTime}
             contentTitle={contentTitle}
             content={content}
-            isEditing={isEditing}
+        isEditing={isEditing}
             isModifying={isModifying}
-            onEditStart={onEditStart}
-            onEditCancel={onEditCancel}
-            onEditSave={onEditSave}
-            onTitleChange={onTitleChange}
-            onContentChange={onContentChange}
-          />
+        onEditStart={onEditStart}
+        onEditCancel={onEditCancel}
+        onEditSave={onEditSave}
+          onTitleChange={onTitleChange}
+          onContentChange={onContentChange}
+        />
           
-          {!isProposal && (
-            <SectionTitle>{isCreating ? '파일 업로드' : '변경사항'}</SectionTitle>
-          )}
-          <ModalList 
-            items={items} 
-            onFileSelect={onFileSelect}
-            onFileRemove={onFileRemove}
-            isCreating={isCreating}
-          />
-        </ContentWrapper>
+        {!isProposal && (
+          <SectionTitle>{isCreating ? '파일 업로드' : '변경사항'}</SectionTitle>
+        )}
+        <ModalList 
+          items={items} 
+          onFileSelect={onFileSelect}
+          onFileRemove={onFileRemove}
+          isCreating={isCreating}
+        />
+      </ContentWrapper>
         
         <ButtonRow>
           <Button
