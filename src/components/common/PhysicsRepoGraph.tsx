@@ -41,11 +41,13 @@ interface PhysicsRepoGraphProps {
 const INITIAL_VIEWPORT = { x: 0, y: 0, scale: 1 };
 
 const GraphContainer = styled.div`
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
   position: relative;
   overflow: hidden;
-  background: #f5f5f5;
+  background: transparent;
   cursor: grab;
   &:active {
     cursor: grabbing;
@@ -192,6 +194,12 @@ const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }
   const initialViewportRef = useRef(INITIAL_VIEWPORT);
   const animatingRef = useRef(false);
   const initialNodeStatesRef = useRef<NodeData[]>(nodes.map(n => ({ ...n })));
+
+  // nodes prop이 바뀌면 초기 노드 위치도 갱신
+  useEffect(() => {
+    initialNodeStatesRef.current = nodes.map(n => ({ ...n }));
+    setNodeStates(nodes);
+  }, [nodes]);
 
   // 휠 이벤트 직접 등록 (passive: false)
   useEffect(() => {
@@ -425,12 +433,6 @@ const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }
     
     requestAnimationFrame(animate);
   }, [nodeStates]);
-
-  // nodes prop이 바뀌면 초기 노드 위치도 갱신
-  useEffect(() => {
-    initialNodeStatesRef.current = nodes.map(n => ({ ...n }));
-    setNodeStates(nodes);
-  }, [nodes]);
 
   return (
     <GraphContainer 

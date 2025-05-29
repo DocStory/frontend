@@ -23,8 +23,7 @@ import pencilIcon from '../../assets/pencilIcon.svg';
 const PageContainer = styled.div`
   display: flex;
   height: 100vh;
-  background: #fff;
-  overflow: hidden;
+  background: #f7faff;
 `;
 
 const MainContent = styled.div`
@@ -32,7 +31,6 @@ const MainContent = styled.div`
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #fff;
 `;
 
 const TitleSection = styled.div`
@@ -95,17 +93,9 @@ const Subtitle = styled.p`
 
 const GraphContainer = styled.div`
   flex: 1;
-  padding: 20px;
+  width: calc(100vw - 280px); /* SideBar 너비(280px)를 제외한 전체 너비 */
+  height: calc(100vh - 180px); /* 헤더와 타이틀 영역을 제외한 높이 */
   overflow: hidden;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  > div {
-    width: 100%;
-    height: 100%;
-  }
 `;
 
 const LoadingContainer = styled.div`
@@ -616,7 +606,7 @@ const RepositoryHistoryPage: React.FC = () => {
         <GraphContainer>
           <PhysicsRepoGraph 
             nodes={graphNodes} 
-            edges={graphEdges} 
+            edges={graphEdges}
           />
         </GraphContainer>
       </MainContent>
