@@ -4,6 +4,7 @@ import downloadIcon from '../../assets/downloadIcon.svg';
 import uploadIcon from '../../assets/uploadIcon.svg';
 import fileIcon from '../../assets/fileIcon.svg';
 import diffIcon from '../../assets/diffIcon.svg';
+import trashIcon from '../../assets/trashIcon.svg';
 
 export interface ModalItem {
   Name: string;
@@ -128,6 +129,28 @@ const HiddenFileInput = styled.input`
   display: none;
 `;
 
+const DeleteButton = styled.button`
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+`;
+
 const ModalList: React.FC<ModalListProps> = ({ 
   items, 
   onFileSelect, 
@@ -182,9 +205,9 @@ const ModalList: React.FC<ModalListProps> = ({
     if (iconType === 'upload') {
       return (
         <IconContainer>
-          <IconCircle>
-            <Icon src={uploadIcon} alt='Upload' />
-          </IconCircle>
+          <DeleteButton onClick={() => onFileRemove && index !== undefined && onFileRemove(index)}>
+            <Icon src={trashIcon} alt='Delete' />
+          </DeleteButton>
         </IconContainer>
       );
     }
