@@ -336,7 +336,7 @@ const RepositoryHistoryPage: React.FC = () => {
           description: history.content,
           timeAgo: history.createdAt ? getRelativeTime(history.createdAt) : 'Unknown',
           isMain: history.historyStatus === 'MAIN',
-          isAbandoned: history.historyStatus === 'ABANDONED' || history.historyStatus === 'ABAND',
+          isAbandoned: history.historyStatus === 'ABAND',
           fileLevel: history.fileLevel,
           historyId: history.id,
           onDetailClick: () => handleHistoryDetailClick(history.id),
@@ -685,10 +685,10 @@ const RepositoryHistoryPage: React.FC = () => {
                 filtered = allHistories.map((group: HistoryListResponse[]) => group.filter(h => h.historyStatus === 'MAIN')).filter((g: HistoryListResponse[]) => g.length > 0);
                 break;
               case '하위':
-                filtered = allHistories.map((group: HistoryListResponse[]) => group.filter(h => h.historyStatus === 'NORMAL')).filter((g: HistoryListResponse[]) => g.length > 0);
+                filtered = allHistories.map((group: HistoryListResponse[]) => group.filter(h => h.historyStatus === 'SUB')).filter((g: HistoryListResponse[]) => g.length > 0);
                 break;
               case '폐기':
-                filtered = allHistories.map((group: HistoryListResponse[]) => group.filter(h => h.historyStatus === 'ABANDONED' || h.historyStatus === 'ABAND')).filter((g: HistoryListResponse[]) => g.length > 0);
+                filtered = allHistories.map((group: HistoryListResponse[]) => group.filter(h => h.historyStatus === 'ABAND')).filter((g: HistoryListResponse[]) => g.length > 0);
                 break;
               case '필터':
                 filtered = allHistories;
@@ -700,19 +700,39 @@ const RepositoryHistoryPage: React.FC = () => {
         />
         <GraphContainer>
           {graphNodes.length === 0 ? (
-            <EmptyStateContainer>
-              <EmptyIcon src={repoIcon} alt="히스토리 없음" />
-              <EmptyTitle>아직 생성된 히스토리가 없어요</EmptyTitle>
-              <EmptyDescription>
-                첫 번째 히스토리를 생성하여 문서 관리를 시작해보세요.
-              </EmptyDescription>
-              <CreateButton onClick={() => handleHistoryCreateClick()}>
+            <div style={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: '#f7faff',
+            }}>
+              <h2 style={{ fontFamily: 'Pretendard', fontWeight: 700, fontSize: 24, color: '#1e293b', marginBottom: 12 }}>아직 생성된 히스토리가 없어요</h2>
+              <p style={{ fontFamily: 'Pretendard', fontWeight: 400, fontSize: 16, color: '#64748b', marginBottom: 32 }}>첫 번째 히스토리를 생성하여 문서 관리를 시작해보세요.</p>
+              <button
+                style={{
+                  fontFamily: 'Pretendard',
+                  fontWeight: 600,
+                  fontSize: 16,
+                  color: '#fff',
+                  background: '#4078FF',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '12px 24px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onClick={() => handleHistoryCreateClick()}
+              >
                 히스토리 생성하기
-              </CreateButton>
-            </EmptyStateContainer>
+              </button>
+            </div>
           ) : (
-            <CanvasRepoGraph
-              nodes={graphNodes}
+            <CanvasRepoGraph 
+              nodes={graphNodes} 
+              edges={graphEdges} 
             />
           )}
         </GraphContainer>
