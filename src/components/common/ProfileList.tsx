@@ -19,7 +19,11 @@ const ProfileListContainer = styled.div<{ backgroundColor?: string }>`
   flex-direction: column;
   gap: 10px;
   padding: 37px 24px 16px 33px;
-  background: ${props => props.backgroundColor || '#ffffff'};
+  background: ${({ backgroundColor, theme }) => 
+    backgroundColor === 'transparent' ? 'transparent' : 
+    backgroundColor || theme.cardBackground
+  };
+  transition: background-color 0.3s ease;
 `;
 
 const ProfileListContent = styled.div`
@@ -52,8 +56,9 @@ const Title = styled.h2<{ isRecentActivity?: boolean }>`
   font-size: ${props => props.isRecentActivity ? '14px' : '22px'};
   line-height: 1em;
   letter-spacing: -0.007em;
-  color: #31394D;
+  color: ${({ theme }) => theme.text};
   margin: 0;
+  transition: color 0.3s ease;
 `;
 
 const Time = styled.span<{ isRecentActivity?: boolean }>`
@@ -62,13 +67,14 @@ const Time = styled.span<{ isRecentActivity?: boolean }>`
   font-size: ${props => props.isRecentActivity ? '12px' : '14px'};
   line-height: 1.43em;
   letter-spacing: -0.006em;
-  color: #C4C4C4;
+  color: ${({ theme }) => theme.textSecondary};
+  transition: color 0.3s ease;
 `;
 
 const IconButton = styled.button`
   width: 48px;
   height: 48px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid ${({ theme }) => theme.border};
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -76,6 +82,12 @@ const IconButton = styled.button`
   background: transparent;
   cursor: pointer;
   padding: 16px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.hoverBackground};
+    border-color: ${({ theme }) => theme.primary};
+  }
 `;
 
 const Icon = styled.img`

@@ -3,6 +3,9 @@ import styled from 'styled-components';
 import Button from './Button';
 import ModalHeader from './ModalHeader';
 import { FiPlus, FiX } from 'react-icons/fi';
+import { createRepository, CreateRepositoryRequest } from '../../api/repository';
+import { useRepositories } from '../../contexts/RepositoryContext';
+import { useToastContext } from '../../contexts/ToastContext';
 
 interface NewRepositoryModalProps {
   isOpen: boolean;
@@ -220,6 +223,9 @@ const NewRepositoryModal: React.FC<NewRepositoryModalProps> = ({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const { refreshRepositories } = useRepositories();
+  const toast = useToastContext();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -232,37 +238,54 @@ const NewRepositoryModal: React.FC<NewRepositoryModalProps> = ({
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!title.trim()) {
-      alert('제목을 입력해주세요.');
-      return;
-    }
-    
-    if (selectedFiles.length === 0) {
-      alert('최소 하나의 파일을 첨부해주세요.');
+      toast.warning('제목을 입력해주세요.');
       return;
     }
 
-    const formData: RepositoryFormData = {
-      title: title.trim(),
-      description: description.trim(),
-      files: selectedFiles,
-    };
+    setIsLoading(true);
 
-    if (onSubmit) {
-      onSubmit(formData);
-    } else {
-      console.log('Repository created:', formData);
-      alert('프로젝트가 성공적으로 생성되었습니다!');
+    try {
+      const repositoryData: CreateRepositoryRequest = {
+        name: title.trim(),
+        description: description.trim()
+      };
+
+      const response = await createRepository(repositoryData);
+
+      if (response.code === 100) {
+        toast.success(`프로젝트 "${response.data.name}"가 성공적으로 생성되었습니다!`);
+        
+        // 레포지토리 목록 새로고침
+        await refreshRepositories();
+        
+        // 기존 onSubmit 콜백도 호출 (필요한 경우)
+        if (onSubmit) {
+          const formData: RepositoryFormData = {
+            title: title.trim(),
+            description: description.trim(),
+            files: selectedFiles,
+          };
+          onSubmit(formData);
+        }
+
+        // 폼 초기화 및 모달 닫기
+        setTitle('');
+        setDescription('');
+        setSelectedFiles([]);
+        onClose();
+      } else {
+        toast.error(`프로젝트 생성 실패: ${response.message}`);
+      }
+    } catch (error) {
+      console.error('Repository creation error:', error);
+      toast.error('프로젝트 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsLoading(false);
     }
-
-    // 폼 초기화
-    setTitle('');
-    setDescription('');
-    setSelectedFiles([]);
-    onClose();
   };
 
   const handleClose = () => {
@@ -340,8 +363,12 @@ const NewRepositoryModal: React.FC<NewRepositoryModalProps> = ({
             </FieldGroup>
 
             <ButtonRow>
-              <Button variant="secondary" size="medium" onClick={handleClose}>취소하기</Button>
-              <Button variant="primary" size="medium" type="submit">생성하기</Button>
+              <Button variant="secondary" size="medium" onClick={handleClose} disabled={isLoading}>
+                취소하기
+              </Button>
+              <Button variant="primary" size="medium" type="submit" disabled={isLoading}>
+                {isLoading ? '생성 중...' : '생성하기'}
+              </Button>
             </ButtonRow>
           </Form>
         </ContentWrapper>

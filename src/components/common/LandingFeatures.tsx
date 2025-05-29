@@ -1,113 +1,177 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
+
+const fadeInUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
 
 const Section = styled.section`
   width: 100%;
-  background: #F7FAFF;
-  padding: 100px 0;
+  background: #f8f9fa;
+  padding: 80px 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+`;
+
+const Container = styled.div`
+  max-width: 1200px;
+  width: 100%;
+  padding: 0 40px;
+`;
+
+const HeaderSection = styled.div`
+  text-align: center;
+  margin-bottom: 60px;
+  animation: ${fadeInUp} 0.6s ease-out;
 `;
 
 const Title = styled.h2`
-  font-family: 'Inter', 'Pretendard', sans-serif;
-  font-weight: 600;
-  font-size: 36px;
-  color: #6C9EFF;
-  margin-bottom: 30px;
-  text-align: center;
+  font-family: 'Pretendard', sans-serif;
+  font-weight: 700;
+  font-size: 42px;
+  color: #333;
+  margin-bottom: 16px;
+  line-height: 1.3;
 `;
 
-const Subtitle = styled.h3`
-  font-family: 'Inter', 'Pretendard', sans-serif;
-  font-weight: 700;
-  font-size: 48px;
-  color: #000;
-  margin-bottom: 60px;
-  text-align: center;
+const Subtitle = styled.p`
+  font-family: 'Pretendard', sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  color: #666;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
 `;
 
 const FeaturesContainer = styled.div`
-  display: flex;
-  width: 100%;
-  max-width: 1200px;
-  gap: 60px;
-  justify-content: center;
-  flex-wrap: wrap;
-  padding: 0 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 30px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
 `;
 
 const FeatureCard = styled.div`
-  flex: 1;
-  min-width: 320px;
-  max-width: 540px;
-  background: #FFFFFF;
-  border-radius: 16px;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
-  padding: 40px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 32px;
+  border: 1px solid #e9ecef;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: ${fadeInUp} 0.6s ease-out;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  &:nth-child(1) {
+    animation-delay: 0.1s;
+  }
+  
+  &:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  
+  &:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+`;
+
+const FeatureHeader = styled.div`
   display: flex;
-  flex-direction: column;
   align-items: center;
+  margin-bottom: 20px;
 `;
 
 const FeatureIcon = styled.div`
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: #E3EDFF;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: #6C9EFF;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 30px;
-  color: #6C9EFF;
-  font-size: 36px;
+  margin-right: 16px;
 `;
 
-const FeatureTitle = styled.h4`
-  font-family: 'Inter', 'Pretendard', sans-serif;
-  font-weight: 700;
-  font-size: 24px;
-  color: #0F172A;
-  margin-bottom: 16px;
-  text-align: center;
+const IconImage = styled.img`
+  width: 24px;
+  height: 24px;
+  filter: brightness(0) invert(1);
+`;
+
+const FeatureTitle = styled.h3`
+  font-family: 'Pretendard', sans-serif;
+  font-weight: 600;
+  font-size: 20px;
+  color: #333;
+  margin: 0;
+  line-height: 1.4;
 `;
 
 const FeatureDescription = styled.p`
-  font-family: 'Inter', 'Pretendard', sans-serif;
+  font-family: 'Pretendard', sans-serif;
   font-weight: 400;
   font-size: 16px;
   line-height: 1.6;
-  color: #334155;
-  text-align: center;
+  color: #666;
+  margin: 0;
 `;
 
 const features = [
   {
-    icon: '📄',
-    title: '파일 히스토리 관리',
-    description: '문서의 모든 변경 사항을 자동으로 기록하고, 언제든 이전 버전으로 돌아갈 수 있습니다. 각 버전별 변경 내용을 한눈에 확인하세요.'
+    icon: '/src/assets/diffIcon.svg',
+    title: '버전 관리',
+    description: '문서의 변경 사항을 자동으로 추적하고 관리합니다. 언제든 이전 버전으로 되돌릴 수 있어요.'
   },
   {
-    icon: '👥',
-    title: '리뷰를 통한 협업',
-    description: '팀원들과 실시간으로 문서를 공유하고 리뷰할 수 있습니다. 변경 사항에 대해 코멘트를 남기고, 승인 프로세스를 통해 문서 품질을 높이세요.'
+    icon: '/src/assets/teamIcon.svg',
+    title: '팀 협업',
+    description: '팀원들과 실시간으로 문서를 공유하고 함께 작업할 수 있습니다.'
+  },
+  {
+    icon: '/src/assets/repoIcon.svg',
+    title: '체계적 관리',
+    description: '프로젝트별로 문서를 정리하고 효율적으로 관리할 수 있습니다.'
   }
 ];
 
 const LandingFeatures: React.FC = () => (
   <Section aria-label="주요 기능 소개" tabIndex={0} id="features">
-    <Title>DocStory의 주요 기능</Title>
-    <Subtitle>복잡한 파일 관리, DocStory가 해결합니다.</Subtitle>
-    <FeaturesContainer>
-      {features.map((feature, index) => (
-        <FeatureCard key={index} aria-label={feature.title} tabIndex={0}>
-          <FeatureIcon aria-hidden>{feature.icon}</FeatureIcon>
-          <FeatureTitle>{feature.title}</FeatureTitle>
-          <FeatureDescription>{feature.description}</FeatureDescription>
-        </FeatureCard>
-      ))}
-    </FeaturesContainer>
+    <Container>
+      <HeaderSection>
+        <Title>DocStory의 주요 기능</Title>
+        <Subtitle>
+          문서 관리를 더 쉽고 효율적으로 만드는 핵심 기능들을 소개합니다.
+        </Subtitle>
+      </HeaderSection>
+      
+      <FeaturesContainer>
+        {features.map((feature, index) => (
+          <FeatureCard key={index} aria-label={feature.title} tabIndex={0}>
+            <FeatureHeader>
+              <FeatureIcon>
+                <IconImage src={feature.icon} alt={feature.title} />
+              </FeatureIcon>
+              <FeatureTitle>{feature.title}</FeatureTitle>
+            </FeatureHeader>
+            <FeatureDescription>{feature.description}</FeatureDescription>
+          </FeatureCard>
+        ))}
+      </FeaturesContainer>
+    </Container>
   </Section>
 );
 

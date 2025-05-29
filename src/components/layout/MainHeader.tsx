@@ -9,10 +9,11 @@ const HeaderContainer = styled.header`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
-  border-bottom: 3px solid #F0F0F0;
+  background: ${({ theme }) => theme.headerBackground};
+  border-bottom: 3px solid ${({ theme }) => theme.border};
   padding: 0 32px;
   height: 64px;
+  transition: all 0.3s ease;
 `;
 
 const SearchBarWrapper = styled.div`
@@ -33,6 +34,14 @@ const Icon = styled.img`
   width: 32px;
   height: 32px;
   cursor: pointer;
+  border-radius: 8px;
+  padding: 4px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.hoverBackground};
+    transform: scale(1.05);
+  }
 `;
 
 interface MainHeaderProps {

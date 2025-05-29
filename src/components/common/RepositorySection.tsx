@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import RepositorySectionHeader from './RepositorySectionHeader';
 import RepositorySectionCard from './RepositorySectionCard';
 import NewRepositoryModal from './NewRepositoryModal';
@@ -19,6 +19,19 @@ const RepositorySection: React.FC = () => {
     // 여기에 실제 저장소 생성 로직을 구현
     setIsNewRepositoryModalOpen(false);
   };
+
+  // 커스텀 이벤트 리스너 추가
+  useEffect(() => {
+    const handleOpenModal = () => {
+      setIsNewRepositoryModalOpen(true);
+    };
+
+    window.addEventListener('openNewRepositoryModal', handleOpenModal);
+    
+    return () => {
+      window.removeEventListener('openNewRepositoryModal', handleOpenModal);
+    };
+  }, []);
 
   return (
     <div>

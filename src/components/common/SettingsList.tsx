@@ -8,12 +8,13 @@ interface SettingsListProps {
     value: string;
     options?: string[];
     onClick?: () => void;
+    onChange?: (value: string) => void;
   }>;
 }
 
 const Container = styled.div`
   width: 100%;
-  background-color: white;
+  background-color: ${({ theme }) => theme.cardBackground};
   border-radius: 8px;
   overflow: visible;
 `;
@@ -23,17 +24,24 @@ const ListItem = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid ${({ theme }) => theme.border};
   cursor: pointer;
+  transition: background-color 0.2s ease;
 
   &:hover {
-    background-color: #f5f5f5;
+    background-color: ${({ theme }) => theme.hoverBackground};
+  }
+
+  &:last-child {
+    border-bottom: none;
   }
 `;
 
 const Title = styled.span`
+  font-family: 'Pretendard';
   font-size: 16px;
-  color: #333333;
+  font-weight: 500;
+  color: ${({ theme }) => theme.text};
 `;
 
 const ValueContainer = styled.div`
@@ -44,8 +52,10 @@ const ValueContainer = styled.div`
 `;
 
 const Value = styled.span`
+  font-family: 'Pretendard';
   font-size: 16px;
-  color: #666666;
+  font-weight: 400;
+  color: ${({ theme }) => theme.textSecondary};
 `;
 
 const ChevronIcon = styled.img<{ isOpen: boolean }>`
@@ -53,6 +63,7 @@ const ChevronIcon = styled.img<{ isOpen: boolean }>`
   height: 20px;
   transform: ${(props) => (props.isOpen ? 'rotate(180deg)' : 'none')};
   transition: transform 0.2s ease;
+  opacity: 0.6;
 `;
 
 const SelectionBox = styled.div<{ isOpen: boolean }>`
@@ -60,32 +71,32 @@ const SelectionBox = styled.div<{ isOpen: boolean }>`
   top: calc(100% + 4px);
   right: 0;
   min-width: 120px;
-  background-color: white;
-  border: 1px solid #e5e5e5;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: ${({ theme }) => theme.cardBackground};
+  border: 1px solid ${({ theme }) => theme.border};
+  border-radius: 8px;
+  box-shadow: 0 4px 12px ${({ theme }) => theme.shadow};
   display: ${(props) => (props.isOpen ? 'block' : 'none')};
-  z-index: 1;
+  z-index: 10;
+  overflow: hidden;
 `;
 
 const Option = styled.div<{ isSelected: boolean }>`
-  padding: 8px 16px;
+  padding: 12px 16px;
   cursor: pointer;
-  background-color: ${(props) => (props.isSelected ? '#F5F5F5' : 'white')};
-  color: ${(props) => (props.isSelected ? '#333333' : '#666666')};
+  font-family: 'Pretendard';
+  font-size: 14px;
+  font-weight: 500;
+  background-color: ${(props) => props.isSelected ? 
+    ({ theme }) => theme.activeBackground : 
+    ({ theme }) => theme.cardBackground};
+  color: ${(props) => props.isSelected ? 
+    ({ theme }) => theme.primary : 
+    ({ theme }) => theme.text};
+  transition: all 0.2s ease;
 
   &:hover {
-    background-color: #f5f5f5;
-  }
-
-  &:first-child {
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
-  }
-
-  &:last-child {
-    border-bottom-left-radius: 4px;
-    border-bottom-right-radius: 4px;
+    background-color: ${({ theme }) => theme.hoverBackground};
+    color: ${({ theme }) => theme.primary};
   }
 `;
 
@@ -109,6 +120,12 @@ const SettingsList: React.FC<SettingsListProps> = ({ items }) => {
       [index]: option,
     }));
     setOpenItemIndex(null);
+    
+    // onChange 핸들러 호출
+    const item = items[index];
+    if (item.onChange) {
+      item.onChange(option);
+    }
   };
 
   return (
@@ -119,26 +136,28 @@ const SettingsList: React.FC<SettingsListProps> = ({ items }) => {
             <Title>{item.title}</Title>
             <ValueContainer>
               <Value>{selectedOptions[index] || item.value}</Value>
-              <ChevronIcon
-                src={chevronDownIcon}
-                alt='chevron down'
-                isOpen={openItemIndex === index}
-              />
               {item.options && (
-                <SelectionBox isOpen={openItemIndex === index}>
-                  {item.options.map((option) => (
-                    <Option
-                      key={option}
-                      isSelected={selectedOptions[index] === option}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOptionSelect(index, option);
-                      }}
-                    >
-                      {option}
-                    </Option>
-                  ))}
-                </SelectionBox>
+                <>
+                  <ChevronIcon
+                    src={chevronDownIcon}
+                    alt='chevron down'
+                    isOpen={openItemIndex === index}
+                  />
+                  <SelectionBox isOpen={openItemIndex === index}>
+                    {item.options.map((option) => (
+                      <Option
+                        key={option}
+                        isSelected={(selectedOptions[index] || item.value) === option}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOptionSelect(index, option);
+                        }}
+                      >
+                        {option}
+                      </Option>
+                    ))}
+                  </SelectionBox>
+                </>
               )}
             </ValueContainer>
           </ListItem>

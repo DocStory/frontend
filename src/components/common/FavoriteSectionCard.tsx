@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import RepositoryCard, { FileType } from './RepositoryCard';
+import api from '../../api/axios';
+import favoriteIcon from '../../assets/clarity_favorite-line.svg';
 
 const CardGrid = styled.div`
   width: 100%;
@@ -14,50 +16,164 @@ const CardGrid = styled.div`
   }
 `;
 
-export interface Favorite {
-  title: string;
+const EmptyStateContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+  grid-column: 1 / -1;
+`;
+
+const EmptyIcon = styled.img`
+  width: 80px;
+  height: 80px;
+  opacity: 0.3;
+  margin-bottom: 24px;
+`;
+
+const EmptyTitle = styled.h3`
+  font-family: 'Pretendard';
+  font-weight: 600;
+  font-size: 20px;
+  color: ${({ theme }) => theme.textSecondary};
+  margin: 0 0 12px 0;
+  transition: color 0.3s ease;
+`;
+
+const EmptyDescription = styled.p`
+  font-family: 'Pretendard';
+  font-weight: 400;
+  font-size: 16px;
+  color: ${({ theme }) => theme.textSecondary};
+  margin: 0;
+  line-height: 1.5;
+  max-width: 400px;
+  opacity: 0.8;
+  transition: color 0.3s ease;
+`;
+
+interface Repository {
+  id: string;
+  name: string;
   description: string;
-  fileTypes: FileType[];
+  ownerNickname: string;
+  myRole: string;
+  isFavorite: boolean;
+  fileTypes?: string[];
 }
 
-interface FavoriteCardGridProps {
-  favorites?: Favorite[];
+interface ApiResponse {
+  code: number;
+  message: string;
+  data: Repository[];
 }
 
-const defaultFavorites: Favorite[] = [
-  {
-    title: 'AI 프로젝트',
-    description: 'AI 기반 문서 자동화 저장소',
-    fileTypes: ['hwp', 'docx', 'pdf'],
-  },
-  {
-    title: '팀 위키',
-    description: '팀원들과 함께 관리하는 위키 저장소',
-    fileTypes: ['docx', 'pdf'],
-  },
-  {
-    title: 'AI 프로젝트',
-    description: 'AI 기반 문서 자동화 저장소',
-    fileTypes: ['hwp', 'docx', 'pdf'],
-  },
-  {
-    title: '팀 위키',
-    description: '팀원들과 함께 관리하는 위키 저장소',
-    fileTypes: ['docx', 'pdf'],
-  },
-];
+interface ApiSingleResponse {
+  code: number;
+  message: string;
+  data: Repository;
+}
 
-const FavoriteSectionCard: React.FC<FavoriteCardGridProps> = ({ favorites = defaultFavorites }) => (
-  <CardGrid>
-    {favorites.map((favorite, idx) => (
-      <RepositoryCard
-        key={idx}
-        title={favorite.title}
-        description={favorite.description}
-        fileTypes={favorite.fileTypes}
-      />
-    ))}
-  </CardGrid>
-);
+const FavoriteSectionCard: React.FC = () => {
+  const [favorites, setFavorites] = useState<Repository[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchFavorites = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await api.get<ApiResponse>('/api/repositories/favorites');
+      setFavorites(response.data.data.map(repo => ({
+        ...repo,
+        isFavorite: true // 즐겨찾기 목록의 모든 항목은 isFavorite이 true
+      })));
+    } catch (err: any) {
+      console.error('즐겨찾기 목록 조회 실패:', err);
+      setError(err.response?.data?.message || err.message || '즐겨찾기 목록을 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFavorites();
+  }, []);
+
+  const handleFavoriteClick = async (repoId: string, isFavorite: boolean) => {
+    try {
+      // 낙관적 업데이트
+      if (!isFavorite) {
+        setFavorites(prev => prev.filter(repo => repo.id !== repoId));
+      }
+
+      // API 호출
+      const response = await api.delete<ApiSingleResponse>(`/api/repositories/${repoId}/favorite`);
+      if (response.data.code !== 100) {
+        throw new Error(response.data.message);
+      }
+    } catch (error) {
+      console.error('즐겨찾기 상태 변경 실패:', error);
+      // 실패 시 목록 새로고침
+      fetchFavorites();
+    }
+  };
+
+  // 백엔드 파일타입을 허용된 FileType으로 필터링하는 함수
+  const filterValidFileTypes = (fileTypes: string[]): ('hwp' | 'docx' | 'pdf')[] => {
+    const typeMapping: Record<string, 'hwp' | 'docx' | 'pdf'> = {
+      'HWP': 'hwp',
+      'HWPX': 'hwp',  // HWPX도 HWP로 처리
+      'DOC': 'docx',
+      'DOCX': 'docx',
+      'PDF': 'pdf',
+    };
+
+    const mappedTypes = fileTypes
+      .map(type => type.toUpperCase()) // 대문자로 변환
+      .map(type => typeMapping[type])  // 매핑 테이블에서 변환
+      .filter((type): type is 'hwp' | 'docx' | 'pdf' => type !== undefined); // undefined 제거
+
+    // 중복 제거하여 반환
+    return [...new Set(mappedTypes)];
+  };
+
+  if (loading) return <div>로딩 중...</div>;
+  if (error) return <div>오류: {error}</div>;
+
+  // 즐겨찾기가 없을 때의 빈 상태 처리
+  if (favorites.length === 0) {
+    return (
+      <CardGrid>
+        <EmptyStateContainer>
+          <EmptyIcon src={favoriteIcon} alt="즐겨찾기 없음" />
+          <EmptyTitle>즐겨찾기한 저장소가 없습니다</EmptyTitle>
+          <EmptyDescription>
+            자주 사용하는 저장소를 즐겨찾기에 추가하여<br />
+            빠르게 접근할 수 있습니다.
+          </EmptyDescription>
+        </EmptyStateContainer>
+      </CardGrid>
+    );
+  }
+
+  return (
+    <CardGrid>
+      {favorites.map((favorite) => (
+        <RepositoryCard
+          key={favorite.id}
+          id={favorite.id}
+          title={favorite.name}
+          description={favorite.description}
+          fileTypes={favorite.fileTypes ? filterValidFileTypes(favorite.fileTypes) : []}
+          isFavorite={true}
+          onFavoriteClick={(isFavorite) => handleFavoriteClick(favorite.id, isFavorite)}
+        />
+      ))}
+    </CardGrid>
+  );
+};
 
 export default FavoriteSectionCard; 

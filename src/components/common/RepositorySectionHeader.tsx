@@ -1,6 +1,5 @@
 import React from 'react';
 import styled from 'styled-components';
-import settingIcon from '../../assets/repositorySettingIcon.svg';
 import Button from './Button';
 
 interface RepositorySectionHeaderProps {
@@ -26,33 +25,18 @@ const Title = styled.h2`
   font-family: 'Pretendard';
   font-weight: 800;
   font-size: 20px;
-  color: #292929;
+  color: ${({ theme }) => theme.text};
   margin: 0;
   position: relative;
   top: 1px;
+  transition: color 0.3s ease;
 `;
 
-const SettingButton = styled.button`
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
+const SectionActions = styled.div`
   display: flex;
   align-items: center;
-  width: 40px;
-  height: 40px;
-  justify-content: center;
-`;
-
-const SettingIcon = styled.img`
-  width: 20px;
-  height: 20px;
-`;
-
-const SectionActions = styled.div`  display: flex;
-  align-items: center;
   gap: 10px;
-  margin-right: 8px
+  margin-right: 8px;
 `;
 
 const NewRepositoryButton = styled(Button)`
@@ -72,9 +56,6 @@ const RepositorySectionHeader: React.FC<RepositorySectionHeaderProps> = ({
     <HeaderWrapper>
       <TitleRow>
         <Title>저장소</Title>
-        <SettingButton>
-          <SettingIcon src={settingIcon} alt="설정" />
-        </SettingButton>
       </TitleRow>
       <SectionActions>
         <NewRepositoryButton

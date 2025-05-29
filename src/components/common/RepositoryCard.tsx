@@ -1,16 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import folderIcon from '../../assets/folderIcon.svg';
 import dotIcon from '../../assets/dot.svg';
+import favoriteLineIcon from '../../assets/clarity_favorite-line.svg';
+import favoriteSolidIcon from '../../assets/clarity_favorite-solid.svg';
 
 export type FileType = 'hwp' | 'docx' | 'pdf';
 
 interface RepositoryCardProps {
+  id?: string;
   fileTypes: FileType[];
   title: string;
   description?: string;
-  onDragHandleClick?: () => void;
   className?: string;
+  isFavorite?: boolean;
+  onFavoriteClick?: (isFavorite: boolean) => void;
 }
 
 const fileTypeBadgeColorMap: Record<FileType, { bg: string; text: string }> = {
@@ -22,14 +27,21 @@ const fileTypeBadgeColorMap: Record<FileType, { bg: string; text: string }> = {
 const Card = styled.div`
   position: relative;
   display: flex;
-  align-items: flex-start;
-  background: #fff;
-  border-radius: 15px;
-  border: 2px solid #F0F0F0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  padding: 20px 24px;
-  min-width: 340px;
-  gap: 18px;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.cardBackground};
+  transition: all 0.2s ease;
+  cursor: pointer;
+  height: 160px;
+  
+  &:hover {
+    border-color: ${({ theme }) => theme.primary};
+    transform: translateY(-2px);
+    box-shadow: ${({ theme }) => theme.shadow};
+  }
 `;
 
 const IconWrapper = styled.div`
@@ -41,32 +53,38 @@ const IconWrapper = styled.div`
   flex-shrink: 0;
 `;
 
-const ContentSection = styled.div`
-  flex: 1;
+const Content = styled.div`
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  gap: 8px;
+  flex: 1;
 `;
 
-const Title = styled.div`
+const Title = styled.h3`
   font-family: Pretendard, 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  color: #6C9EFF;
-  white-space: nowrap;
+  font-size: 18px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.text};
+  margin: 0;
+  line-height: 1.2;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.3s ease;
 `;
 
-const Description = styled.div`
+const Description = styled.p`
   font-family: Pretendard, 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  color: #7C7C7C;
-  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 400;
+  color: ${({ theme }) => theme.textSecondary};
+  margin: 0;
+  line-height: 1.4;
   overflow: hidden;
-  text-overflow: ellipsis;
-  margin-top: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  transition: color 0.3s ease;
 `;
 
 const BadgeGroup = styled.div`
@@ -101,22 +119,22 @@ const BadgeText = styled.span<{ $fileType: FileType }>`
   letter-spacing: -0.009em;
 `;
 
-const DragHandle = styled.button`
+const FavoriteButton = styled.button`
+  position: absolute;
+  top: 20px;
+  right: 20px;
   background: none;
   border: none;
-  padding: 0;
-  margin-left: 16px;
-  cursor: grab;
+  padding: 4px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 36px;
-  width: 24px;
-  outline: none;
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.1);
+  }
 
   &:focus {
     outline: 2px solid #4078FF;
@@ -125,18 +143,43 @@ const DragHandle = styled.button`
 `;
 
 const RepositoryCard: React.FC<RepositoryCardProps> = ({
+  id,
   fileTypes,
   title,
   description,
-  onDragHandleClick,
   className = '',
+  isFavorite = false,
+  onFavoriteClick,
 }) => {
+  const navigate = useNavigate();
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // 즐겨찾기 버튼 클릭 시에는 카드 클릭 이벤트 무시
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
+    
+    if (id) {
+      navigate(`/repository/${id}`);
+    }
+  };
+
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onFavoriteClick?.(!isFavorite);
+  };
+
   return (
-    <Card className={className} tabIndex={0} aria-label={`저장소 카드: ${title}`}> 
+    <Card 
+      className={className} 
+      tabIndex={0} 
+      aria-label={`저장소 카드: ${title}`}
+      onClick={handleCardClick}
+    > 
       <IconWrapper>
         <img src={folderIcon} alt="폴더 아이콘" width={32} height={32} />
       </IconWrapper>
-      <ContentSection>
+      <Content>
         <Title>{title}</Title>
         {description && <Description>{description}</Description>}
         <BadgeGroup>
@@ -147,19 +190,18 @@ const RepositoryCard: React.FC<RepositoryCardProps> = ({
             </FileTypeBadge>
           ))}
         </BadgeGroup>
-      </ContentSection>
-      <DragHandle
-        aria-label="드래그 핸들"
-        tabIndex={0}
-        onClick={onDragHandleClick}
-        onKeyDown={e => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            onDragHandleClick?.();
-          }
-        }}
+      </Content>
+      <FavoriteButton
+        onClick={handleFavoriteClick}
+        aria-label={isFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"}
       >
-        <img src={dotIcon} alt="드래그 핸들 점" width={20} height={20} />
-      </DragHandle>
+        <img 
+          src={isFavorite ? favoriteSolidIcon : favoriteLineIcon} 
+          alt={isFavorite ? "즐겨찾기됨" : "즐겨찾기"} 
+          width={20} 
+          height={20} 
+        />
+      </FavoriteButton>
     </Card>
   );
 };

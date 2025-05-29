@@ -2,15 +2,35 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import RepositoryCard from '../components/common/RepositoryCard';
 
-const meta: Meta<typeof RepositoryCard> = {
-  title: 'Common/RepositoryCard',
+const meta = {
+  title: 'Components/RepositoryCard',
   component: RepositoryCard,
+  parameters: {
+    layout: 'centered',
+  },
   tags: ['autodocs'],
-};
+} satisfies Meta<typeof RepositoryCard>;
 
 export default meta;
+type Story = StoryObj<typeof meta>;
 
-type Story = StoryObj<typeof RepositoryCard>;
+export const Default: Story = {
+  args: {
+    title: '프로젝트 문서',
+    description: '프로젝트 관련 문서들이 있는 저장소입니다.',
+    fileTypes: ['pdf', 'hwp'],
+    isFavorite: false,
+  },
+};
+
+export const WithFavorite: Story = {
+  args: {
+    title: '즐겨찾기된 저장소',
+    description: '즐겨찾기 상태의 저장소입니다.',
+    fileTypes: ['pdf', 'hwp'],
+    isFavorite: true,
+  },
+};
 
 export const Hwp: Story = {
   args: {
