@@ -616,46 +616,47 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
     createImageElements();
   }, [createImageElements]);
   
-  // Canvas 이벤트 핸들러들
+  // 클릭 판정용 ref 추가
+  const clickStartNodeId = useRef<string | null>(null);
+  const clickStartPos = useRef<{ x: number; y: number } | null>(null);
+  const CLICK_MOVE_THRESHOLD = 5; // px
+
+  // handleCanvasMouseDown 수정
   const handleCanvasMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-    
     const nodeAtPos = getNodeAtPosition(mouseX, mouseY);
-    
+
     if (nodeAtPos && (e.button === 0)) {
+      // 클릭 시작 노드/좌표 저장
+      clickStartNodeId.current = nodeAtPos.id;
+      clickStartPos.current = { x: mouseX, y: mouseY };
       // 노드 드래그 시작
       setDragMode(DRAG_NODE);
       setDraggingId(nodeAtPos.id);
-      
-      // 마우스 위치와 노드 위치의 오프셋 계산
       const nodePos = screenToNode({ x: mouseX, y: mouseY });
       const offsetX = nodePos.x - nodeAtPos.x;
       const offsetY = nodePos.y - nodeAtPos.y;
       setDragOffset({ x: offsetX, y: offsetY });
-      
       const body = bodiesRef.current[nodeAtPos.id];
       if (body) {
         Matter.Body.setStatic(body, true);
       }
     } else if (e.button === 2 || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) {
-      // 시점 드래그 시작
       setDragMode(DRAG_PAN);
       setIsPanning(true);
       setLastMousePos({ x: e.clientX, y: e.clientY });
     } else {
-      // 빈 공간 클릭 - 시점 드래그
       setDragMode(DRAG_PAN);
       setIsPanning(true);
       setLastMousePos({ x: e.clientX, y: e.clientY });
     }
-  }, [getNodeAtPosition]);
-  
-  // 4. 기존 handleCanvasMouseMove에서 setForceRender는 제거 (루프에서 처리)
+  }, [getNodeAtPosition, screenToNode]);
+
+  // handleCanvasMouseMove 수정
   const handleCanvasMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -691,27 +692,29 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
     }
   }, [dragMode, isPanning, lastMousePos, draggingId, getNodeAtPosition, screenToNode, dragOffset, render]);
   
+  // handleCanvasMouseUp 수정
   const handleCanvasMouseUp = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
-    // 클릭 이벤트 처리 (드래그가 아닌 경우에만)
-    if (dragMode === DRAG_NONE || (dragMode === DRAG_NODE && !draggingId)) {
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-      
-      const nodeAtPos = getNodeAtPosition(mouseX, mouseY);
-      if (nodeAtPos && nodeAtPos.onDetailClick && nodeAtPos.historyId) {
-        // 우클릭이면 context menu 처리하지 않고 기본 동작
-        if (e.button === 2) {
-          return;
-        }
-        // 왼쪽 클릭이면 상세보기 실행
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const nodeAtPos = getNodeAtPosition(mouseX, mouseY);
+
+    // 클릭 판정: 다운/업이 같은 노드 & 이동 거의 없음 & 좌클릭
+    if (
+      e.button === 0 &&
+      nodeAtPos &&
+      clickStartNodeId.current === nodeAtPos.id &&
+      clickStartPos.current &&
+      Math.abs(mouseX - clickStartPos.current.x) < CLICK_MOVE_THRESHOLD &&
+      Math.abs(mouseY - clickStartPos.current.y) < CLICK_MOVE_THRESHOLD
+    ) {
+      if (nodeAtPos.onDetailClick && nodeAtPos.historyId) {
         nodeAtPos.onDetailClick(nodeAtPos.historyId);
       }
     }
-    
+    // 기존 드래그/패닝 처리
     if (dragMode === DRAG_NODE && draggingId) {
       const body = bodiesRef.current[draggingId];
       if (body) {
@@ -720,7 +723,6 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
         Matter.Body.setAngularVelocity(body, 0);
       }
     }
-    
     if (dragMode === DRAG_PAN) {
       setViewport(viewportRef.current);
     }
@@ -728,6 +730,8 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
     setDraggingId(null);
     setIsPanning(false);
     setDragOffset({ x: 0, y: 0 });
+    clickStartNodeId.current = null;
+    clickStartPos.current = null;
   }, [dragMode, draggingId, getNodeAtPosition]);
   
   const handleCanvasMouseLeave = useCallback(() => {
