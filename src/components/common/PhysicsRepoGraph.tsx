@@ -7,7 +7,7 @@ const CARD_WIDTH = 335;
 const CARD_HEIGHT = 150;
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 2;
-const UPDATE_INTERVAL = 1000 / 30; // 30 FPS로 제한
+const UPDATE_INTERVAL = 1000 / 60; // 60 FPS로 증가
 
 interface NodeData {
   id: string;
@@ -19,6 +19,13 @@ interface NodeData {
   isMain?: boolean;
   x: number;
   y: number;
+  historyId?: string;
+  onDetailClick?: (historyId: string) => void;
+  currentUserId?: string;
+  historyCreatorId?: string;
+  onEditClick?: (historyId: string) => void;
+  onCreateClick?: (historyId?: string) => void;
+  onProposalClick?: (historyId: string) => void;
 }
 
 interface EdgeData {
@@ -34,11 +41,13 @@ interface PhysicsRepoGraphProps {
 const INITIAL_VIEWPORT = { x: 0, y: 0, scale: 1 };
 
 const GraphContainer = styled.div`
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
   position: relative;
   overflow: hidden;
-  background: #f5f5f5;
+  background: transparent;
   cursor: grab;
   &:active {
     cursor: grabbing;
@@ -127,6 +136,7 @@ const MemoizedNode = memo(({ node, isDragging, onDragStart, onDrag, onDragEnd }:
     y={node.y}
     isDragging={isDragging}
     style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}
+    data-node-id={node.id}
     onMouseDown={e => onDragStart(node.id, e)}
     onMouseMove={e => isDragging && onDrag(node.id, e)}
     onMouseUp={() => onDragEnd(node.id)}
@@ -141,6 +151,13 @@ const MemoizedNode = memo(({ node, isDragging, onDragStart, onDrag, onDragEnd }:
       title={node.title}
       description={node.description}
       timeAgo={node.timeAgo}
+      historyId={node.historyId}
+      onDetailClick={node.onDetailClick}
+      currentUserId={node.currentUserId}
+      historyCreatorId={node.historyCreatorId}
+      onEditClick={node.onEditClick}
+      onCreateClick={node.onCreateClick}
+      onProposalClick={node.onProposalClick}
     />
   </NodeWrapper>
 ));
@@ -162,12 +179,17 @@ const MemoizedEdge = memo(({ source, target, isMain }: {
 
 MemoizedEdge.displayName = 'MemoizedEdge';
 
+const DRAG_NONE = 0;
+const DRAG_PAN = 1;
+const DRAG_NODE = 2;
+
 const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }) => {
   const [nodeStates, setNodeStates] = useState<NodeData[]>(nodes);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [viewport, setViewport] = useState(INITIAL_VIEWPORT);
   const [isPanning, setIsPanning] = useState(false);
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
+  const [dragMode, setDragMode] = useState<number>(DRAG_NONE); // 0: 없음, 1: 시점, 2: 노드
   
   const engineRef = useRef<Matter.Engine | null>(null);
   const bodiesRef = useRef<{ [id: string]: Matter.Body }>({});
@@ -178,6 +200,13 @@ const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }
   const initialViewportRef = useRef(INITIAL_VIEWPORT);
   const animatingRef = useRef(false);
   const initialNodeStatesRef = useRef<NodeData[]>(nodes.map(n => ({ ...n })));
+  const lastNodePositionsRef = useRef<{ [id: string]: { x: number; y: number } }>({});
+
+  // nodes prop이 바뀌면 초기 노드 위치도 갱신
+  useEffect(() => {
+    initialNodeStatesRef.current = nodes.map(n => ({ ...n }));
+    setNodeStates(nodes);
+  }, [nodes]);
 
   // 휠 이벤트 직접 등록 (passive: false)
   useEffect(() => {
@@ -203,153 +232,206 @@ const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }
     };
   }, [viewport]);
 
-  // 최적화된 패닝 핸들러
+  // 마우스 다운 핸들러 (드래그 모드 결정)
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
+    // 노드 드래그 중이면 시점 드래그 불가
+    if (dragMode === DRAG_NODE) return;
+    // 우클릭(2) 또는 space/ctrl/meta/alt/shift 키 → 시점 드래그
+    if (
+      e.button === 2 ||
+      e.ctrlKey || e.metaKey || e.altKey || e.shiftKey ||
+      (e.nativeEvent && (e.nativeEvent as any).code === 'Space')
+    ) {
       setIsPanning(true);
+      setDragMode(DRAG_PAN);
       setLastMousePos({ x: e.clientX, y: e.clientY });
+      return;
     }
-  }, []);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isPanning) return;
-    
-    const dx = e.clientX - lastMousePos.x;
-    const dy = e.clientY - lastMousePos.y;
-    
-    requestAnimationFrame(() => {
-      setViewport(prev => ({
-        ...prev,
-        x: prev.x + dx,
-        y: prev.y + dy
-      }));
-    });
-    
+    // 노드 위에서만 노드 드래그
+    const nodeElem = (e.target as HTMLElement).closest('[data-node-id]');
+    if (nodeElem) {
+      // 시점 드래그 시작하지 않음 (노드 드래그는 MemoizedNode에서 처리)
+      return;
+    }
+    // 그 외는 시점 드래그
+    setIsPanning(true);
+    setDragMode(DRAG_PAN);
     setLastMousePos({ x: e.clientX, y: e.clientY });
-  }, [isPanning, lastMousePos]);
+  }, [dragMode]);
 
-  const handleMouseUp = useCallback(() => {
-    setIsPanning(false);
+  // 노드 드래그 핸들러
+  const handleDragStart = useCallback((id: string, e: React.MouseEvent) => {
+    setDraggingId(id);
+    setDragMode(DRAG_NODE);
+    const body = bodiesRef.current[id];
+    if (body) {
+      Matter.Body.setStatic(body, true);
+    }
+    e.stopPropagation();
+    e.preventDefault();
+  }, []);
+  const handleDrag = useCallback((id: string, e: React.MouseEvent) => {
+    if (dragMode !== DRAG_NODE) return;
+    const body = bodiesRef.current[id];
+    if (!body) return;
+    const container = (e.target as HTMLElement).closest('[data-graph-container]') as HTMLElement;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const x = (e.clientX - rect.left - viewport.x) / viewport.scale - CARD_WIDTH / 2;
+    const y = (e.clientY - rect.top - viewport.y) / viewport.scale - CARD_HEIGHT / 2;
+    Matter.Body.setPosition(body, { x, y });
+  }, [dragMode, viewport]);
+  const handleDragEnd = useCallback((id: string) => {
+    if (dragMode !== DRAG_NODE) return;
+    const body = bodiesRef.current[id];
+    if (body) {
+      Matter.Body.setStatic(body, false);
+      Matter.Body.setVelocity(body, { x: 0, y: 0 });
+      Matter.Body.setAngularVelocity(body, 0);
+    }
+    setDraggingId(null);
+    setDragMode(DRAG_NONE);
+  }, [dragMode]);
+
+  // 마우스 무브 핸들러
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (dragMode === DRAG_PAN && isPanning) {
+      const dx = e.clientX - lastMousePos.x;
+      const dy = e.clientY - lastMousePos.y;
+      requestAnimationFrame(() => {
+        setViewport(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
+      });
+      setLastMousePos({ x: e.clientX, y: e.clientY });
+    } else if (dragMode === DRAG_NODE && draggingId) {
+      const body = bodiesRef.current[draggingId];
+      if (!body) return;
+      const container = (e.target as HTMLElement).closest('[data-graph-container]') as HTMLElement;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const x = (e.clientX - rect.left - viewport.x) / viewport.scale - CARD_WIDTH / 2;
+      const y = (e.clientY - rect.top - viewport.y) / viewport.scale - CARD_HEIGHT / 2;
+      Matter.Body.setPosition(body, { x, y });
+    }
+  }, [dragMode, isPanning, lastMousePos, draggingId, viewport]);
+
+  // 우클릭 메뉴 방지
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
   }, []);
 
   // Matter.js 초기화 및 최적화
   useEffect(() => {
-    const engine = Matter.Engine.create({
-      gravity: { x: 0, y: 0 },
-      enableSleeping: true, // 정지된 물체 계산 제외
-    });
+    let rafId: number | null = null;
+    let lastUpdate = performance.now();
+    let lastRender = performance.now();
+    let engine: Matter.Engine | null = null;
+    let world: Matter.World | null = null;
+    let bodies: { [id: string]: Matter.Body } = {};
+    let constraints: Matter.Constraint[] = [];
 
-    // 물리 엔진 설정 최적화
-    engine.constraintIterations = 2; // 기본값 보다 낮춤
-    engine.positionIterations = 3; // 기본값 보다 낮춤
-    engine.velocityIterations = 3; // 기본값 보다 낮춤
-
-    engineRef.current = engine;
-
-    // 노드별 Body 생성
-    const bodies: { [id: string]: Matter.Body } = {};
-    nodes.forEach(node => {
-      bodies[node.id] = Matter.Bodies.rectangle(
-        node.x,
-        node.y,
-        CARD_WIDTH,
-        CARD_HEIGHT,
-        {
-          inertia: Infinity,
-          restitution: 0.3, // 반발력 감소
-          friction: 0.2,
-          frictionAir: 0.1,
-          frictionStatic: 0.2,
-          density: 0.001,
-          isStatic: false,
-          sleepThreshold: 60, // 빨리 잠들도록
-        }
-      );
-    });
-
-    // 최적화된 Constraint 설정
-    const constraints = edges.map(edge => {
-      const sourceBody = bodies[edge.source];
-      const targetBody = bodies[edge.target];
-      const sourceNode = nodes.find(n => n.id === edge.source);
-      const targetNode = nodes.find(n => n.id === edge.target);
-      const isMainEdge = sourceNode?.isMain && targetNode?.isMain;
-      
-      return Matter.Constraint.create({
-        bodyA: sourceBody,
-        bodyB: targetBody,
-        stiffness: isMainEdge ? 0.08 : 0.05,
-        damping: isMainEdge ? 0.3 : 0.2,
-        length: Math.sqrt(
-          Math.pow(sourceBody.position.x - targetBody.position.x, 2) +
-          Math.pow(sourceBody.position.y - targetBody.position.y, 2)
-        )
+    function setupEngine() {
+      engine = Matter.Engine.create({
+        gravity: { x: 0, y: 0 },
+        enableSleeping: true,
       });
-    });
+      engine.constraintIterations = 2;
+      engine.positionIterations = 3;
+      engine.velocityIterations = 3;
+      engineRef.current = engine;
 
-    const world = engine.world;
-    Matter.World.add(world, Object.values(bodies));
-    Matter.World.add(world, constraints);
-    
-    bodiesRef.current = bodies;
-    constraintsRef.current = constraints;
-
-    // 최적화된 업데이트 루프
-    function update(timestamp: number) {
-      if (timestamp - lastUpdateRef.current >= UPDATE_INTERVAL) {
-        Matter.Engine.update(engine, UPDATE_INTERVAL);
-        
-        setNodeStates(prev =>
-          prev.map(node => {
-            const body = bodies[node.id];
-            return {
-              ...node,
-              x: body.position.x,
-              y: body.position.y,
-            };
-          })
+      bodies = {};
+      nodes.forEach(node => {
+        bodies[node.id] = Matter.Bodies.rectangle(
+          node.x,
+          node.y,
+          CARD_WIDTH,
+          CARD_HEIGHT,
+          {
+            inertia: Infinity,
+            restitution: 0.1,
+            friction: 0.05,
+            frictionAir: 0.05,
+            frictionStatic: 0.1,
+            density: 0.0005,
+            isStatic: false,
+            sleepThreshold: 30,
+          }
         );
-        
-        lastUpdateRef.current = timestamp;
-      }
-      
-      rafRef.current = requestAnimationFrame(update);
+      });
+      constraints = edges.map(edge => {
+        const sourceBody = bodies[edge.source];
+        const targetBody = bodies[edge.target];
+        const sourceNode = nodes.find(n => n.id === edge.source);
+        const targetNode = nodes.find(n => n.id === edge.target);
+        const isMainEdge = sourceNode?.isMain && targetNode?.isMain;
+        return Matter.Constraint.create({
+          bodyA: sourceBody,
+          bodyB: targetBody,
+          stiffness: isMainEdge ? 0.04 : 0.02,
+          damping: isMainEdge ? 0.5 : 0.4,
+          length: Math.sqrt(
+            Math.pow(sourceBody.position.x - targetBody.position.x, 2) +
+            Math.pow(sourceBody.position.y - targetBody.position.y, 2)
+          )
+        });
+      });
+      world = engine.world;
+      Matter.World.add(world, Object.values(bodies));
+      Matter.World.add(world, constraints);
+      bodiesRef.current = bodies;
+      constraintsRef.current = constraints;
     }
-    
-    rafRef.current = requestAnimationFrame(update);
+
+    function cleanupEngine() {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (world && engine) {
+        Matter.World.clear(world, false);
+        Matter.Engine.clear(engine);
+      }
+      if (bodies) Object.keys(bodies).forEach(id => delete bodies[id]);
+      if (constraints) constraints.length = 0;
+      engineRef.current = null;
+      bodiesRef.current = {};
+      constraintsRef.current = [];
+      world = null;
+      engine = null;
+    }
+
+    function startLoop() {
+      lastUpdate = performance.now();
+      lastRender = performance.now();
+      function update(now: number) {
+        const delta = now - lastUpdate;
+        if (engine) {
+          if (delta > 0) {
+            Matter.Engine.update(engine, Math.min(delta, 16.67));
+            lastUpdate = now;
+          }
+          // 항상 60fps로 setNodeStates (빈도 제한 제거)
+          setNodeStates(prev =>
+            prev.map(node => {
+              const body = bodies[node.id];
+              if (!body) return node;
+              lastNodePositionsRef.current[node.id] = { x: body.position.x, y: body.position.y };
+              return { ...node, x: body.position.x, y: body.position.y };
+            })
+          );
+          lastRender = now;
+        }
+        rafId = requestAnimationFrame(update);
+      }
+      rafId = requestAnimationFrame(update);
+    }
+
+    // 최초 엔진 세팅 및 루프 시작
+    setupEngine();
+    startLoop();
 
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      Matter.World.clear(world, false);
-      Matter.Engine.clear(engine);
+      cleanupEngine();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes, edges]);
-
-  // 최적화된 드래그 핸들러
-  const handleDragStart = useCallback((id: string, e: React.MouseEvent) => {
-    setDraggingId(id);
-    e.preventDefault();
-  }, []);
-
-  const handleDrag = useCallback((id: string, e: React.MouseEvent) => {
-    const body = bodiesRef.current[id];
-    if (!body) return;
-
-    const container = (e.target as HTMLElement).closest('[data-graph-container]') as HTMLElement;
-    if (!container) return;
-    const rect = container.getBoundingClientRect();
-    
-    const x = (e.clientX - rect.left - viewport.x) / viewport.scale - CARD_WIDTH / 2;
-    const y = (e.clientY - rect.top - viewport.y) / viewport.scale - CARD_HEIGHT / 2;
-    
-    Matter.Body.setPosition(body, { x, y });
-    Matter.Body.setVelocity(body, { x: 0, y: 0 });
-    Matter.Body.setAngularVelocity(body, 0);
-  }, [viewport]);
-
-  const handleDragEnd = useCallback((id: string) => {
-    setDraggingId(null);
-  }, []);
 
   // 노드 위치만 초기화
   const handleResetNodes = useCallback(() => {
@@ -399,20 +481,33 @@ const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }
     requestAnimationFrame(animate);
   }, [nodeStates]);
 
-  // nodes prop이 바뀌면 초기 노드 위치도 갱신
+  // handleMouseUp을 document 전역에 등록
   useEffect(() => {
-    initialNodeStatesRef.current = nodes.map(n => ({ ...n }));
-    setNodeStates(nodes);
-  }, [nodes]);
+    const onUp = () => {
+      if (dragMode === DRAG_PAN) {
+        setIsPanning(false);
+      } else if (dragMode === DRAG_NODE && draggingId) {
+        const body = bodiesRef.current[draggingId];
+        if (body) {
+          Matter.Body.setStatic(body, false);
+          Matter.Body.setVelocity(body, { x: 0, y: 0 });
+          Matter.Body.setAngularVelocity(body, 0);
+        }
+        setDraggingId(null);
+      }
+      setDragMode(DRAG_NONE);
+    };
+    document.addEventListener('mouseup', onUp);
+    return () => document.removeEventListener('mouseup', onUp);
+  }, [dragMode, draggingId]);
 
   return (
-    <GraphContainer 
+    <GraphContainer
       ref={containerRef}
       data-graph-container
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
+      onContextMenu={handleContextMenu}
     >
       <ResetButton
         onClick={handleResetNodes}

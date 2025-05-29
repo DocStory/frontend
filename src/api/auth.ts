@@ -51,6 +51,28 @@ const AuthService = {
   // 토큰 가져오기
   getToken: (): string | null => {
     return localStorage.getItem('accessToken');
+  },
+
+  // JWT 토큰에서 사용자 정보 추출
+  getUserFromToken: (): { userId: string; nickname: string; email: string; profileImage?: string } | null => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return null;
+
+      // JWT 토큰의 payload 부분 디코딩
+      const payload = token.split('.')[1];
+      const decodedPayload = JSON.parse(atob(payload));
+      
+      return {
+        userId: decodedPayload.providerId,
+        nickname: decodedPayload.nickname,
+        email: decodedPayload.email,
+        profileImage: decodedPayload.profileImage
+      };
+    } catch (error) {
+      console.error('토큰에서 사용자 정보 추출 실패:', error);
+      return null;
+    }
   }
 };
 

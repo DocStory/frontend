@@ -10,6 +10,13 @@ interface HistoryCardProps {
   title: string;
   description?: string;
   timeAgo?: string;
+  historyId?: string;
+  onDetailClick?: (historyId: string) => void;
+  currentUserId?: string;
+  historyCreatorId?: string;
+  onEditClick?: (historyId: string) => void;
+  onCreateClick?: (historyId?: string) => void;
+  onProposalClick?: (historyId: string) => void;
 }
 
 const Card = styled.div<{ $isMain: boolean; $isExpanded: boolean }>`
@@ -105,6 +112,13 @@ const HistoryCard: React.FC<HistoryCardProps> = ({
   title,
   description,
   timeAgo,
+  historyId,
+  onDetailClick,
+  currentUserId,
+  historyCreatorId,
+  onEditClick,
+  onCreateClick,
+  onProposalClick,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [dropdown, setDropdown] = useState<{ open: boolean; x: number; y: number }>({ open: false, x: 0, y: 0 });
@@ -115,17 +129,30 @@ const HistoryCard: React.FC<HistoryCardProps> = ({
     setDropdown({ open: true, x: e.clientX, y: e.clientY });
   };
 
-  const handleDropdownSelect = (_value: string) => {
+  const handleDropdownSelect = (value: string) => {
     setDropdown({ ...dropdown, open: false });
-    // TODO: 실제 동작 연결
-    // alert(value);
+    
+    if (value === 'create' && onCreateClick) {
+      onCreateClick(historyId);
+    } else if (value === 'detail' && historyId && onDetailClick) {
+      onDetailClick(historyId);
+    } else if (value === 'edit' && historyId && onEditClick) {
+      onEditClick(historyId);
+    } else if (value === 'pp' && historyId && onProposalClick) {
+      onProposalClick(historyId);
+    }
+    // TODO: PP 요청 등 다른 동작들도 연결
   };
 
   const handleDropdownClose = () => setDropdown({ ...dropdown, open: false });
 
+  // 현재 사용자가 작성한 히스토리인지 확인
+  const canEdit = currentUserId && historyCreatorId && currentUserId === historyCreatorId;
+
   const dropdownOptions: DropdownOption[] = [
+    { label: '생성하기', value: 'create' },
     { label: '자세히 보기', value: 'detail' },
-    { label: '수정하기', value: 'edit' },
+    ...(canEdit ? [{ label: '수정하기', value: 'edit' }] : []),
     { label: 'PP 요청', value: 'pp' },
   ];
 
@@ -153,7 +180,7 @@ const HistoryCard: React.FC<HistoryCardProps> = ({
           {isHovered && description && <Description>{description}</Description>}
         </Content>
         <BottomRow>
-          <Avatar src={userAvatar || avatarImg} alt="사용자 아바타" />
+          <Avatar src={avatarImg} alt="사용자 아바타" />
           <UserName>{userName}</UserName>
         </BottomRow>
       </Card>

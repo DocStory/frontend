@@ -31,6 +31,7 @@ interface ModalProps {
   onReject: () => void;
   onAccept: () => void;
   role?: string;
+  onClose?: () => void;
 }
 
 const ModalContainer = styled.div`
@@ -75,10 +76,11 @@ const Modal: React.FC<ModalProps> = ({
   onReject,
   onAccept,
   role,
+  onClose,
 }) => {
   return (
     <ModalContainer>
-      <ModalHeader title={modalTitle} onClose={() => {}} backgroundColor="#f1f5f9"/>
+      <ModalHeader title={modalTitle} onClose={onClose || (() => {})} backgroundColor="#f1f5f9"/>
       <ProfileList
         title={headerTitle}
         time={headerTime}

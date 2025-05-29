@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import styled from 'styled-components';
 import downloadIcon from '../../assets/downloadIcon.svg';
 import uploadIcon from '../../assets/uploadIcon.svg';
@@ -13,6 +13,9 @@ export interface ModalItem {
 
 interface ModalListProps {
   items: ModalItem[];
+  onFileSelect?: (files: FileList | null) => void;
+  onFileRemove?: (index: number) => void;
+  isCreating?: boolean;
 }
 
 const ModalListContainer = styled.div`
@@ -95,37 +98,103 @@ const Icon = styled.img<{ $large?: boolean }>`
   min-height: ${({ $large }) => ($large ? '36px' : '24px')};
 `;
 
-const ModalList: React.FC<ModalListProps> = ({ items }) => {
-  const renderIcons = (iconType?: 'download' | 'upload' | 'diff') => {
+const FileUploadArea = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: border-color 0.2s, background-color 0.2s;
+
+  &:hover {
+    border-color: #6c9eff;
+    background: #f0f7ff;
+  }
+`;
+
+const FileUploadText = styled.span`
+  font-family: 'Pretendard';
+  font-weight: 400;
+  font-size: 16px;
+  color: #64748b;
+  margin-left: 8px;
+`;
+
+const HiddenFileInput = styled.input`
+  display: none;
+`;
+
+const ModalList: React.FC<ModalListProps> = ({ 
+  items, 
+  onFileSelect, 
+  onFileRemove, 
+  isCreating = false 
+}) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (onFileSelect) {
+      onFileSelect(files);
+    }
+  };
+
+  const renderIcons = (iconType?: 'download' | 'upload' | 'diff', index?: number) => {
     if (iconType === 'upload') {
       return (
-        <IconCircle>
-          <Icon src={uploadIcon} alt='Upload' />
-        </IconCircle>
+        <IconContainer>
+          <IconCircle>
+            <Icon src={uploadIcon} alt='Upload' />
+          </IconCircle>
+        </IconContainer>
       );
     }
     if (iconType === 'diff') {
       return (
-        <>
+        <IconContainer>
           <IconCircle>
             <Icon src={diffIcon} alt='Diff' />
           </IconCircle>
           <IconCircle>
             <Icon src={downloadIcon} alt='Download' $large />
           </IconCircle>
-        </>
+        </IconContainer>
       );
     }
     // default: download
     return (
-      <IconCircle>
-        <Icon src={downloadIcon} alt='Download' $large />
-      </IconCircle>
+      <IconContainer>
+        <IconCircle>
+          <Icon src={downloadIcon} alt='Download' $large />
+        </IconCircle>
+      </IconContainer>
     );
   };
 
   return (
     <ModalListContainer>
+      {isCreating && onFileSelect && (
+        <>
+          <FileUploadArea onClick={handleFileUploadClick}>
+            <Icon src={uploadIcon} alt='Upload' />
+            <FileUploadText>파일을 선택하거나 여기에 드래그하세요</FileUploadText>
+          </FileUploadArea>
+          <HiddenFileInput
+            ref={fileInputRef}
+            type="file"
+            onChange={handleFileChange}
+          />
+        </>
+      )}
+      
       {items.map((item, index) => (
         <ModalItemContainer key={index}>
           <ItemInfo>
@@ -135,7 +204,7 @@ const ModalList: React.FC<ModalListProps> = ({ items }) => {
               <ItemDate>{item.date}</ItemDate>
             </ItemTextInfo>
           </ItemInfo>
-          <IconContainer>{renderIcons(item.iconType)}</IconContainer>
+          {renderIcons(item.iconType, index)}
         </ModalItemContainer>
       ))}
     </ModalListContainer>

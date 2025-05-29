@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import sendIcon from '../../assets/sendIcon.svg';
 import MemberList from '../common/MemberList';
 import ModalHeader from '../common/ModalHeader';
+import { getTeamMembers, updateTeamMemberRole, removeTeamMember } from '../../api/team';
+import { UUID } from '../../api/common/types';
+import { inviteUserToTeam } from '../../api/teaminvite';
 
 interface TeamInviteModalProps {
   isOpen: boolean;
   onClose: () => void;
   onInvite: (email: string) => void;
+  repositoryId: UUID;
 }
 
 const ModalContainer = styled.div<{ isOpen: boolean }>`
@@ -109,48 +113,81 @@ const SendIcon = styled.img`
 const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
   isOpen,
   onClose,
-  onInvite,
+  repositoryId = "1a728c51-4cca-43b5-a41e-08c1edcc33f6",
 }) => {
   const [email, setEmail] = useState('');
-  const [members, setMembers] = useState([
-    {
-      id: '1',
-      name: '홍길동',
-      email: 'Marvin McKinney@gmail.com',
-      role: 'admin' as const,
-    },
-    {
-      id: '2',
-      name: '홍길동',
-      email: 'Marvin McKinney@gmail.com',
-      role: 'reviewer' as const,
-    },
-    {
-      id: '3',
-      name: '홍길동',
-      email: 'Marvin McKinney@gmail.com',
-      role: 'contributor' as const,
-    },
-  ]);
+  const [members, setMembers] = useState<Array<{
+    id: string;
+    name: string;
+    email: string;
+    role: 'admin' | 'reviewer' | 'contributor';
+  }>>([]);
 
-  const handleInvite = () => {
-    if (email.trim()) {
-      onInvite(email);
-      setEmail('');
+  const fetchTeamMembers = async () => {
+    try {
+      const response = await getTeamMembers(repositoryId);
+
+      if (response.data) {
+        const formattedMembers = response.data
+          .map((member) => ({
+          id: member.userId,
+          name: member.nickname,
+          email: member.email,
+          role: member.role.toLowerCase() as 'admin' | 'reviewer' | 'contributor',
+        }))
+
+        const sortedMembers = formattedMembers.sort((a, b) => {
+          if (a.role === 'admin' && b.role !== 'admin') return -1;
+          if (b.role === 'admin' && a.role !== 'admin') return 1;
+
+          return a.name.localeCompare(b.name, 'ko');
+        });
+
+        setMembers(sortedMembers);
+      }
+    } catch (error) {
+      console.error('Failed to fetch team members:', error);
     }
   };
 
-  const handleRoleChange = (
-    id: string,
-    role: 'admin' | 'reviewer' | 'contributor'
-  ) => {
-    setMembers(
-      members.map((member) => (member.id === id ? { ...member, role } : member))
-    );
+  useEffect(() => {
+    if (isOpen) {
+      fetchTeamMembers();
+    }
+  }, [isOpen, repositoryId]);
+
+
+  const handleInvite = async () => {
+    if (email.trim()) {
+      try {
+        await inviteUserToTeam({
+          repositoryId,
+          email: email.trim(),
+        });
+        setEmail('');
+        await fetchTeamMembers();
+      } catch (error) {
+        console.error('Failed to invite user:', error);
+      }
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setMembers(members.filter((member) => member.id !== id));
+  const handleRoleChange = async (id: string, role: 'admin' | 'reviewer' | 'contributor') => {
+    try {
+      await updateTeamMemberRole(repositoryId, id, { role: role.toUpperCase() });
+      await fetchTeamMembers();
+    } catch (error) {
+      console.error('Failed to update member role:', error);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await removeTeamMember(repositoryId, id);
+      await fetchTeamMembers();
+    } catch (error) {
+      console.error('Failed to remove team member:', error);
+    }
   };
 
   return (

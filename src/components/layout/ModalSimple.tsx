@@ -20,6 +20,17 @@ interface ModalSimpleProps {
   contentTitle: string;
   content: string;
   items: ModalItem[];
+  onClose?: () => void;
+  userProfileImage?: string;
+  onEditStart?: () => void;
+  onEditCancel?: () => void;
+  onEditSave?: () => void;
+  onTitleChange?: (title: string) => void;
+  onContentChange?: (content: string) => void;
+  onFileSelect?: (files: FileList | null) => void;
+  onFileRemove?: (index: number) => void;
+  isCreating?: boolean;
+  isProposal?: boolean;
 }
 
 const ModalContainer = styled.div`
@@ -60,25 +71,50 @@ const ModalSimple: React.FC<ModalSimpleProps> = ({
   contentTitle,
   content,
   items,
+  onClose,
+  userProfileImage,
+  onEditStart,
+  onEditCancel,
+  onEditSave,
+  onTitleChange,
+  onContentChange,
+  onFileSelect,
+  onFileRemove,
+  isCreating = false,
+  isProposal = false,
 }) => {
   return (
     <ModalContainer>
-      <ModalHeader title={modalTitle} onClose={() => {}} backgroundColor="#f1f5f9"/>
+      <ModalHeader title={modalTitle} onClose={onClose || (() => {})} backgroundColor="#f1f5f9"/>
       <ProfileList
         title={headerTitle}
         time={headerTime}
         isEditing={isEditing}
         canEdit={canEdit}
         backgroundColor="#f1f5f9"
+        userProfileImage={userProfileImage}
+        onEditStart={onEditStart}
+        onEditCancel={onEditCancel}
+        onEditSave={onEditSave}
       />
       <ContentWrapper>
         <ModalContent
           title={contentTitle}
           content={content}
           isEditing={isEditing}
+          isModifying={isEditing}
+          onTitleChange={onTitleChange}
+          onContentChange={onContentChange}
         />
-        <SectionTitle>변경사항</SectionTitle>
-        <ModalList items={items} />
+        {!isProposal && (
+          <SectionTitle>{isCreating ? '파일 업로드' : '변경사항'}</SectionTitle>
+        )}
+        <ModalList 
+          items={items} 
+          onFileSelect={onFileSelect}
+          onFileRemove={onFileRemove}
+          isCreating={isCreating}
+        />
       </ContentWrapper>
     </ModalContainer>
   );
