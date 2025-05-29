@@ -32,12 +32,12 @@ const Overlay = styled.div`
 `;
 
 const Container = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.cardBackground};
   width: 95%;
   max-width: 800px;
   max-height: 90vh;
   border-radius: 15px;
-  border: 3px solid #CBD5E1;
+  border: 3px solid ${({ theme }) => theme.border};
   position: relative;
   display: flex;
   flex-direction: column;
@@ -49,15 +49,15 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 24px 32px;
-  border-bottom: 1px solid #e5e7eb;
-  background: white;
+  border-bottom: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.cardBackground};
 `;
 
 const Title = styled.h2`
   font-family: 'Pretendard';
   font-weight: 700;
   font-size: 24px;
-  color: #1f2937;
+  color: ${({ theme }) => theme.text};
   margin: 0;
 `;
 
@@ -65,21 +65,21 @@ const CloseButton = styled.button`
   background: none;
   border: none;
   font-size: 24px;
-  color: #6b7280;
+  color: ${({ theme }) => theme.textSecondary};
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
   transition: color 0.2s ease;
 
   &:hover {
-    color: #374151;
+    color: ${({ theme }) => theme.text};
   }
 `;
 
 const FilterSection = styled.div`
   padding: 24px 0;
-  border-bottom: 1px solid #cbd5e1;
-  background: #f1f5f9;
+  border-bottom: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.surface};
   display: flex;
   gap: 0;
   justify-content: center;
@@ -96,7 +96,7 @@ const StyledFilterTab = styled(FilterTab)`
   display: flex;
   align-items: center;
   justify-content: center;
-  border-right: 1px solid #cbd5e1;
+  border-right: 1px solid ${({ theme }) => theme.border};
 
   &:last-child {
     border-right: none;
@@ -106,7 +106,7 @@ const StyledFilterTab = styled(FilterTab)`
 const ContentWrapper = styled.div`
   flex: 1;
   overflow-y: auto;
-  background: #f1f5f9;
+  background: ${({ theme }) => theme.surface};
   min-height: 0;
 `;
 
@@ -115,8 +115,8 @@ const ButtonRow = styled.div`
   justify-content: flex-end;
   gap: 12px;
   padding: 24px 32px;
-  border-top: 1px solid #e5e7eb;
-  background: white;
+  border-top: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.cardBackground};
 `;
 
 const ModalPPList: React.FC<ModalPPListProps> = ({ items, onClose, onProposalClick }) => {
@@ -189,7 +189,7 @@ const ModalPPList: React.FC<ModalPPListProps> = ({ items, onClose, onProposalCli
           <Button
             variant="primary"
             size="medium"
-            onClick={() => onProposalClick && onProposalClick()}
+            onClick={() => onProposalClick && onProposalClick('')}
           >
             새 Proposal 생성
           </Button>

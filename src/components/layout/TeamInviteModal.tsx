@@ -30,12 +30,12 @@ const ModalContainer = styled.div<{ isOpen: boolean }>`
 `;
 
 const ModalContent = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.cardBackground};
   width: 95%;
   max-width: 600px;
   max-height: 90vh;
   border-radius: 15px;
-  border: 3px solid #CBD5E1;
+  border: 3px solid ${({ theme }) => theme.border};
   position: relative;
   display: flex;
   flex-direction: column;
@@ -43,7 +43,7 @@ const ModalContent = styled.div`
 `;
 
 const ModalBody = styled.div`
-  background: #f8f8f8;
+  background: ${({ theme }) => theme.background};
   padding: 24px;
   flex: 1;
   overflow-y: auto;
@@ -51,7 +51,7 @@ const ModalBody = styled.div`
 `;
 
 const InputSection = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.cardBackground};
   border-radius: 16px;
   padding: 12px;
   margin-bottom: 24px;
@@ -67,20 +67,20 @@ const EmailInput = styled.input`
   font-family: 'Pretendard';
   font-size: 16px;
   padding: 14px 16px;
-  border: 1.5px solid #e5e7eb;
+  border: 1.5px solid ${({ theme }) => theme.border};
   border-radius: 8px;
-  background: #fafafa;
-  color: #1f2937;
+  background: ${({ theme }) => theme.surface};
+  color: ${({ theme }) => theme.text};
   transition: border-color 0.2s ease;
   flex: 1;
 
   &::placeholder {
-    color: #9ca3af;
+    color: ${({ theme }) => theme.textSecondary};
   }
 
   &:focus {
     outline: none;
-    border-color: #4078FF;
+    border-color: ${({ theme }) => theme.primary};
   }
 `;
 
@@ -89,8 +89,8 @@ const SendButton = styled.button`
   align-items: center;
   gap: 4px;
   padding: 8px 12px;
-  background: #6c9eff;
-  color: white;
+  background: ${({ theme }) => theme.primary};
+  color: ${({ theme }) => theme.background};
   border: none;
   border-radius: 8px;
   font-size: 12px;
@@ -101,11 +101,11 @@ const SendButton = styled.button`
   box-shadow: 0px 4px 40px 0px rgba(255, 133, 95, 0.04);
 
   &:hover {
-    background: #5b8def;
+    background: ${({ theme }) => theme.primaryHover};
   }
 
   &:disabled {
-    background: #93c5fd;
+    background: ${({ theme }) => theme.primaryDisabled};
     cursor: not-allowed;
   }
 `;

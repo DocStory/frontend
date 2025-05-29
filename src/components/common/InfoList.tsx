@@ -18,23 +18,24 @@ const ListItem = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 24px;
-  border-bottom: 1px solid #e5e5e5;
+  padding: 16px 0;
+  border-bottom: 1px solid ${({ theme }) => theme.border};
 
   &:last-child {
     border-bottom: none;
-    padding-bottom: 0;
   }
 `;
 
 const Label = styled.span`
-  font-size: 16px;
-  color: #666666;
+  font-weight: 600;
+  color: ${({ theme }) => theme.textSecondary};
+  flex: 1;
 `;
 
 const Value = styled.span`
-  font-size: 16px;
-  color: #1a1a1a;
+  color: ${({ theme }) => theme.text};
+  text-align: right;
+  flex: 2;
 `;
 
 const InfoList: React.FC<InfoListProps> = ({

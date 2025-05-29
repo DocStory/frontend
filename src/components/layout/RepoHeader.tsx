@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { useTheme } from '../../contexts/ThemeContext';
 import SearchBar from '../common/SearchBar';
 import NotificationIcon from '../../assets/notificationIcon.svg';
 import NotiIcon from '../../assets/notiIcon.svg';
@@ -11,7 +12,7 @@ const HeaderContainer = styled.header`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: ${({ theme }) => theme.headerBackground};
+  background: ${({ theme }) => theme.cardBackground};
   border-bottom: 1px solid ${({ theme }) => theme.border};
   padding: 0 32px;
   height: 64px;
@@ -31,10 +32,18 @@ const Right = styled.div`
   gap: 32px;
 `;
 
-const Icon = styled.img`
+const Icon = styled.img<{ $isDark: boolean }>`
   width: 32px;
   height: 32px;
   cursor: pointer;
+  transition: opacity 0.2s ease;
+  
+  &:hover {
+    opacity: 0.8;
+  }
+  
+  /* 다크모드에서 아이콘 색상 조정 */
+  filter: ${({ $isDark }) => $isDark ? 'brightness(0.9) contrast(1.1)' : 'none'};
 `;
 
 interface RepoHeaderProps {
@@ -47,20 +56,26 @@ const RepoHeader: React.FC<RepoHeaderProps> = ({
   hasNewNotification = false, 
   onTeamIconClick,
   onRepoIconClick,
-}) => (
-  <HeaderContainer>
-    <SearchBarWrapper>
-      <SearchBar />
-    </SearchBarWrapper>
-    <Right>
-      <Icon src={RepoIcon} alt="레포" onClick={onRepoIconClick} />
-      <Icon src={TeamIcon} alt="팀" onClick={onTeamIconClick} />
-      <Icon
-        src={hasNewNotification ? NotiIcon : NotificationIcon}
-        alt="알림"
-      />
-    </Right>
-  </HeaderContainer>
-);
+}) => {
+  const { mode } = useTheme();
+  const isDark = mode === 'dark';
+
+  return (
+    <HeaderContainer>
+      <SearchBarWrapper>
+        <SearchBar />
+      </SearchBarWrapper>
+      <Right>
+        <Icon src={RepoIcon} alt="레포" onClick={onRepoIconClick} $isDark={isDark} />
+        <Icon src={TeamIcon} alt="팀" onClick={onTeamIconClick} $isDark={isDark} />
+        <Icon
+          src={hasNewNotification ? NotiIcon : NotificationIcon}
+          alt="알림"
+          $isDark={isDark}
+        />
+      </Right>
+    </HeaderContainer>
+  );
+};
 
 export default RepoHeader; 

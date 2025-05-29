@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import { useTheme } from '../../contexts/ThemeContext';
 import createIcon from '../../assets/pencilIcon.svg';
 import Tab from '../common/FilterTab.tsx';
 
@@ -14,8 +15,8 @@ const Container = styled.div`
   width: 1622px;
   height: 148px;
   padding: 0 24px 0 58px;
-  background: #fff;
-  border-bottom: 1px solid #f0f0f0;
+  background: ${({ theme }) => theme.cardBackground};
+  border-bottom: 1px solid ${({ theme }) => theme.border};
 `;
 
 const TitleContainer = styled.div`
@@ -30,7 +31,7 @@ const Title = styled.h1`
   font-family: 'Pretendard';
   font-weight: 700;
   font-size: 26px;
-  color: #292929;
+  color: ${({ theme }) => theme.text};
   margin: 0;
 `;
 
@@ -38,22 +39,29 @@ const Subtitle = styled.p`
   font-family: 'Pretendard';
   font-weight: 400;
   font-size: 16px;
-  color: rgba(0, 0, 0, 0.62);
+  color: ${({ theme }) => theme.textSecondary};
   margin: 0;
   letter-spacing: 0.94%;
 `;
 
-const CreateIcon = styled.div`
+const CreateIcon = styled.div<{ $isDark: boolean }>`
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 19px;
   height: 19px;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 0.8;
+  }
 
   img {
     width: 100%;
     height: 100%;
+    /* 다크모드에서 아이콘 색상 조정 */
+    filter: ${({ $isDark }) => $isDark ? 'brightness(0.9) contrast(1.1)' : 'none'};
   }
 `;
 
@@ -70,37 +78,41 @@ const TabWrapper = styled.div<{ label: string }>`
   justify-content: center;
 `;
 
-const RepositoryTile: React.FC<RepositoryTileProps> = ({
+const RepositoryTitle: React.FC<RepositoryTileProps> = ({
   title,
   subtitle,
   onTabChange,
   onCreateClick,
 }) => {
-  const tabs = ['전체보기', '주요', '하위', '폐기', '필터'];
-  const [activeTab, setActiveTab] = useState('전체보기');
+  const [selectedTab, setSelectedTab] = useState('전체보기');
+  const { mode } = useTheme();
+  const isDark = mode === 'dark';
 
-  const handleTabClick = (tab: string) => {
-    setActiveTab(tab);
+  const handleTabClick = (tabLabel: string) => {
+    setSelectedTab(tabLabel);
     if (onTabChange) {
-      onTabChange(tab);
+      onTabChange(tabLabel);
     }
   };
+
+  const tabs = ['전체보기', '히스토리', '프로포절'];
 
   return (
     <Container>
       <TitleContainer>
         <Title>{title}</Title>
-        <CreateIcon onClick={onCreateClick}>
-          <img src={createIcon} alt='레포지토리 생성' />
+        <CreateIcon onClick={onCreateClick} $isDark={isDark}>
+          <img src={createIcon} alt="생성" />
         </CreateIcon>
       </TitleContainer>
       <Subtitle>{subtitle}</Subtitle>
+
       <TabContainer>
         {tabs.map((tab) => (
           <TabWrapper key={tab} label={tab}>
             <Tab
               label={tab}
-              isActive={activeTab === tab}
+              isActive={selectedTab === tab}
               showLine={true}
               onClick={() => handleTabClick(tab)}
             />
@@ -111,4 +123,4 @@ const RepositoryTile: React.FC<RepositoryTileProps> = ({
   );
 };
 
-export default RepositoryTile;
+export default RepositoryTitle;

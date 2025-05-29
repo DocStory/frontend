@@ -1,13 +1,18 @@
 import React, { useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { FiCheck, FiX, FiAlertCircle } from 'react-icons/fi';
+import { FiCheck, FiX, FiAlertCircle, FiAlertTriangle } from 'react-icons/fi';
+
+export type ToastType = 'success' | 'error' | 'warning';
+
+export interface ToastData {
+  id: string;
+  type: ToastType;
+  message: string;
+}
 
 interface ToastProps {
-  type: 'success' | 'error' | 'warning';
-  message: string;
-  isVisible: boolean;
-  onClose: () => void;
-  duration?: number;
+  toast: ToastData;
+  onClose: (id: string) => void;
 }
 
 const slideIn = keyframes`
@@ -32,47 +37,47 @@ const slideOut = keyframes`
   }
 `;
 
-const ToastContainer = styled.div<{ isVisible: boolean; type: string }>`
+const ToastContainer = styled.div<{ type: ToastType }>`
   position: fixed;
   top: 80px;
   right: 24px;
   min-width: 320px;
   max-width: 400px;
   padding: 16px 20px;
-  background: #fff;
+  background: ${({ theme }) => theme.cardBackground};
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  border-left: 4px solid ${({ type }) => 
-    type === 'success' ? '#10B981' : 
-    type === 'error' ? '#EF4444' : '#F59E0B'};
+  box-shadow: 0 8px 32px ${({ theme }) => theme.shadow};
+  border-left: 4px solid ${({ type, theme }) => 
+    type === 'success' ? theme.success :
+    type === 'error' ? theme.error : theme.warning};
   display: flex;
   align-items: center;
   gap: 12px;
   z-index: 9999;
-  animation: ${({ isVisible }) => isVisible ? slideIn : slideOut} 0.3s ease-out;
+  animation: ${({ type }) => type ? slideIn : slideOut} 0.3s ease-out;
   font-family: 'Pretendard';
 `;
 
-const IconWrapper = styled.div<{ type: string }>`
+const IconWrapper = styled.div<{ type: ToastType }>`
   display: flex;
   align-items: center;
   justify-content: center;
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: ${({ type }) => 
-    type === 'success' ? '#DCFCE7' : 
-    type === 'error' ? '#FEE2E2' : '#FEF3C7'};
-  color: ${({ type }) => 
-    type === 'success' ? '#10B981' : 
-    type === 'error' ? '#EF4444' : '#F59E0B'};
+  background: ${({ type, theme }) =>
+    type === 'success' ? 'rgba(16, 185, 129, 0.1)' :
+    type === 'error' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)'};
+  color: ${({ type, theme }) =>
+    type === 'success' ? theme.success :
+    type === 'error' ? theme.error : theme.warning};
 `;
 
 const MessageText = styled.span`
   flex: 1;
   font-size: 14px;
   font-weight: 500;
-  color: #374151;
+  color: ${({ theme }) => theme.text};
   line-height: 1.4;
 `;
 
@@ -84,56 +89,38 @@ const CloseButton = styled.button`
   height: 20px;
   background: none;
   border: none;
-  color: #9CA3AF;
+  color: ${({ theme }) => theme.textSecondary};
   cursor: pointer;
   border-radius: 4px;
   transition: all 0.2s ease;
 
   &:hover {
-    color: #6B7280;
-    background: #F3F4F6;
+    color: ${({ theme }) => theme.text};
+    background: ${({ theme }) => theme.hoverBackground};
   }
 `;
 
-const Toast: React.FC<ToastProps> = ({ 
-  type, 
-  message, 
-  isVisible, 
-  onClose, 
-  duration = 3000 
-}) => {
-  useEffect(() => {
-    if (isVisible && duration > 0) {
-      const timer = setTimeout(() => {
-        onClose();
-      }, duration);
-
-      return () => clearTimeout(timer);
-    }
-  }, [isVisible, duration, onClose]);
-
+const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
   const getIcon = () => {
-    switch (type) {
+    switch (toast.type) {
       case 'success':
-        return <FiCheck size={16} />;
+        return <FiCheck size={14} />;
       case 'error':
-        return <FiX size={16} />;
+        return <FiAlertCircle size={14} />;
       case 'warning':
-        return <FiAlertCircle size={16} />;
+        return <FiAlertTriangle size={14} />;
       default:
-        return <FiCheck size={16} />;
+        return null;
     }
   };
 
-  if (!isVisible) return null;
-
   return (
-    <ToastContainer isVisible={isVisible} type={type}>
-      <IconWrapper type={type}>
+    <ToastContainer type={toast.type}>
+      <IconWrapper type={toast.type}>
         {getIcon()}
       </IconWrapper>
-      <MessageText>{message}</MessageText>
-      <CloseButton onClick={onClose}>
+      <MessageText>{toast.message}</MessageText>
+      <CloseButton onClick={() => onClose(toast.id)}>
         <FiX size={16} />
       </CloseButton>
     </ToastContainer>

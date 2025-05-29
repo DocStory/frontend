@@ -25,12 +25,71 @@ import HistoryDetailModal from '../common/HistoryDetailModal';
 const PageContainer = styled.div`
   display: flex;
   height: 100vh;
-  background: #f7faff;
+  background: ${({ theme }) => theme.background};
   width: 100%;
   min-width: 0;
   max-width: 100vw;
   overflow-x: hidden;
   box-sizing: border-box;
+`;
+
+const Header = styled.div`
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: ${({ theme }) => theme.cardBackground};
+  border-bottom: 1px solid ${({ theme }) => theme.border};
+  padding: 24px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const HeaderTitle = styled.h1`
+  font-family: 'Pretendard';
+  font-weight: 700;
+  font-size: 24px;
+  color: ${({ theme }) => theme.text};
+  margin: 0;
+`;
+
+const HeaderActions = styled.div`
+  display: flex;
+  gap: 12px;
+`;
+
+const CreateButton = styled.button`
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: ${({ theme }) => theme.surface};
+  color: ${({ theme }) => theme.text};
+  font-family: 'Pretendard';
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.hoverBackground};
+  }
+`;
+
+const ProposalButton = styled.button`
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: ${({ theme }) => theme.primary};
+  color: ${({ theme }) => theme.background};
+  font-family: 'Pretendard';
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.primaryHover};
+  }
 `;
 
 const MainContent = styled.div`
@@ -45,8 +104,8 @@ const MainContent = styled.div`
 `;
 
 const TitleSection = styled.div`
-  background: #fff;
-  border-bottom: 1px solid #f0f0f0;
+  background: ${({ theme }) => theme.background};
+  border-bottom: 1px solid ${({ theme }) => theme.borderLight};
   padding: 24px 58px;
 `;
 
@@ -61,7 +120,7 @@ const Title = styled.h1`
   font-family: 'Pretendard';
   font-weight: 700;
   font-size: 26px;
-  color: #292929;
+  color: ${({ theme }) => theme.text};
   margin: 0;
 `;
 
@@ -72,13 +131,13 @@ const EditButton = styled.button`
   width: 28px;
   height: 28px;
   border: none;
-  background: #f8f9fa;
+  background: ${({ theme }) => theme.backgroundLighter};
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    background: #e9ecef;
+    background: ${({ theme }) => theme.hoverBackground};
     transform: translateY(-1px);
   }
 
@@ -97,7 +156,7 @@ const Subtitle = styled.p`
   font-family: 'Pretendard';
   font-weight: 400;
   font-size: 16px;
-  color: rgba(0, 0, 0, 0.62);
+  color: ${({ theme }) => theme.textSecondary};
   margin: 0;
   letter-spacing: 0.94%;
 `;
@@ -123,7 +182,7 @@ const LoadingContainer = styled.div`
   height: 100vh;
   font-family: 'Pretendard';
   font-size: 18px;
-  color: #666;
+  color: ${({ theme }) => theme.textSecondary};
 `;
 
 const EmptyStateContainer = styled.div`
@@ -162,28 +221,6 @@ const EmptyDescription = styled.p`
   max-width: 400px;
   opacity: 0.8;
   transition: color 0.3s ease;
-`;
-
-const CreateButton = styled.button`
-  font-family: 'Pretendard';
-  font-weight: 600;
-  font-size: 14px;
-  color: #fff;
-  background: ${({ theme }) => theme.primary};
-  border: none;
-  border-radius: 8px;
-  padding: 12px 24px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: ${({ theme }) => theme.primaryHover};
-    transform: translateY(-1px);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
 `;
 
 const RepositoryHistoryPage: React.FC = () => {
@@ -702,30 +739,31 @@ const RepositoryHistoryPage: React.FC = () => {
         <GraphContainer>
           {graphNodes.length === 0 ? (
             <div style={{
-              width: '100%',
-              height: '100%',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              background: '#f7faff',
+              minHeight: '400px',
+              padding: '40px',
+              textAlign: 'center',
+              background: 'transparent',
             }}>
-              <h2 style={{ fontFamily: 'Pretendard', fontWeight: 700, fontSize: 24, color: '#1e293b', marginBottom: 12 }}>아직 생성된 히스토리가 없어요</h2>
-              <p style={{ fontFamily: 'Pretendard', fontWeight: 400, fontSize: 16, color: '#64748b', marginBottom: 32 }}>첫 번째 히스토리를 생성하여 문서 관리를 시작해보세요.</p>
+              <h2 style={{ fontFamily: 'Pretendard', fontWeight: 700, fontSize: 24, color: 'var(--text-color)', marginBottom: 12 }}>아직 생성된 히스토리가 없어요</h2>
+              <p style={{ fontFamily: 'Pretendard', fontWeight: 400, fontSize: 16, color: 'var(--text-secondary)', marginBottom: 32 }}>첫 번째 히스토리를 생성하여 문서 관리를 시작해보세요.</p>
               <button
+                onClick={() => handleHistoryCreateClick()}
                 style={{
+                  padding: '12px 24px',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
                   fontFamily: 'Pretendard',
-                  fontWeight: 600,
-                  fontSize: 16,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
                   color: '#fff',
                   background: '#4078FF',
-                  border: 'none',
-                  borderRadius: 8,
-                  padding: '12px 24px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
                 }}
-                onClick={() => handleHistoryCreateClick()}
               >
                 히스토리 생성하기
               </button>

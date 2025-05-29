@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import Button from './Button';
-import ModalHeader from './ModalHeader';
 import { useToastContext } from '../../contexts/ToastContext';
 
 interface EditRepositoryModalProps {
@@ -27,15 +25,15 @@ const ModalOverlay = styled.div<{ isOpen: boolean }>`
 `;
 
 const ModalContainer = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.modalBackground};
   border-radius: 16px;
   padding: 32px;
   width: 90%;
   max-width: 480px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 40px ${({ theme }) => theme.shadow};
 `;
 
-const ModalHeader = styled.div`
+const ModalHeaderComponent = styled.div`
   margin-bottom: 24px;
 `;
 
@@ -43,7 +41,7 @@ const ModalTitle = styled.h2`
   font-family: 'Pretendard';
   font-weight: 700;
   font-size: 24px;
-  color: #1a1a1a;
+  color: ${({ theme }) => theme.text};
   margin: 0 0 8px 0;
 `;
 
@@ -51,7 +49,7 @@ const ModalSubtitle = styled.p`
   font-family: 'Pretendard';
   font-weight: 400;
   font-size: 16px;
-  color: #666;
+  color: ${({ theme }) => theme.textSecondary};
   margin: 0;
 `;
 
@@ -71,26 +69,26 @@ const Label = styled.label`
   font-family: 'Pretendard';
   font-weight: 600;
   font-size: 14px;
-  color: #1a1a1a;
+  color: ${({ theme }) => theme.text};
 `;
 
 const Input = styled.input`
   font-family: 'Pretendard';
   font-size: 16px;
   padding: 12px 16px;
-  border: 1px solid #e1e5e9;
+  border: 1px solid ${({ theme }) => theme.border};
   border-radius: 8px;
-  background: white;
-  color: #1a1a1a;
+  background: ${({ theme }) => theme.inputBackground};
+  color: ${({ theme }) => theme.text};
   transition: border-color 0.2s ease;
 
   &:focus {
     outline: none;
-    border-color: #4078FF;
+    border-color: ${({ theme }) => theme.primary};
   }
 
   &::placeholder {
-    color: #9ca3af;
+    color: ${({ theme }) => theme.textSecondary};
   }
 `;
 
@@ -98,21 +96,21 @@ const TextArea = styled.textarea`
   font-family: 'Pretendard';
   font-size: 16px;
   padding: 12px 16px;
-  border: 1px solid #e1e5e9;
+  border: 1px solid ${({ theme }) => theme.border};
   border-radius: 8px;
-  background: white;
-  color: #1a1a1a;
+  background: ${({ theme }) => theme.inputBackground};
+  color: ${({ theme }) => theme.text};
   resize: vertical;
   min-height: 100px;
   transition: border-color 0.2s ease;
 
   &:focus {
     outline: none;
-    border-color: #4078FF;
+    border-color: ${({ theme }) => theme.primary};
   }
 
   &::placeholder {
-    color: #9ca3af;
+    color: ${({ theme }) => theme.textSecondary};
   }
 `;
 
@@ -122,7 +120,7 @@ const ButtonGroup = styled.div`
   margin-top: 8px;
 `;
 
-const Button = styled.button<{ variant: 'primary' | 'secondary' }>`
+const StyledButton = styled.button<{ variant: 'primary' | 'secondary' }>`
   flex: 1;
   font-family: 'Pretendard';
   font-weight: 600;
@@ -133,27 +131,27 @@ const Button = styled.button<{ variant: 'primary' | 'secondary' }>`
   cursor: pointer;
   transition: all 0.2s ease;
 
-  ${({ variant }) =>
+  ${({ variant, theme }) =>
     variant === 'primary'
       ? `
-        background: #4078FF;
-        color: white;
+        background: ${theme.primary};
+        color: ${theme.background};
         
         &:hover:not(:disabled) {
-          background: #3366CC;
+          background: ${theme.primaryHover};
         }
         
         &:disabled {
-          background: #9ca3af;
+          background: ${theme.textSecondary};
           cursor: not-allowed;
         }
       `
       : `
-        background: #f3f4f6;
-        color: #374151;
+        background: ${theme.surface};
+        color: ${theme.text};
         
         &:hover {
-          background: #e5e7eb;
+          background: ${theme.hoverBackground};
         }
       `}
 `;
@@ -206,10 +204,10 @@ const EditRepositoryModal: React.FC<EditRepositoryModalProps> = ({
   return (
     <ModalOverlay isOpen={isOpen} onClick={handleOverlayClick}>
       <ModalContainer>
-        <ModalHeader>
+        <ModalHeaderComponent>
           <ModalTitle>레포지토리 수정</ModalTitle>
           <ModalSubtitle>레포지토리의 이름과 설명을 수정할 수 있습니다.</ModalSubtitle>
-        </ModalHeader>
+        </ModalHeaderComponent>
         
         <Form onSubmit={handleSubmit}>
           <FormGroup>
@@ -237,12 +235,12 @@ const EditRepositoryModal: React.FC<EditRepositoryModalProps> = ({
           </FormGroup>
 
           <ButtonGroup>
-            <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
+            <StyledButton type="button" variant="secondary" onClick={onClose} disabled={loading}>
               취소
-            </Button>
-            <Button type="submit" variant="primary" disabled={loading || !name.trim()}>
+            </StyledButton>
+            <StyledButton type="submit" variant="primary" disabled={loading || !name.trim()}>
               {loading ? '수정 중...' : '수정하기'}
-            </Button>
+            </StyledButton>
           </ButtonGroup>
         </Form>
       </ModalContainer>
