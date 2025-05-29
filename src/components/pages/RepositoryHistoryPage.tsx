@@ -143,6 +143,7 @@ const RepositoryHistoryPage: React.FC = () => {
   const [selectedHistoryForProposal, setSelectedHistoryForProposal] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [parentFileId, setParentFileId] = useState<string | null>(null);
+  const [allHistories, setAllHistories] = useState<HistoryListResponse[][]>([]);
   const [histories, setHistories] = useState<HistoryListResponse[][]>([]);
   const [rootFiles, setRootFiles] = useState<HistoryFileResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -171,14 +172,14 @@ const RepositoryHistoryPage: React.FC = () => {
     const nodes: any[] = [];
 
     // 모든 히스토리를 하나의 배열로 평탄화
-    const allHistories: HistoryListResponse[] = [];
-    histories.forEach(historyGroup => {
-      allHistories.push(...historyGroup);
+    const all: HistoryListResponse[] = [];
+    histories.forEach((historyGroup: HistoryListResponse[]) => {
+      all.push(...historyGroup);
     });
 
     // fileId를 키로 하는 맵 생성
     const fileIdToHistoryMap = new Map<string, HistoryListResponse>();
-    allHistories.forEach(history => {
+    all.forEach(history => {
       fileIdToHistoryMap.set(history.fileId, history);
     });
 
@@ -196,7 +197,7 @@ const RepositoryHistoryPage: React.FC = () => {
     };
 
     // 루트 노드들 찾기
-    const rootHistories = allHistories.filter(history => !history.parentFileId);
+    const rootHistories = all.filter(history => !history.parentFileId);
     
     // 각 루트의 하위 트리 구성
     const getRootForHistory = (history: HistoryListResponse): HistoryListResponse => {
@@ -208,7 +209,7 @@ const RepositoryHistoryPage: React.FC = () => {
 
     // 루트별로 히스토리 그룹화
     const rootGroups = new Map<string, HistoryListResponse[]>();
-    allHistories.forEach(history => {
+    all.forEach(history => {
       const root = getRootForHistory(history);
       if (!rootGroups.has(root.fileId)) {
         rootGroups.set(root.fileId, []);
@@ -256,7 +257,8 @@ const RepositoryHistoryPage: React.FC = () => {
           title: history.title,
           description: history.content,
           timeAgo: history.createdAt ? getRelativeTime(history.createdAt) : 'Unknown',
-          isMain: history.historyStatus === 'MAIN' || (history.historyStatus as any) === 'NORMAL',
+          isMain: history.historyStatus === 'MAIN',
+          isAbandoned: history.historyStatus === 'ABANDONED' || history.historyStatus === 'ABAND',
           fileLevel: history.fileLevel,
           historyId: history.id,
           onDetailClick: () => handleHistoryDetailClick(history.id),
@@ -286,19 +288,19 @@ const RepositoryHistoryPage: React.FC = () => {
     const edges: any[] = [];
     
     // 모든 히스토리를 하나의 배열로 평탄화
-    const allHistories: HistoryListResponse[] = [];
-    histories.forEach(historyGroup => {
-      allHistories.push(...historyGroup);
+    const all: HistoryListResponse[] = [];
+    histories.forEach((historyGroup: HistoryListResponse[]) => {
+      all.push(...historyGroup);
     });
     
     // fileId를 키로 하는 맵 생성 (빠른 검색을 위해)
     const fileIdToHistoryMap = new Map<string, HistoryListResponse>();
-    allHistories.forEach(history => {
+    all.forEach(history => {
       fileIdToHistoryMap.set(history.fileId, history);
     });
     
     // 각 히스토리에 대해 부모-자식 관계 확인
-    allHistories.forEach(history => {
+    all.forEach(history => {
       if (history.parentFileId) {
         // 부모 파일 ID에 해당하는 히스토리 찾기
         const parentHistory = fileIdToHistoryMap.get(history.parentFileId);
@@ -307,6 +309,7 @@ const RepositoryHistoryPage: React.FC = () => {
           edges.push({
             source: parentHistory.id,
             target: history.id,
+            isMainEdge: parentHistory.historyStatus === 'MAIN' && history.historyStatus === 'MAIN',
           });
         }
       }
@@ -460,6 +463,7 @@ const RepositoryHistoryPage: React.FC = () => {
       // 히스토리 데이터 가져오기
       const historiesResponse = await getFilteredHistories(repositoryId, undefined, 'all');
       if (historiesResponse.code === 100 && historiesResponse.data) {
+        setAllHistories(historiesResponse.data);
         setHistories(historiesResponse.data);
       }
 
@@ -589,21 +593,33 @@ const RepositoryHistoryPage: React.FC = () => {
           onTeamIconClick={() => setIsModalOpen(true)}
           onRepoIconClick={handleProposalListOpen}
         />
-        <TitleSection>
-          <TitleContainer>
-            <Title>{repositoryDetail.name}</Title>
-            {isAdmin && (
-              <EditButton 
-                onClick={handleEditClick}
-                aria-label="레포지토리 수정"
-                title="레포지토리 수정"
-              >
-                <img src={pencilIcon} alt="수정" />
-              </EditButton>
-            )}
-          </TitleContainer>
-          <Subtitle>{repositoryDetail.description || '설명이 없습니다.'}</Subtitle>
-        </TitleSection>
+        <RepositoryTile
+          title={repositoryDetail.name}
+          subtitle={repositoryDetail.description || '설명이 없습니다.'}
+          onTabChange={(tab) => {
+            if (!allHistories.length) return;
+            let filtered: HistoryListResponse[][] = [];
+            switch (tab) {
+              case '전체보기':
+                filtered = allHistories;
+                break;
+              case '주요':
+                filtered = allHistories.map((group: HistoryListResponse[]) => group.filter(h => h.historyStatus === 'MAIN')).filter((g: HistoryListResponse[]) => g.length > 0);
+                break;
+              case '하위':
+                filtered = allHistories.map((group: HistoryListResponse[]) => group.filter(h => h.historyStatus === 'NORMAL')).filter((g: HistoryListResponse[]) => g.length > 0);
+                break;
+              case '폐기':
+                filtered = allHistories.map((group: HistoryListResponse[]) => group.filter(h => h.historyStatus === 'ABANDONED' || h.historyStatus === 'ABAND')).filter((g: HistoryListResponse[]) => g.length > 0);
+                break;
+              case '필터':
+                filtered = allHistories;
+                break;
+            }
+            setHistories(filtered);
+          }}
+          onCreateClick={handleEditClick}
+        />
         <GraphContainer>
           <CanvasRepoGraph 
             nodes={graphNodes} 
