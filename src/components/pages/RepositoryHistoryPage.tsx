@@ -24,6 +24,11 @@ const PageContainer = styled.div`
   display: flex;
   height: 100vh;
   background: #f7faff;
+  width: 100%;
+  min-width: 0;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
 `;
 
 const MainContent = styled.div`
@@ -31,6 +36,10 @@ const MainContent = styled.div`
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  width: 100%;
+  min-width: 0;
+  max-width: 100vw;
+  box-sizing: border-box;
 `;
 
 const TitleSection = styled.div`
@@ -93,9 +102,16 @@ const Subtitle = styled.p`
 
 const GraphContainer = styled.div`
   flex: 1;
-  width: calc(100vw - 280px); /* SideBar 너비(280px)를 제외한 전체 너비 */
-  height: calc(100vh - 180px); /* 헤더와 타이틀 영역을 제외한 높이 */
-  overflow: hidden;
+  width: 100%;
+  max-width: 100vw;
+  min-width: 0;
+  height: calc(100vh - 180px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  box-sizing: border-box;
 `;
 
 const LoadingContainer = styled.div`

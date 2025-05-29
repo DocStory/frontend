@@ -51,11 +51,14 @@ const GraphContainer = styled.div`
   width: 100%;
   height: 100%;
   min-width: 0;
+  max-width: 100vw;
   min-height: 0;
   position: relative;
   overflow: hidden;
+  overflow-x: hidden;
   background: transparent;
   cursor: grab;
+  box-sizing: border-box;
   &:active {
     cursor: grabbing;
   }
@@ -67,6 +70,9 @@ const StyledCanvas = styled.canvas`
   left: 0;
   width: 100%;
   height: 100%;
+  min-width: 0;
+  max-width: 100vw;
+  box-sizing: border-box;
   touch-action: none;
 `;
 
