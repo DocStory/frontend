@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import SideBar from '../common/SideBar';
 import RepoHeader from '../layout/RepoHeader';
 import RepositoryTile from '../layout/RepositoryTitle';
-import PhysicsRepoGraph from '../common/PhysicsRepoGraph';
+import CanvasRepoGraph from '../common/CanvasRepoGraph';
 import TeamInviteModal from '../layout/TeamInviteModal';
 import ModalSimple from '../layout/ModalSimple';
 import Modal from '../layout/Modal';
@@ -604,7 +604,7 @@ const RepositoryHistoryPage: React.FC = () => {
           <Subtitle>{repositoryDetail.description || '설명이 없습니다.'}</Subtitle>
         </TitleSection>
         <GraphContainer>
-          <PhysicsRepoGraph 
+          <CanvasRepoGraph 
             nodes={graphNodes} 
             edges={graphEdges}
           />
