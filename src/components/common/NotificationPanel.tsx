@@ -5,6 +5,7 @@ import memberinviteIcon from '../../assets/memberinviteIcon.svg';
 import folderIcon from '../../assets/folderIcon.svg';
 import { getMyInvitations, acceptTeamInvite, rejectTeamInvite } from '../../api/teaminvite';
 import { UserInvitation } from '../../api/teaminvite/types';
+import { useToastContext } from '../../contexts/ToastContext';
 
 const Overlay = styled.div<{ isOpen: boolean }>`
   position: fixed;
@@ -60,6 +61,7 @@ interface NotificationPanelProps {
 
 const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const toast = useToastContext();
 
   useEffect(() => {
     if (isOpen) {
@@ -94,18 +96,24 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }
   const handleAcceptInvite = async (id: string) => {
     try {
       await acceptTeamInvite(id);
+      toast.success('팀 초대를 수락했습니다.');
       handleCloseItem(id);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to accept invitation:', error);
+      const errorMessage = error.response?.data?.message || '초대 수락 중 오류가 발생했습니다.';
+      toast.error(errorMessage);
     }
   };
 
   const handleRejectInvite = async (id: string) => {
     try {
       await rejectTeamInvite(id);
+      toast.success('팀 초대를 거절했습니다.');
       handleCloseItem(id);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to reject invitation:', error);
+      const errorMessage = error.response?.data?.message || '초대 거절 중 오류가 발생했습니다.';
+      toast.error(errorMessage);
     }
   };
 

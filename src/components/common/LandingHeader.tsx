@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const HeaderWrapper = styled.header<{ isScrolled: boolean }>`
   position: fixed;
@@ -7,13 +8,13 @@ const HeaderWrapper = styled.header<{ isScrolled: boolean }>`
   left: 0;
   right: 0;
   z-index: 1000;
-  background: ${props => props.isScrolled 
-    ? 'rgba(255, 255, 255, 0.98)' 
-    : 'rgba(255, 255, 255, 0.25)'};
+  background: ${({ isScrolled, theme }) => isScrolled 
+    ? `${theme.headerBackground}98` 
+    : `${theme.headerBackground}40`};
   backdrop-filter: blur(20px);
-  border-bottom: 1px solid ${props => props.isScrolled 
-    ? 'rgba(0, 0, 0, 0.1)' 
-    : 'rgba(255, 255, 255, 0.3)'};
+  border-bottom: 1px solid ${({ isScrolled, theme }) => isScrolled 
+    ? theme.border 
+    : `${theme.border}50`};
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 16px 0;
 `;
@@ -45,11 +46,11 @@ const LogoImg = styled.img`
   border-radius: 8px;
 `;
 
-const Brand = styled.h1`
+const Brand = styled.h1<{ isScrolled: boolean }>`
   font-family: 'Inter', 'Pretendard', sans-serif;
   font-weight: 800;
   font-size: 24px;
-  color: ${props => props.theme?.isScrolled ? '#0F172A' : '#FFFFFF'};
+  color: ${({ isScrolled, theme }) => theme.text};
   margin: 0;
   letter-spacing: -0.5px;
 `;
@@ -68,13 +69,13 @@ const NavLink = styled.a<{ isScrolled: boolean }>`
   font-family: 'Inter', 'Pretendard', sans-serif;
   font-weight: 500;
   font-size: 16px;
-  color: ${props => props.isScrolled ? '#64748B' : 'rgba(255, 255, 255, 0.9)'};
+  color: ${({ theme }) => theme.textSecondary};
   text-decoration: none;
   position: relative;
   transition: all 0.3s ease;
   
   &:hover {
-    color: ${props => props.isScrolled ? '#6C9EFF' : '#FFFFFF'};
+    color: ${({ theme }) => theme.primary};
     transform: translateY(-1px);
   }
   
@@ -85,7 +86,7 @@ const NavLink = styled.a<{ isScrolled: boolean }>`
     left: 0;
     width: 0;
     height: 2px;
-    background: linear-gradient(90deg, #6C9EFF 0%, #4F80FF 100%);
+    background: linear-gradient(90deg, ${({ theme }) => theme.primary} 0%, ${({ theme }) => theme.primaryHover} 100%);
     transition: width 0.3s ease;
   }
   
@@ -95,13 +96,9 @@ const NavLink = styled.a<{ isScrolled: boolean }>`
 `;
 
 const CTAButton = styled.button<{ isScrolled: boolean }>`
-  background: ${props => props.isScrolled 
-    ? 'linear-gradient(135deg, #6C9EFF 0%, #4F80FF 100%)' 
-    : 'rgba(255, 255, 255, 0.2)'};
-  border: 1px solid ${props => props.isScrolled 
-    ? 'transparent' 
-    : 'rgba(255, 255, 255, 0.3)'};
-  color: ${props => props.isScrolled ? '#FFFFFF' : '#FFFFFF'};
+  background: ${({ theme }) => theme.primary};
+  border: 1px solid transparent;
+  color: ${({ theme }) => theme.background};
   font-family: 'Inter', 'Pretendard', sans-serif;
   font-weight: 600;
   font-size: 14px;
@@ -113,9 +110,8 @@ const CTAButton = styled.button<{ isScrolled: boolean }>`
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(108, 158, 255, 0.3);
-    background: linear-gradient(135deg, #6C9EFF 0%, #4F80FF 100%);
-    border-color: transparent;
+    box-shadow: 0 8px 25px ${({ theme }) => theme.shadow};
+    background: ${({ theme }) => theme.primaryHover};
   }
   
   &:active {
@@ -127,7 +123,7 @@ const MobileMenuButton = styled.button<{ isScrolled: boolean }>`
   display: none;
   background: none;
   border: none;
-  color: ${props => props.isScrolled ? '#0F172A' : '#FFFFFF'};
+  color: ${({ theme }) => theme.text};
   font-size: 24px;
   cursor: pointer;
   padding: 8px;
@@ -135,9 +131,7 @@ const MobileMenuButton = styled.button<{ isScrolled: boolean }>`
   transition: all 0.2s ease;
   
   &:hover {
-    background: ${props => props.isScrolled 
-      ? 'rgba(0, 0, 0, 0.05)' 
-      : 'rgba(255, 255, 255, 0.1)'};
+    background: ${({ theme }) => theme.hoverBackground};
   }
   
   @media (max-width: 768px) {
@@ -147,6 +141,7 @@ const MobileMenuButton = styled.button<{ isScrolled: boolean }>`
 
 const LandingHeader: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const theme = useTheme();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -173,7 +168,7 @@ const LandingHeader: React.FC = () => {
       <Container>
         <LogoSection onClick={() => scrollToSection('intro')}>
           <LogoImg src="/src/assets/logo.svg" alt="DocStory 로고" />
-          <Brand theme={{ isScrolled }}>DocStory</Brand>
+          <Brand isScrolled={isScrolled} theme={theme}>DocStory</Brand>
         </LogoSection>
         
         <Navigation>

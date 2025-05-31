@@ -26,16 +26,16 @@ const StyledButton = styled(Button)`
   font-weight: 400;
   line-height: 1.5em;
   letter-spacing: 0.02em;
-  color: #161414;
-  border-color: #6c9eff;
-  background-color: #d8e5ff;
+  color: ${({ theme }) => theme.text};
+  border-color: ${({ theme }) => theme.primary};
+  background-color: ${({ theme }) => theme.surface};
   display: flex;
   align-items: center;
   justify-content: space-between;
 
   &:hover {
-    border-color: #6c9eff;
-    color: #161414;
+    border-color: ${({ theme }) => theme.primary};
+    color: ${({ theme }) => theme.text};
   }
 `;
 
@@ -43,8 +43,8 @@ const Dropdown = styled.div`
   position: absolute;
   top: 100%;
   right: 0;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
+  background: ${({ theme }) => theme.cardBackground};
+  border: 1px solid ${({ theme }) => theme.border};
   border-radius: 4px;
   padding: 4px;
   width: 100px;
@@ -58,7 +58,7 @@ const DropdownItem = styled.button<{ isActive: boolean }>`
   font-size: 11px;
   line-height: 1.4em;
   letter-spacing: 0.026em;
-  color: #161414;
+  color: ${({ theme }) => theme.text};
   background: none;
   border: none;
   padding: 4px 8px;
@@ -70,7 +70,7 @@ const DropdownItem = styled.button<{ isActive: boolean }>`
   gap: 4px;
 
   &:hover {
-    background: #fdfbfb;
+    background: ${({ theme }) => theme.surface};
   }
 `;
 
@@ -81,7 +81,7 @@ const Icon = styled.img`
 
 const Divider = styled.div`
   height: 1px;
-  background: #e8e8e8;
+  background: ${({ theme }) => theme.border};
   margin: 8px 0;
 `;
 
@@ -96,7 +96,7 @@ const DeleteSection = styled.div`
   height: 24px;
 
   &:hover {
-    background: #fdfbfb;
+    background: ${({ theme }) => theme.surface};
   }
 `;
 

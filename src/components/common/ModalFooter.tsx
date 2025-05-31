@@ -9,12 +9,14 @@ interface ModalFooterProps {
   isEditing?: boolean;
 }
 
-const FooterContainer = styled.div`
-  padding: 24px 33px;
+const FooterWrapper = styled.div`
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
+  align-items: center;
   gap: 12px;
-  background: #f1f5f9;
+  padding: 20px 32px;
+  border-top: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.surface};
 `;
 
 const FigmaButton = styled(Button)`
@@ -33,14 +35,14 @@ const ModalFooter: React.FC<ModalFooterProps> = ({
 }) => {
   if (isEditing || (role !== 'Reviewer' && role !== 'admin')) return null;
   return (
-    <FooterContainer>
+    <FooterWrapper>
       <FigmaButton variant='secondary' onClick={onReject}>
         거절하기
       </FigmaButton>
       <FigmaButton variant='primary' onClick={onAccept}>
         수락하기
       </FigmaButton>
-    </FooterContainer>
+    </FooterWrapper>
   );
 };
 

@@ -1,15 +1,17 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import SideBar from '../common/SideBar';
 import RepoHeader from '../layout/RepoHeader';
-import PhysicsRepoGraph from '../common/PhysicsRepoGraph';
+import RepositoryTile from '../layout/RepositoryTitle';
+import CanvasRepoGraph from '../common/CanvasRepoGraph';
 import TeamInviteModal from '../layout/TeamInviteModal';
 import ModalSimple from '../layout/ModalSimple';
 import Modal from '../layout/Modal';
 import EditRepositoryModal from '../common/EditRepositoryModal';
 import { getFilteredHistories, getHistoryRootFiles, getHistoryDetail, updateHistory, createHistory } from '../../api/history';
 import { HistoryListResponse, HistoryFileResponse, HistoryDetailResponse } from '../../api/history/types';
+import { UUID } from '../../api/common/types';
 import { createProposal, getProposalsByRepository, getProposalById, updateProposal, mergeProposal, updateProposalStatus } from '../../api/proposal';
 import ModalPPList from '../layout/ModalPPList';
 import { getRepositoryDetail, updateRepository, RepositoryDetail, UpdateRepositoryRequest } from '../../api/repository';
@@ -19,11 +21,76 @@ import pencilIcon from '../../assets/pencilIcon.svg';
 import { getUserAuthority } from '../../api/user';
 import { getReviewsByProposal, createReview, updateReview, deleteReview } from '../../api/review';
 import { Review, ReviewCreateRequest, ReviewUpdateRequest } from '../../api/review/types';
+import HistoryDetailModal from '../common/HistoryDetailModal';
 
 const PageContainer = styled.div`
   display: flex;
   height: 100vh;
-  background: #f7faff;
+  background: ${({ theme }) => theme.background};
+  width: 100%;
+  min-width: 0;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
+`;
+
+const Header = styled.div`
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: ${({ theme }) => theme.cardBackground};
+  border-bottom: 1px solid ${({ theme }) => theme.border};
+  padding: 24px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const HeaderTitle = styled.h1`
+  font-family: 'Pretendard';
+  font-weight: 700;
+  font-size: 24px;
+  color: ${({ theme }) => theme.text};
+  margin: 0;
+`;
+
+const HeaderActions = styled.div`
+  display: flex;
+  gap: 12px;
+`;
+
+const CreateButton = styled.button`
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: ${({ theme }) => theme.surface};
+  color: ${({ theme }) => theme.text};
+  font-family: 'Pretendard';
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.hoverBackground};
+  }
+`;
+
+const ProposalButton = styled.button`
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: ${({ theme }) => theme.primary};
+  color: ${({ theme }) => theme.background};
+  font-family: 'Pretendard';
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.primaryHover};
+  }
 `;
 
 const MainContent = styled.div`
@@ -31,11 +98,15 @@ const MainContent = styled.div`
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  width: 100%;
+  min-width: 0;
+  max-width: 100vw;
+  box-sizing: border-box;
 `;
 
 const TitleSection = styled.div`
-  background: #fff;
-  border-bottom: 1px solid #f0f0f0;
+  background: ${({ theme }) => theme.background};
+  border-bottom: 1px solid ${({ theme }) => theme.borderLight};
   padding: 24px 58px;
 `;
 
@@ -50,7 +121,7 @@ const Title = styled.h1`
   font-family: 'Pretendard';
   font-weight: 700;
   font-size: 26px;
-  color: #292929;
+  color: ${({ theme }) => theme.text};
   margin: 0;
 `;
 
@@ -61,13 +132,13 @@ const EditButton = styled.button`
   width: 28px;
   height: 28px;
   border: none;
-  background: #f8f9fa;
+  background: ${({ theme }) => theme.backgroundLighter};
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    background: #e9ecef;
+    background: ${({ theme }) => theme.hoverBackground};
     transform: translateY(-1px);
   }
 
@@ -86,26 +157,67 @@ const Subtitle = styled.p`
   font-family: 'Pretendard';
   font-weight: 400;
   font-size: 16px;
-  color: rgba(0, 0, 0, 0.62);
+  color: ${({ theme }) => theme.textSecondary};
   margin: 0;
   letter-spacing: 0.94%;
 `;
 
 const GraphContainer = styled.div`
   flex: 1;
-  width: calc(100vw - 280px); /* SideBar 너비(280px)를 제외한 전체 너비 */
-  height: calc(100vh - 180px); /* 헤더와 타이틀 영역을 제외한 높이 */
-  overflow: hidden;
+  width: 100%;
+  min-width: 0;
+  height: calc(100vh - 180px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  box-sizing: border-box;
 `;
 
-const LoadingContainer = styled.div`
+const CenterContainer = styled.div`
+  flex: 1;
   display: flex;
-  justify-content: center;
   align-items: center;
-  height: 100vh;
+  justify-content: center;
+`;
+
+const EmptyStateContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 80px 20px;
+  text-align: center;
+`;
+
+const EmptyIcon = styled.img`
+  width: 80px;
+  height: 80px;
+  opacity: 0.3;
+  margin-bottom: 24px;
+`;
+
+const EmptyTitle = styled.h3`
   font-family: 'Pretendard';
-  font-size: 18px;
-  color: #666;
+  font-weight: 600;
+  font-size: 20px;
+  color: ${({ theme }) => theme.textSecondary};
+  margin: 0 0 12px 0;
+  transition: color 0.3s ease;
+`;
+
+const EmptyDescription = styled.p`
+  font-family: 'Pretendard';
+  font-weight: 400;
+  font-size: 16px;
+  color: ${({ theme }) => theme.textSecondary};
+  margin: 0 0 32px 0;
+  line-height: 1.5;
+  max-width: 400px;
+  opacity: 0.8;
+  transition: color 0.3s ease;
 `;
 
 const RepositoryHistoryPage: React.FC = () => {
@@ -143,6 +255,7 @@ const RepositoryHistoryPage: React.FC = () => {
   const [selectedHistoryForProposal, setSelectedHistoryForProposal] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [parentFileId, setParentFileId] = useState<string | null>(null);
+  const [allHistories, setAllHistories] = useState<HistoryListResponse[][]>([]);
   const [histories, setHistories] = useState<HistoryListResponse[][]>([]);
   const [rootFiles, setRootFiles] = useState<HistoryFileResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -174,14 +287,14 @@ const RepositoryHistoryPage: React.FC = () => {
     const nodes: any[] = [];
 
     // 모든 히스토리를 하나의 배열로 평탄화
-    const allHistories: HistoryListResponse[] = [];
-    histories.forEach(historyGroup => {
-      allHistories.push(...historyGroup);
+    const all: HistoryListResponse[] = [];
+    histories.forEach((historyGroup: HistoryListResponse[]) => {
+      all.push(...historyGroup);
     });
 
     // fileId를 키로 하는 맵 생성
     const fileIdToHistoryMap = new Map<string, HistoryListResponse>();
-    allHistories.forEach(history => {
+    all.forEach(history => {
       fileIdToHistoryMap.set(history.fileId, history);
     });
 
@@ -199,7 +312,7 @@ const RepositoryHistoryPage: React.FC = () => {
     };
 
     // 루트 노드들 찾기
-    const rootHistories = allHistories.filter(history => !history.parentFileId);
+    const rootHistories = all.filter(history => !history.parentFileId);
     
     // 각 루트의 하위 트리 구성
     const getRootForHistory = (history: HistoryListResponse): HistoryListResponse => {
@@ -211,7 +324,7 @@ const RepositoryHistoryPage: React.FC = () => {
 
     // 루트별로 히스토리 그룹화
     const rootGroups = new Map<string, HistoryListResponse[]>();
-    allHistories.forEach(history => {
+    all.forEach(history => {
       const root = getRootForHistory(history);
       if (!rootGroups.has(root.fileId)) {
         rootGroups.set(root.fileId, []);
@@ -263,11 +376,13 @@ const RepositoryHistoryPage: React.FC = () => {
           fileLevel: history.fileLevel,
           historyId: history.id,
           onDetailClick: () => handleHistoryDetailClick(history.id),
-          onEditClick: () => handleHistoryEditClick(history.id),
+          onEditClick: history.createdBy?.providerId === currentUser?.userId ? () => handleHistoryEditClick(history.id) : undefined,
           onCreateClick: () => handleHistoryCreateClick(history.id),
           onProposalClick: () => handleProposalCreateClick(history.id),
           currentUserId: currentUser?.userId,
           historyCreatorId: history.createdBy?.providerId,
+          createdBy: history.createdBy,
+          parentFileId: history.parentFileId,
           x: startX + (currentPosition * nodeWidth),
           y: 80 + (depth * 220),
         });
@@ -288,19 +403,19 @@ const RepositoryHistoryPage: React.FC = () => {
     const edges: any[] = [];
     
     // 모든 히스토리를 하나의 배열로 평탄화
-    const allHistories: HistoryListResponse[] = [];
-    histories.forEach(historyGroup => {
-      allHistories.push(...historyGroup);
+    const all: HistoryListResponse[] = [];
+    histories.forEach((historyGroup: HistoryListResponse[]) => {
+      all.push(...historyGroup);
     });
     
     // fileId를 키로 하는 맵 생성 (빠른 검색을 위해)
     const fileIdToHistoryMap = new Map<string, HistoryListResponse>();
-    allHistories.forEach(history => {
+    all.forEach(history => {
       fileIdToHistoryMap.set(history.fileId, history);
     });
     
     // 각 히스토리에 대해 부모-자식 관계 확인
-    allHistories.forEach(history => {
+    all.forEach(history => {
       if (history.parentFileId) {
         // 부모 파일 ID에 해당하는 히스토리 찾기
         const parentHistory = fileIdToHistoryMap.get(history.parentFileId);
@@ -309,6 +424,7 @@ const RepositoryHistoryPage: React.FC = () => {
           edges.push({
             source: parentHistory.id,
             target: history.id,
+            isMainEdge: parentHistory.historyStatus === 'MAIN' && history.historyStatus === 'MAIN',
           });
         }
       }
@@ -462,6 +578,7 @@ const RepositoryHistoryPage: React.FC = () => {
       // 히스토리 데이터 가져오기
       const historiesResponse = await getFilteredHistories(repositoryId, undefined, 'all');
       if (historiesResponse.code === 100 && historiesResponse.data) {
+        setAllHistories(historiesResponse.data);
         setHistories(historiesResponse.data);
       }
 
@@ -658,9 +775,32 @@ const RepositoryHistoryPage: React.FC = () => {
     return (
       <PageContainer>
         <SideBar activeMenu="저장소" onMenuClick={handleMenuClick} />
-        <LoadingContainer>
-          레포지토리 정보를 불러오는 중...
-        </LoadingContainer>
+        <MainContent>
+          <RepoHeader
+            onTeamIconClick={() => setIsModalOpen(true)}
+            onRepoIconClick={handleProposalListOpen}
+          />
+          <RepositoryTile
+            title="로딩 중..."
+            subtitle="레포지토리 정보를 불러오는 중입니다."
+            onTabChange={() => {}}
+            onCreateClick={() => {}}
+          />
+          <GraphContainer>
+            <CenterContainer>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                fontFamily: 'Pretendard',
+                fontSize: '18px',
+                color: 'var(--text-secondary)',
+              }}>
+                레포지토리 정보를 불러오는 중...
+              </div>
+            </CenterContainer>
+          </GraphContainer>
+        </MainContent>
       </PageContainer>
     );
   }
@@ -670,7 +810,10 @@ const RepositoryHistoryPage: React.FC = () => {
       <PageContainer>
         <SideBar activeMenu="저장소" onMenuClick={handleMenuClick} />
         <MainContent>
-          <RepoHeader hasNewNotification={true} />
+          <RepoHeader
+            onTeamIconClick={() => setIsModalOpen(true)}
+            onRepoIconClick={handleProposalListOpen}
+          />
           <TitleSection>
             <TitleContainer>
               <Title>오류 발생</Title>
@@ -686,31 +829,77 @@ const RepositoryHistoryPage: React.FC = () => {
     <PageContainer>
       <SideBar activeMenu="저장소" onMenuClick={handleMenuClick} />
       <MainContent>
-        <RepoHeader 
-          hasNewNotification={true}
+        <RepoHeader
           onTeamIconClick={() => setIsModalOpen(true)}
           onRepoIconClick={handleProposalListOpen}
         />
-        <TitleSection>
-          <TitleContainer>
-            <Title>{repositoryDetail.name}</Title>
-            {isAdmin && (
-              <EditButton 
-                onClick={handleEditClick}
-                aria-label="레포지토리 수정"
-                title="레포지토리 수정"
-              >
-                <img src={pencilIcon} alt="수정" />
-              </EditButton>
-            )}
-          </TitleContainer>
-          <Subtitle>{repositoryDetail.description || '설명이 없습니다.'}</Subtitle>
-        </TitleSection>
+        <RepositoryTile
+          title={repositoryDetail.name}
+          subtitle={repositoryDetail.description || '설명이 없습니다.'}
+          onTabChange={(tab) => {
+            if (!allHistories.length) return;
+            let filtered: HistoryListResponse[][] = [];
+            switch (tab) {
+              case '전체':
+                filtered = allHistories;
+                break;
+              case '주요':
+                filtered = allHistories.map((group: HistoryListResponse[]) => group.filter(h => h.historyStatus === 'MAIN')).filter((g: HistoryListResponse[]) => g.length > 0);
+                break;
+              case '하위':
+                filtered = allHistories.map((group: HistoryListResponse[]) => group.filter(h => h.historyStatus === 'NORMAL')).filter((g: HistoryListResponse[]) => g.length > 0);
+                break;
+              case '폐기':
+                filtered = allHistories.map((group: HistoryListResponse[]) => group.filter(h => h.historyStatus === 'ABANDONED')).filter((g: HistoryListResponse[]) => g.length > 0);
+                break;
+              case '필터':
+                filtered = allHistories;
+                break;
+            }
+            setHistories(filtered);
+          }}
+          onCreateClick={handleEditClick}
+        />
         <GraphContainer>
-          <PhysicsRepoGraph 
-            nodes={graphNodes} 
-            edges={graphEdges}
-          />
+          {graphNodes.length === 0 ? (
+            <CenterContainer>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '400px',
+                padding: '40px',
+                textAlign: 'center',
+                background: 'transparent',
+              }}>
+                <h2 style={{ fontFamily: 'Pretendard', fontWeight: 700, fontSize: 24, color: 'var(--text-color)', marginBottom: 12 }}>아직 생성된 히스토리가 없어요</h2>
+                <p style={{ fontFamily: 'Pretendard', fontWeight: 400, fontSize: 16, color: 'var(--text-secondary)', marginBottom: 32 }}>첫 번째 히스토리를 생성하여 문서 관리를 시작해보세요.</p>
+                <button
+                  onClick={() => handleHistoryCreateClick()}
+                  style={{
+                    padding: '12px 24px',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    fontFamily: 'Pretendard',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    color: '#fff',
+                    background: '#4078FF',
+                  }}
+                >
+                  히스토리 생성하기
+                </button>
+              </div>
+            </CenterContainer>
+          ) : (
+            <CanvasRepoGraph 
+              nodes={graphNodes} 
+              edges={graphEdges} 
+            />
+          )}
         </GraphContainer>
       </MainContent>
 
@@ -721,6 +910,8 @@ const RepositoryHistoryPage: React.FC = () => {
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
             onInvite={() => {}}
+            isAdmin={isAdmin}
+            userAuthority={userAuthority}
           />
 
           <EditRepositoryModal
@@ -733,83 +924,91 @@ const RepositoryHistoryPage: React.FC = () => {
           />
 
           {isDetailModalOpen && selectedHistoryDetail && (
-            <div style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000
-            }}>
-              <ModalSimple
-                headerTitle={selectedHistoryDetail.createdBy.nickname}
-                headerTime={selectedHistoryDetail.createAt ? new Date(selectedHistoryDetail.createAt).toLocaleDateString() : ''}
-                modalTitle="히스토리 상세 정보"
-                contentTitle={isEditing ? editedTitle : selectedHistoryDetail.title}
-                content={isEditing ? editedContent : selectedHistoryDetail.content}
-                items={selectedHistoryDetail.files.map(file => ({
-                  Name: file.name,
-                  date: file.fileType,
-                  iconType: 'diff' as const
-                }))}
-                onClose={() => {
-                  setIsDetailModalOpen(false);
-                  setSelectedHistoryDetail(null);
-                  setIsEditing(false);
-                  setEditedTitle('');
-                  setEditedContent('');
-                }}
-                isEditing={isEditing}
-                canEdit={isAdmin}
-                onEditStart={() => {
-                  setIsEditing(true);
-                  setEditedTitle(selectedHistoryDetail.title);
-                  setEditedContent(selectedHistoryDetail.content);
-                }}
-                onEditCancel={() => {
-                  setIsEditing(false);
-                  setEditedTitle('');
-                  setEditedContent('');
-                }}
-                onEditSave={async () => {
-                  if (!selectedHistoryDetail) return;
-
-                  try {
-                    const updateData = {
-                      title: editedTitle,
-                      content: editedContent
-                    };
-
-                    const response = await updateHistory(repositoryId, selectedHistoryDetail.Id, updateData);
-                    
-                    if (response.code === 100) {
-                      // 성공적으로 업데이트된 경우 상세 정보 다시 가져오기
-                      const updatedDetailResponse = await getHistoryDetail(repositoryId, selectedHistoryDetail.Id);
-                      if (updatedDetailResponse.code === 100 && updatedDetailResponse.data) {
-                        setSelectedHistoryDetail(updatedDetailResponse.data);
-                      }
-                      setIsEditing(false);
-                      setEditedTitle('');
-                      setEditedContent('');
-                      
-                      // 히스토리 목록도 다시 가져오기
-                      const historiesResponse = await getFilteredHistories(repositoryId, undefined, 'all');
-                      if (historiesResponse.code === 100 && historiesResponse.data) {
-                        setHistories(historiesResponse.data);
-                      }
+            <HistoryDetailModal
+              userName={selectedHistoryDetail.createdBy.nickname}
+              userProfileImage={selectedHistoryDetail.createdBy.profileImage}
+              createdAt={selectedHistoryDetail.createAt ? new Date(selectedHistoryDetail.createAt).toLocaleDateString() : ''}
+              title={isEditing ? editedTitle : selectedHistoryDetail.title}
+              content={isEditing ? editedContent : selectedHistoryDetail.content}
+              files={selectedHistoryDetail.files.map(file => ({
+                Name: file.name,
+                date: file.fileType,
+                iconType: 'diff' as const,
+                onCompareClick: () => {
+                  alert('비교 기능은 추후 구현 예정');
+                },
+                onDownloadClick: () => {
+                  const downloadFile = async () => {
+                    try {
+                      const response = await fetch(`/api/files/download/${file.id}`);
+                      if (!response.ok) throw new Error('다운로드 실패');
+                      const blob = await response.blob();
+                      const url = window.URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = file.name || 'download';
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      window.URL.revokeObjectURL(url);
+                    } catch (err) {
+                      alert('파일 다운로드에 실패했습니다.');
                     }
-                  } catch (err) {
-                    console.error('Failed to update history:', err);
+                  };
+                  downloadFile();
+                },
+              }))}
+              onClose={() => {
+                setIsDetailModalOpen(false);
+                setSelectedHistoryDetail(null);
+                setIsEditing(false);
+                setEditedTitle('');
+                setEditedContent('');
+              }}
+              canEdit={selectedHistoryDetail.createdBy.providerId === currentUser?.userId}
+              isEditing={isEditing}
+              onEditStart={() => {
+                setIsEditing(true);
+                setEditedTitle(selectedHistoryDetail.title);
+                setEditedContent(selectedHistoryDetail.content);
+              }}
+              onEditCancel={() => {
+                setIsEditing(false);
+                setEditedTitle('');
+                setEditedContent('');
+              }}
+              onEditSave={async () => {
+                if (!selectedHistoryDetail) return;
+                try {
+                  const updateData = {
+                    title: editedTitle,
+                    content: editedContent
+                  };
+                  const response = await updateHistory(repositoryId, selectedHistoryDetail.Id, updateData);
+                  if (response.code === 100) {
+                    toast.success('히스토리가 성공적으로 수정되었습니다.');
+                    const updatedDetailResponse = await getHistoryDetail(repositoryId, selectedHistoryDetail.Id);
+                    if (updatedDetailResponse.code === 100 && updatedDetailResponse.data) {
+                      setSelectedHistoryDetail(updatedDetailResponse.data);
+                    }
+                    setIsEditing(false);
+                    setEditedTitle('');
+                    setEditedContent('');
+                    const historiesResponse = await getFilteredHistories(repositoryId, undefined, 'all');
+                    if (historiesResponse.code === 100 && historiesResponse.data) {
+                      setHistories(historiesResponse.data);
+                    }
+                  } else {
+                    toast.error(`히스토리 수정 실패: ${response.message}`);
                   }
-                }}
-                onTitleChange={setEditedTitle}
-                onContentChange={setEditedContent}
-              />
-            </div>
+                } catch (err) {
+                  console.error('Failed to update history:', err);
+                  toast.error('히스토리 수정 중 오류가 발생했습니다. 다시 시도해주세요.');
+                }
+              }}
+              onTitleChange={setEditedTitle}
+              onContentChange={setEditedContent}
+            />
           )}
 
           {isCreateModalOpen && (
@@ -844,6 +1043,7 @@ const RepositoryHistoryPage: React.FC = () => {
                   setSelectedFiles([]);
                 }}
                 isEditing={true}
+                isModifying={true}
                 canEdit={true}
                 onEditStart={() => {}}
                 onEditCancel={() => {
@@ -855,55 +1055,47 @@ const RepositoryHistoryPage: React.FC = () => {
                 }}
                 onEditSave={async () => {
                   if (!createTitle.trim()) {
+                    toast.warning('제목을 입력해주세요.');
                     return;
                   }
-
                   if (selectedFiles.length === 0) {
+                    toast.warning('파일을 첨부해주세요.');
                     return;
                   }
-
                   try {
                     const formData = new FormData();
-                    
-                    // JSON 데이터를 historyCreateRequest 파트로 추가
                     const historyCreateRequest = {
                       title: createTitle,
                       ...(createContent.trim() && { content: createContent }),
                       ...(parentFileId && { parentFileId: parentFileId })
                     };
-                    
-                    // JSON 파트를 올바른 Content-Type으로 추가
                     const historyCreateRequestJson = JSON.stringify(historyCreateRequest);
                     formData.append('historyCreateRequest', historyCreateRequestJson);
-
-                    // 파일 추가
                     formData.append('file', selectedFiles[0]);
-
                     const response = await createHistory(repositoryId, formData);
-                    
                     if (response.code === 100) {
-                      // 성공적으로 생성된 경우 모달 닫기
+                      toast.success('히스토리가 성공적으로 생성되었습니다.');
                       setIsCreateModalOpen(false);
                       setParentFileId(null);
                       setCreateTitle('');
                       setCreateContent('');
                       setSelectedFiles([]);
-                      
-                      // 히스토리 목록 다시 가져오기
                       const historiesResponse = await getFilteredHistories(repositoryId, undefined, 'all');
                       if (historiesResponse.code === 100 && historiesResponse.data) {
                         setHistories(historiesResponse.data);
                       }
+                    } else {
+                      toast.error(`히스토리 생성 실패: ${response.message}`);
                     }
                   } catch (err) {
                     console.error('Failed to create history:', err);
+                    toast.error('히스토리 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
                   }
                 }}
                 onTitleChange={setCreateTitle}
                 onContentChange={setCreateContent}
                 onFileSelect={(files: FileList | null) => {
                   if (files && files.length > 0) {
-                    // 첫 번째 파일만 선택
                     setSelectedFiles([files[0]]);
                   }
                 }}
@@ -931,7 +1123,7 @@ const RepositoryHistoryPage: React.FC = () => {
               <ModalSimple
                 headerTitle={currentUser?.nickname || 'Unknown User'}
                 headerTime={new Date().toLocaleDateString()}
-                modalTitle="Proposal 생성"
+                modalTitle="PP 요청"
                 contentTitle={proposalTitle}
                 content={proposalContent}
                 items={[]}
@@ -942,23 +1134,23 @@ const RepositoryHistoryPage: React.FC = () => {
                   setProposalContent('');
                 }}
                 isEditing={true}
+                isModifying={true}
                 canEdit={true}
-                onEditStart={() => {
-                  setIsEditing(true);
-                  setProposalTitle('');
-                  setProposalContent('');
-                }}
+                onEditStart={() => {}}
                 onEditCancel={() => {
-                  setIsEditing(false);
+                  setIsProposalModalOpen(false);
+                  setSelectedHistoryForProposal(null);
                   setProposalTitle('');
                   setProposalContent('');
                 }}
                 onEditSave={async () => {
                   if (!proposalTitle.trim()) {
+                    toast.warning('제목을 입력해주세요.');
                     return;
                   }
 
                   if (!selectedHistoryForProposal) {
+                    toast.error('히스토리가 선택되지 않았습니다.');
                     return;
                   }
 
@@ -972,19 +1164,22 @@ const RepositoryHistoryPage: React.FC = () => {
                     const response = await createProposal(proposalData);
                     
                     if (response.code === 100) {
-                      // 성공적으로 생성된 경우 모달 닫기
+                      toast.success('PP 요청이 성공적으로 생성되었습니다.');
                       setIsProposalModalOpen(false);
                       setSelectedHistoryForProposal(null);
                       setProposalTitle('');
                       setProposalContent('');
+                    } else {
+                      toast.error(`PP 요청 생성 실패: ${response.message}`);
                     }
                   } catch (err) {
                     console.error('Failed to create proposal:', err);
+                    toast.error('PP 요청 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
                   }
                 }}
                 onTitleChange={setProposalTitle}
                 onContentChange={setProposalContent}
-                isCreating={false}
+                isCreating={true}
                 isProposal={true}
               />
             </div>
@@ -1046,7 +1241,7 @@ const RepositoryHistoryPage: React.FC = () => {
                   setIsEditing(false);
                   setEditedTitle('');
                   setEditedContent('');
-                  setReviewContent(''); // 댓글 입력 초기화
+                  setReviewContent('');
                 }}
                 isEditing={isEditing}
                 canEdit={isAdmin && selectedProposalDetail.status === 'OPEN'}
@@ -1104,7 +1299,6 @@ const RepositoryHistoryPage: React.FC = () => {
                         setIsProposalDetailModalOpen(false);
                         setSelectedProposalId(null);
                         setSelectedProposalDetail(null);
-                        // Proposal 목록 새로고침
                         if (repositoryId) {
                           const proposalsResponse = await getProposalsByRepository(repositoryId, 'ALL');
                           if (proposalsResponse.code === 100 && proposalsResponse.data) {
@@ -1133,7 +1327,6 @@ const RepositoryHistoryPage: React.FC = () => {
                       setIsProposalDetailModalOpen(false);
                       setSelectedProposalId(null);
                       setSelectedProposalDetail(null);
-                      // Proposal 목록 새로고침
                       if (repositoryId) {
                         const proposalsResponse = await getProposalsByRepository(repositoryId, 'ALL');
                         if (proposalsResponse.code === 100 && proposalsResponse.data) {

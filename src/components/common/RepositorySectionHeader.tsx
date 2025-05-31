@@ -63,7 +63,7 @@ const RepositorySectionHeader: React.FC<RepositorySectionHeaderProps> = ({
           size="small"
           onClick={onNewRepositoryClick}
         >
-          New Repository
+          새 저장소
         </NewRepositoryButton>
       </SectionActions>
     </HeaderWrapper>

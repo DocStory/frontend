@@ -19,10 +19,10 @@ const DropdownContainer = styled.ul<{ x: number; y: number }>`
   position: fixed;
   z-index: 50;
   min-width: 150px;
-  background: #fff;
+  background: ${({ theme }) => theme.cardBackground};
   border-radius: 10px;
   box-shadow: 0px 4px 16px 0px rgba(107, 110, 116, 0.08);
-  border: 1px solid #e2e5eb;
+  border: 1px solid ${({ theme }) => theme.borderLight};
   padding: 6px 0;
   font-family: 'Pretendard', sans-serif;
   overflow: hidden;
@@ -33,24 +33,24 @@ const DropdownContainer = styled.ul<{ x: number; y: number }>`
 const DropdownItem = styled.li`
   padding: 10px 18px;
   font-size: 15px;
-  color: #222;
+  color: ${({ theme }) => theme.text};
   cursor: pointer;
   border-radius: 6px;
   transition: background 0.12s;
   outline: none;
   &:hover, &:focus {
-    background: #f5f7fa;
-    color: #3576e0;
+    background: ${({ theme }) => theme.backgroundLighter};
+    color: ${({ theme }) => theme.primary};
   }
   &:active {
-    background: #e6f0ff;
-    color: #3576e0;
+    background: ${({ theme }) => theme.backgroundLighter};
+    color: ${({ theme }) => theme.primary};
   }
 `;
 
 const Divider = styled.div`
   height: 1px;
-  background: #e2e5eb;
+  background: ${({ theme }) => theme.borderLight};
   margin: 2px 0;
 `;
 

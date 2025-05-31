@@ -296,12 +296,12 @@ const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }
   // 마우스 무브 핸들러
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (dragMode === DRAG_PAN && isPanning) {
-      const dx = e.clientX - lastMousePos.x;
-      const dy = e.clientY - lastMousePos.y;
-      requestAnimationFrame(() => {
+    const dx = e.clientX - lastMousePos.x;
+    const dy = e.clientY - lastMousePos.y;
+    requestAnimationFrame(() => {
         setViewport(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
-      });
-      setLastMousePos({ x: e.clientX, y: e.clientY });
+    });
+    setLastMousePos({ x: e.clientX, y: e.clientY });
     } else if (dragMode === DRAG_NODE && draggingId) {
       const body = bodiesRef.current[draggingId];
       if (!body) return;
@@ -331,55 +331,55 @@ const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }
 
     function setupEngine() {
       engine = Matter.Engine.create({
-        gravity: { x: 0, y: 0 },
+      gravity: { x: 0, y: 0 },
         enableSleeping: true,
-      });
+    });
       engine.constraintIterations = 2;
       engine.positionIterations = 3;
       engine.velocityIterations = 3;
-      engineRef.current = engine;
+    engineRef.current = engine;
 
       bodies = {};
-      nodes.forEach(node => {
-        bodies[node.id] = Matter.Bodies.rectangle(
-          node.x,
-          node.y,
-          CARD_WIDTH,
-          CARD_HEIGHT,
-          {
-            inertia: Infinity,
+    nodes.forEach(node => {
+      bodies[node.id] = Matter.Bodies.rectangle(
+        node.x,
+        node.y,
+        CARD_WIDTH,
+        CARD_HEIGHT,
+        {
+          inertia: Infinity,
             restitution: 0.1,
             friction: 0.05,
             frictionAir: 0.05,
             frictionStatic: 0.1,
             density: 0.0005,
-            isStatic: false,
+          isStatic: false,
             sleepThreshold: 30,
-          }
-        );
-      });
+        }
+      );
+    });
       constraints = edges.map(edge => {
-        const sourceBody = bodies[edge.source];
-        const targetBody = bodies[edge.target];
-        const sourceNode = nodes.find(n => n.id === edge.source);
-        const targetNode = nodes.find(n => n.id === edge.target);
-        const isMainEdge = sourceNode?.isMain && targetNode?.isMain;
-        return Matter.Constraint.create({
-          bodyA: sourceBody,
-          bodyB: targetBody,
+      const sourceBody = bodies[edge.source];
+      const targetBody = bodies[edge.target];
+      const sourceNode = nodes.find(n => n.id === edge.source);
+      const targetNode = nodes.find(n => n.id === edge.target);
+      const isMainEdge = sourceNode?.isMain && targetNode?.isMain;
+      return Matter.Constraint.create({
+        bodyA: sourceBody,
+        bodyB: targetBody,
           stiffness: isMainEdge ? 0.04 : 0.02,
           damping: isMainEdge ? 0.5 : 0.4,
-          length: Math.sqrt(
-            Math.pow(sourceBody.position.x - targetBody.position.x, 2) +
-            Math.pow(sourceBody.position.y - targetBody.position.y, 2)
-          )
-        });
+        length: Math.sqrt(
+          Math.pow(sourceBody.position.x - targetBody.position.x, 2) +
+          Math.pow(sourceBody.position.y - targetBody.position.y, 2)
+        )
       });
+    });
       world = engine.world;
-      Matter.World.add(world, Object.values(bodies));
-      Matter.World.add(world, constraints);
-      bodiesRef.current = bodies;
-      constraintsRef.current = constraints;
+    Matter.World.add(world, Object.values(bodies));
+    Matter.World.add(world, constraints);
+    bodiesRef.current = bodies;
+    constraintsRef.current = constraints;
     }
 
     function cleanupEngine() {
@@ -408,18 +408,18 @@ const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }
             lastUpdate = now;
           }
           // 항상 60fps로 setNodeStates (빈도 제한 제거)
-          setNodeStates(prev =>
-            prev.map(node => {
-              const body = bodies[node.id];
+        setNodeStates(prev =>
+          prev.map(node => {
+            const body = bodies[node.id];
               if (!body) return node;
               lastNodePositionsRef.current[node.id] = { x: body.position.x, y: body.position.y };
               return { ...node, x: body.position.x, y: body.position.y };
-            })
-          );
+          })
+        );
           lastRender = now;
-        }
-        rafId = requestAnimationFrame(update);
       }
+        rafId = requestAnimationFrame(update);
+    }
       rafId = requestAnimationFrame(update);
     }
 
@@ -502,7 +502,7 @@ const PhysicsRepoGraph: React.FC<PhysicsRepoGraphProps> = ({ nodes, edges = [] }
   }, [dragMode, draggingId]);
 
   return (
-    <GraphContainer
+    <GraphContainer 
       ref={containerRef}
       data-graph-container
       onMouseDown={handleMouseDown}

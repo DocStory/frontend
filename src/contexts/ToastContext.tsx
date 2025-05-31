@@ -1,120 +1,74 @@
-import React, { createContext, useContext, ReactNode } from 'react';
-import { useToast } from '../hooks/useToast';
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import styled from 'styled-components';
 import ToastContainer from '../components/common/ToastContainer';
 
-interface ToastContextValue {
+export type ToastType = 'success' | 'error' | 'warning';
+
+export interface Toast {
+  id: string;
+  type: ToastType;
+  message: string;
+}
+
+interface ToastContextType {
   success: (message: string) => void;
   error: (message: string) => void;
   warning: (message: string) => void;
+  removeToast: (id: string) => void;
 }
 
-const ToastContext = createContext<ToastContextValue | undefined>(undefined);
+const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export const useToastContext = () => {
   const context = useContext(ToastContext);
-  if (context === undefined) {
-    throw new Error('useToastContext must be used within a ToastProvider');
+  if (!context) {
+    throw new Error('useToastContext must be used within ToastProvider');
   }
   return context;
 };
 
-interface ToastProviderProps {
-  children: ReactNode;
-}
+const ToastWrapper = styled.div`
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+`;
 
-export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
-  const { success, error, warning, toasts, hideToast } = useToast();
+export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [nextId, setNextId] = useState(1);
 
-  const value: ToastContextValue = {
-    success,
-    error,
-    warning,
-  };
+  const addToast = useCallback((type: ToastType, message: string) => {
+    const id = String(nextId);
+    setNextId(prev => prev + 1);
+    
+    const newToast: Toast = { id, type, message };
+    setToasts(prev => [...prev, newToast]);
+
+    // 자동 제거 (3초 후)
+    setTimeout(() => {
+      setToasts(prev => prev.filter(toast => toast.id !== id));
+    }, 3000);
+  }, [nextId]);
+
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  }, []);
+
+  const success = useCallback((message: string) => addToast('success', message), [addToast]);
+  const error = useCallback((message: string) => addToast('error', message), [addToast]);
+  const warning = useCallback((message: string) => addToast('warning', message), [addToast]);
 
   return (
-    <ToastContext.Provider value={value}>
+    <ToastContext.Provider value={{ success, error, warning, removeToast }}>
       {children}
-      {/* 토스트들을 렌더링 */}
-      <div style={{ position: 'fixed', top: 0, right: 0, zIndex: 9999 }}>
-        {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            style={{
-              position: 'fixed',
-              top: `${80 + (toasts.indexOf(toast) * 80)}px`,
-              right: '24px',
-            }}
-          >
-            <div
-              style={{
-                minWidth: '320px',
-                maxWidth: '400px',
-                padding: '16px 20px',
-                background: '#fff',
-                borderRadius: '12px',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-                borderLeft: `4px solid ${
-                  toast.type === 'success' ? '#10B981' : 
-                  toast.type === 'error' ? '#EF4444' : '#F59E0B'
-                }`,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                fontFamily: 'Pretendard',
-                animation: toast.isVisible ? 
-                  'slideIn 0.3s ease-out' : 
-                  'slideOut 0.3s ease-out',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  background: toast.type === 'success' ? '#DCFCE7' : 
-                    toast.type === 'error' ? '#FEE2E2' : '#FEF3C7',
-                  color: toast.type === 'success' ? '#10B981' : 
-                    toast.type === 'error' ? '#EF4444' : '#F59E0B',
-                }}
-              >
-                {toast.type === 'success' ? '✓' : 
-                 toast.type === 'error' ? '✕' : '⚠'}
-              </div>
-              <span
-                style={{
-                  flex: 1,
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#374151',
-                  lineHeight: 1.4,
-                }}
-              >
-                {toast.message}
-              </span>
-              <button
-                onClick={() => hideToast(toast.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '20px',
-                  height: '20px',
-                  background: 'none',
-                  border: 'none',
-                  color: '#9CA3AF',
-                  cursor: 'pointer',
-                  borderRadius: '4px',
-                }}
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+      <ToastWrapper>
+        <ToastContainer toasts={toasts} onClose={removeToast} />
+      </ToastWrapper>
     </ToastContext.Provider>
   );
 }; 

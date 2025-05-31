@@ -180,18 +180,23 @@ const ReplyInputContainer = styled.div`
 `;
 
 const Input = styled.input`
-  flex: 1;
-  padding: 12px;
-  border: none;
-  background: #ffffff;
   font-family: 'Pretendard';
-  font-weight: 400;
-  font-size: 18px;
-  line-height: 1.11em;
-  letter-spacing: -0.006em;
-  color: #475569;
+  font-size: 16px;
+  padding: 12px 16px;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  background: white;
+  color: #1a1a1a;
+  transition: border-color 0.2s ease;
+  flex: 1;
+
   &::placeholder {
-    color: #475569;
+    color: #9ca3af;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #4078FF;
   }
 `;
 

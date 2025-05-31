@@ -21,28 +21,32 @@ interface MemberListProps {
 }
 
 const ListContainer = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.cardBackground};
   border-radius: 16px;
   padding: 16px;
 `;
 
-const ListTitle = styled.h3`
-  font-size: 12px;
-  font-weight: 400;
-  color: #0a171f;
-  margin: 0 0 24px 0;
-  font-family: 'Pretendard', sans-serif;
+const Title = styled.h3`
+  font-family: 'Pretendard';
+  font-size: 18px;
+  font-weight: 700;
+  color: ${({ theme }) => theme.text};
+  margin: 0 0 16px 0;
 `;
 
-const ListItem = styled.div`
+const MemberItem = styled.div`
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 12px;
-  background: white;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border: 1px solid ${({ theme }) => theme.border};
   border-radius: 8px;
-  margin-bottom: 12px;
-  border: 1px solid #ededec;
+  margin-bottom: 8px;
+  background: ${({ theme }) => theme.surface};
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 `;
 
 const MemberInfo = styled.div`
@@ -64,25 +68,41 @@ const MemberDetails = styled.div`
 `;
 
 const MemberName = styled.span`
-  font-size: 14px;
+  font-family: 'Pretendard';
   font-weight: 600;
-  color: #1f2937;
-  font-family: 'Pretendard', sans-serif;
+  font-size: 14px;
+  color: ${({ theme }) => theme.text};
 `;
 
 const MemberEmail = styled.span`
   font-size: 12px;
-  color: #6b7280;
+  color: ${({ theme }) => theme.textSecondary};
   font-family: 'Pretendard', sans-serif;
+`;
+
+const RoleText = styled.span`
+  font-family: 'Pretendard';
+  font-size: 12px;
+  color: ${({ theme }) => theme.textSecondary};
+`;
+
+const RoleBadge = styled.span`
+  font-family: 'Pretendard';
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: ${({ theme }) => theme.surface};
+  color: ${({ theme }) => theme.text};
+  border: 1px solid ${({ theme }) => theme.border};
 `;
 
 const HostButton = styled.div`
   display: inline-flex;
   align-items: center;
   padding: 11px 12px;
-  background: #f8f3f1;
-  color: #161414;
-  border: 1px solid #ededec;
+  background: ${({ theme }) => theme.surface};
+  color: ${({ theme }) => theme.text};
+  border: 1px solid ${({ theme }) => theme.border};
   border-radius: 8px;
   font-size: 12px;
   font-weight: 400;
@@ -91,13 +111,13 @@ const HostButton = styled.div`
   box-shadow: 0px 4px 40px 0px rgba(255, 133, 95, 0.04);
 `;
 
-const RoleText = styled.div`
+const RoleBadgeText = styled.div`
   display: inline-flex;
   align-items: center;
   padding: 11px 12px;
-  background: #f8f3f1;
-  color: #161414;
-  border: 1px solid #ededec;
+  background: ${({ theme }) => theme.surface};
+  color: ${({ theme }) => theme.text};
+  border: 1px solid ${({ theme }) => theme.border};
   border-radius: 8px;
   font-size: 12px;
   font-weight: 400;
@@ -114,9 +134,9 @@ const MemberList: React.FC<MemberListProps> = ({
 }) => {
   return (
     <ListContainer>
-      <ListTitle>멤버 리스트 :</ListTitle>
+      <Title>멤버 리스트 :</Title>
       {members.map((member) => (
-        <ListItem key={member.id}>
+        <MemberItem key={member.id}>
           <MemberInfo>
             <Avatar src={avatarIcon} alt={member.name} />
             <MemberDetails>
@@ -142,11 +162,11 @@ const MemberList: React.FC<MemberListProps> = ({
               onDelete={() => onDelete?.(member.id)}
             />
           ) : (
-            <RoleText>
+            <RoleBadgeText>
               {member.role === 'reviewer' ? '편집 가능' : '보기 가능'}
-            </RoleText>
+            </RoleBadgeText>
           )}
-        </ListItem>
+        </MemberItem>
       ))}
     </ListContainer>
   );
