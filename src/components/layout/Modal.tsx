@@ -14,8 +14,13 @@ interface ModalItem {
 }
 
 interface Comment {
+  id: string;
   author: string;
   content: string;
+  createdAt: string;
+  updatedAt: string;
+  isAuthor: boolean;
+  replies?: Comment[];
 }
 
 interface ModalProps {
@@ -37,6 +42,11 @@ interface ModalProps {
   onEditSave?: () => void;
   onTitleChange?: (title: string) => void;
   onContentChange?: (content: string) => void;
+  onCommentSubmit?: (content: string, parentId?: string) => void;
+  onCommentEdit?: (commentId: string, content: string) => void;
+  onCommentDelete?: (commentId: string) => void;
+  commentContent?: string;
+  onCommentContentChange?: (content: string) => void;
 }
 
 const ModalContainer = styled.div`
@@ -87,6 +97,11 @@ const Modal: React.FC<ModalProps> = ({
   onEditSave,
   onTitleChange,
   onContentChange,
+  onCommentSubmit,
+  onCommentEdit,
+  onCommentDelete,
+  commentContent,
+  onCommentContentChange,
 }) => {
   return (
     <ModalContainer>
@@ -113,7 +128,15 @@ const Modal: React.FC<ModalProps> = ({
         <SectionTitle>변경사항</SectionTitle>
         <ModalList items={items} />
         {!isEditing && (
-          <ModalComment comments={comments} isEditing={isEditing} />
+          <ModalComment 
+            comments={comments} 
+            isEditing={isEditing}
+            onCommentSubmit={onCommentSubmit}
+            onCommentEdit={onCommentEdit}
+            onCommentDelete={onCommentDelete}
+            commentContent={commentContent}
+            onCommentContentChange={onCommentContentChange}
+          />
         )}
       </ContentWrapper>
       <ModalFooter

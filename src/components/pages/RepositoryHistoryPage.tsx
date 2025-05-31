@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import SideBar from '../common/SideBar';
 import RepoHeader from '../layout/RepoHeader';
-import RepositoryTile from '../layout/RepositoryTitle';
 import PhysicsRepoGraph from '../common/PhysicsRepoGraph';
 import TeamInviteModal from '../layout/TeamInviteModal';
 import ModalSimple from '../layout/ModalSimple';
@@ -11,8 +10,6 @@ import Modal from '../layout/Modal';
 import EditRepositoryModal from '../common/EditRepositoryModal';
 import { getFilteredHistories, getHistoryRootFiles, getHistoryDetail, updateHistory, createHistory } from '../../api/history';
 import { HistoryListResponse, HistoryFileResponse, HistoryDetailResponse } from '../../api/history/types';
-import { UUID } from '../../api/common/types';
-import AuthService from '../../api/auth';
 import { createProposal, getProposalsByRepository, getProposalById, updateProposal, mergeProposal, updateProposalStatus } from '../../api/proposal';
 import ModalPPList from '../layout/ModalPPList';
 import { getRepositoryDetail, updateRepository, RepositoryDetail, UpdateRepositoryRequest } from '../../api/repository';
@@ -20,6 +17,8 @@ import { useUser } from '../../contexts/UserContext';
 import { useToastContext } from '../../contexts/ToastContext';
 import pencilIcon from '../../assets/pencilIcon.svg';
 import { getUserAuthority } from '../../api/user';
+import { getReviewsByProposal, createReview, updateReview, deleteReview } from '../../api/review';
+import { Review, ReviewCreateRequest, ReviewUpdateRequest } from '../../api/review/types';
 
 const PageContainer = styled.div`
   display: flex;
@@ -149,6 +148,8 @@ const RepositoryHistoryPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userAuthority, setUserAuthority] = useState<string | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewContent, setReviewContent] = useState('');
 
   // 상대적인 시간 표시 함수
   const getRelativeTime = useCallback((dateString: string) => {
@@ -539,6 +540,12 @@ const RepositoryHistoryPage: React.FC = () => {
           status: proposalStatus
         };
         setSelectedProposalDetail(proposalData);
+
+        // 댓글 목록 가져오기
+        const reviewsResponse = await getReviewsByProposal(proposalId);
+        if (reviewsResponse.code === 100 && reviewsResponse.data) {
+          setReviews(reviewsResponse.data);
+        }
       } else {
         setSelectedProposalDetail(null);
       }
@@ -584,6 +591,68 @@ const RepositoryHistoryPage: React.FC = () => {
   useEffect(() => {
     fetchRepositoryDetail();
   }, [repositoryId]);
+
+  // 댓글 작성 함수
+  const handleCreateReview = async (content: string, parentId?: string) => {
+    if (!selectedProposalId || !content.trim()) return;
+
+    try {
+      const reviewData: ReviewCreateRequest = {
+        comment: content,
+        ...(parentId && { parentId })
+      };
+
+      const response = await createReview(selectedProposalId, reviewData);
+      if (response.code === 100) {
+        // 댓글 목록 새로고침
+        const reviewsResponse = await getReviewsByProposal(selectedProposalId);
+        if (reviewsResponse.code === 100 && reviewsResponse.data) {
+          setReviews(reviewsResponse.data);
+        }
+        setReviewContent(''); // 댓글 입력 초기화
+      }
+    } catch (err) {
+      console.error('Failed to create review:', err);
+    }
+  };
+
+  // 댓글 수정 함수
+  const handleEditReview = async (reviewId: string, content: string) => {
+    if (!selectedProposalId) return;
+
+    try {
+      const reviewData: ReviewUpdateRequest = {
+        comment: content
+      };
+
+      const response = await updateReview(selectedProposalId, reviewId, reviewData);
+      if (response.code === 100) {
+        // 댓글 목록 새로고침
+        const reviewsResponse = await getReviewsByProposal(selectedProposalId);
+        if (reviewsResponse.code === 100 && reviewsResponse.data) {
+          setReviews(reviewsResponse.data);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to update review:', err);
+    }
+  };
+
+  // 댓글 삭제 함수
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!selectedProposalId) return;
+
+    try {
+      await deleteReview(selectedProposalId, reviewId);
+      // 댓글 목록 새로고침
+      const reviewsResponse = await getReviewsByProposal(selectedProposalId);
+      if (reviewsResponse.code === 100 && reviewsResponse.data) {
+        setReviews(reviewsResponse.data);
+      }
+    } catch (err) {
+      console.error('Failed to delete review:', err);
+    }
+  };
 
   if (loading) {
     return (
@@ -977,6 +1046,7 @@ const RepositoryHistoryPage: React.FC = () => {
                   setIsEditing(false);
                   setEditedTitle('');
                   setEditedContent('');
+                  setReviewContent(''); // 댓글 입력 초기화
                 }}
                 isEditing={isEditing}
                 canEdit={isAdmin && selectedProposalDetail.status === 'OPEN'}
@@ -1082,7 +1152,28 @@ const RepositoryHistoryPage: React.FC = () => {
                     console.error('Failed to merge proposal:', err);
                   }
                 } : () => {}}
-                comments={[]}
+                comments={reviews.map(review => ({
+                  id: review.id,
+                  content: review.comment,
+                  author: review.reviewer.nickname,
+                  createdAt: review.createdAt,
+                  updatedAt: review.updatedAt,
+                  isAuthor: review.reviewer.providerId === currentUser?.userId,
+                  replies: review.replies.map(reply => ({
+                    id: reply.id,
+                    content: reply.comment,
+                    author: reply.reviewer.nickname,
+                    createdAt: reply.createdAt,
+                    updatedAt: reply.updatedAt,
+                    isAuthor: reply.reviewer.providerId === currentUser?.userId,
+                    replies: []
+                  }))
+                }))}
+                onCommentSubmit={handleCreateReview}
+                onCommentEdit={handleEditReview}
+                onCommentDelete={handleDeleteReview}
+                commentContent={reviewContent}
+                onCommentContentChange={setReviewContent}
                 role={canReviewProposal && selectedProposalDetail.status === 'OPEN' ? 'admin' : undefined}
               />
             </div>
