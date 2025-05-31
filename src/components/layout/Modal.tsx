@@ -222,6 +222,33 @@ const Modal: React.FC<ModalProps> = ({
               생성하기
             </Button>
           )}
+          {(() => {
+            console.log('Modal Button Conditions:', {
+              isEditing,
+              isCreating,
+              role,
+              hasRejectHandler: !!onReject,
+              hasAcceptHandler: !!onAccept
+            });
+            return !isEditing && !isCreating && role && (
+              <>
+                <Button
+                  variant="secondary"
+                  size="medium"
+                  onClick={onReject}
+                >
+                  거절하기
+                </Button>
+                <Button
+                  variant="primary"
+                  size="medium"
+                  onClick={onAccept}
+                >
+                  승인하기
+                </Button>
+              </>
+            );
+          })()}
         </ButtonRow>
       </Container>
     </Overlay>

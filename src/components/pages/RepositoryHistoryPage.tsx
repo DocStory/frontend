@@ -638,6 +638,35 @@ const RepositoryHistoryPage: React.FC = () => {
     ? repositoryDetail.owner.email === userInfo.email
     : false;
 
+  // 현재 사용자의 권한 확인
+  const checkUserAuthority = useCallback(async () => {
+    if (!repositoryId) return;
+
+    try {
+      const response = await getUserAuthority(repositoryId);
+      console.log('User Authority Response:', response);
+      setUserAuthority(response.authority);
+    } catch (err) {
+      console.error('Failed to fetch user authority:', err);
+      // API 호출 실패 시 repositoryDetail의 owner 정보를 기반으로 권한 설정
+      if (repositoryDetail && userInfo) {
+        const isOwner = repositoryDetail.owner.email === userInfo.email;
+        console.log('Falling back to owner check:', { isOwner });
+        setUserAuthority(isOwner ? 'ADMIN' : null);
+      } else {
+        setUserAuthority(null);
+      }
+    }
+  }, [repositoryId, repositoryDetail, userInfo]);
+
+  // 현재 사용자가 admin 또는 reviewer인지 확인
+  const canReviewProposal = useMemo(() => {
+    console.log('User Authority:', userAuthority);
+    const result = userAuthority === 'ADMIN' || userAuthority === 'REVIEWER';
+    console.log('Can Review Proposal:', result);
+    return result;
+  }, [userAuthority]);
+
   // Proposal 상세 모달 열기
   const handleProposalDetailOpen = useCallback(async (proposalId: string) => {
     if (!proposalId) return;
@@ -649,6 +678,14 @@ const RepositoryHistoryPage: React.FC = () => {
       const proposalStatus = proposalFromList?.status === 'progress' ? 'OPEN' :
                            proposalFromList?.status === 'merge' ? 'MERGED' :
                            proposalFromList?.status === 'close' ? 'CLOSED' : 'OPEN';
+      
+      console.log('Proposal Status:', proposalStatus);
+      console.log('Debug Info:', {
+        canReviewProposal,
+        userAuthority,
+        proposalStatus,
+        isOpen: proposalStatus === 'OPEN'
+      });
 
       const response = await getProposalById(proposalId);
       if (response.code === 100 && response.data) {
@@ -657,6 +694,7 @@ const RepositoryHistoryPage: React.FC = () => {
           status: proposalStatus
         };
         setSelectedProposalDetail(proposalData);
+        console.log('Selected Proposal Detail:', proposalData);
 
         // 댓글 목록 가져오기
         const reviewsResponse = await getReviewsByProposal(proposalId);
@@ -667,9 +705,10 @@ const RepositoryHistoryPage: React.FC = () => {
         setSelectedProposalDetail(null);
       }
     } catch (err) {
+      console.error('Failed to fetch proposal detail:', err);
       setSelectedProposalDetail(null);
     }
-  }, [proposalList]);
+  }, [proposalList, canReviewProposal, userAuthority]);
 
   // 현재 사용자 정보 설정
   useEffect(() => {
@@ -683,27 +722,17 @@ const RepositoryHistoryPage: React.FC = () => {
     }
   }, [userInfo]);
 
-  // 현재 사용자의 권한 확인
-  const checkUserAuthority = useCallback(async () => {
-    if (!repositoryId) return;
-
-    try {
-      const response = await getUserAuthority(repositoryId);
-      setUserAuthority(response.authority);
-    } catch (err) {
-      console.error('Failed to fetch user authority:', err);
-      setUserAuthority(null);
+  // repositoryDetail이 변경될 때마다 권한 재확인
+  useEffect(() => {
+    if (repositoryDetail) {
+      checkUserAuthority();
     }
-  }, [repositoryId]);
+  }, [repositoryDetail, checkUserAuthority]);
 
+  // repositoryId가 변경될 때마다 권한 재확인
   useEffect(() => {
     checkUserAuthority();
   }, [repositoryId, checkUserAuthority]);
-
-  // 현재 사용자가 admin 또는 reviewer인지 확인
-  const canReviewProposal = useMemo(() => {
-    return userAuthority === 'ADMIN' || userAuthority === 'REVIEWER';
-  }, [userAuthority]);
 
   useEffect(() => {
     fetchRepositoryDetail();
@@ -1217,7 +1246,7 @@ const RepositoryHistoryPage: React.FC = () => {
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              backgroundColor: 'rgba(0, 0, 0, 0)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -1286,6 +1315,13 @@ const RepositoryHistoryPage: React.FC = () => {
                 onTitleChange={setEditedTitle}
                 onContentChange={setEditedContent}
                 onReject={selectedProposalDetail.status === 'OPEN' ? async () => {
+                  console.log('Reject button clicked');
+                  console.log('Current state:', {
+                    isEditing,
+                    canReviewProposal,
+                    userAuthority,
+                    proposalStatus: selectedProposalDetail.status
+                  });
                   if (isEditing) {
                     setIsEditing(false);
                     setEditedTitle('');
@@ -1296,6 +1332,7 @@ const RepositoryHistoryPage: React.FC = () => {
                     try {
                       const response = await updateProposalStatus(selectedProposalDetail.id, { status: 'CLOSED' });
                       if (response.code === 100) {
+                        toast.success('Proposal이 거절되었습니다.');
                         setIsProposalDetailModalOpen(false);
                         setSelectedProposalId(null);
                         setSelectedProposalDetail(null);
@@ -1315,15 +1352,24 @@ const RepositoryHistoryPage: React.FC = () => {
                       }
                     } catch (err) {
                       console.error('Failed to reject proposal:', err);
+                      toast.error('Proposal 거절 중 오류가 발생했습니다.');
                     }
                   }
                 } : () => {}}
                 onAccept={selectedProposalDetail.status === 'OPEN' ? async () => {
+                  console.log('Accept button clicked');
+                  console.log('Current state:', {
+                    isEditing,
+                    canReviewProposal,
+                    userAuthority,
+                    proposalStatus: selectedProposalDetail.status
+                  });
                   if (!selectedProposalDetail) return;
                   
                   try {
                     const response = await mergeProposal(selectedProposalDetail.id);
                     if (response.code === 100) {
+                      toast.success('Proposal이 승인되었습니다.');
                       setIsProposalDetailModalOpen(false);
                       setSelectedProposalId(null);
                       setSelectedProposalDetail(null);
@@ -1343,6 +1389,7 @@ const RepositoryHistoryPage: React.FC = () => {
                     }
                   } catch (err) {
                     console.error('Failed to merge proposal:', err);
+                    toast.error('Proposal 승인 중 오류가 발생했습니다.');
                   }
                 } : () => {}}
                 comments={reviews.map(review => ({
@@ -1367,7 +1414,17 @@ const RepositoryHistoryPage: React.FC = () => {
                 onCommentDelete={handleDeleteReview}
                 commentContent={reviewContent}
                 onCommentContentChange={setReviewContent}
-                role={canReviewProposal && selectedProposalDetail.status === 'OPEN' ? 'admin' : undefined}
+                role={(() => {
+                  const shouldShowButtons = canReviewProposal && selectedProposalDetail.status === 'OPEN' && userAuthority;
+                  console.log('Role Calculation:', {
+                    canReviewProposal,
+                    proposalStatus: selectedProposalDetail.status,
+                    userAuthority,
+                    shouldShowButtons,
+                    finalRole: shouldShowButtons ? userAuthority : undefined
+                  });
+                  return shouldShowButtons ? userAuthority : undefined;
+                })()}
               />
             </div>
           )}
