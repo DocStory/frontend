@@ -17,6 +17,7 @@ interface MemberListProps {
     role: 'admin' | 'reviewer' | 'contributor'
   ) => void;
   onDelete?: (id: string) => void;
+  isAdmin: boolean;
 }
 
 const ListContainer = styled.div`
@@ -110,10 +111,26 @@ const HostButton = styled.div`
   box-shadow: 0px 4px 40px 0px rgba(255, 133, 95, 0.04);
 `;
 
+const RoleBadgeText = styled.div`
+  display: inline-flex;
+  align-items: center;
+  padding: 11px 12px;
+  background: ${({ theme }) => theme.surface};
+  color: ${({ theme }) => theme.text};
+  border: 1px solid ${({ theme }) => theme.border};
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.144em;
+  font-family: 'Pretendard', sans-serif;
+  box-shadow: 0px 4px 40px 0px rgba(255, 133, 95, 0.04);
+`;
+
 const MemberList: React.FC<MemberListProps> = ({
   members,
   onRoleChange,
   onDelete,
+  isAdmin,
 }) => {
   return (
     <ListContainer>
@@ -129,12 +146,12 @@ const MemberList: React.FC<MemberListProps> = ({
           </MemberInfo>
           {member.role === 'admin' ? (
             <HostButton>호스트</HostButton>
-          ) : (
+          ) : isAdmin ? (
             <ToggleButton
               currentValue={member.role}
               options={[
-                { label: '편집 가능', value: 'contributor' },
-                { label: '보기 가능', value: 'reviewer' },
+                { label: '편집 가능', value: 'reviewer' },
+                { label: '보기 가능', value: 'contributor' },
               ]}
               onChange={(value) =>
                 onRoleChange?.(
@@ -144,6 +161,10 @@ const MemberList: React.FC<MemberListProps> = ({
               }
               onDelete={() => onDelete?.(member.id)}
             />
+          ) : (
+            <RoleBadgeText>
+              {member.role === 'reviewer' ? '편집 가능' : '보기 가능'}
+            </RoleBadgeText>
           )}
         </MemberItem>
       ))}

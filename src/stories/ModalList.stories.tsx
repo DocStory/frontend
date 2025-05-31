@@ -1,85 +1,112 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import ModalList from '../components/common/ModalList.tsx';
+import ModalList from '../components/common/ModalList';
+import type { ModalItem } from '../components/common/ModalList';
 
 const meta: Meta<typeof ModalList> = {
-  title: 'Modal/ModalList',
+  title: 'Common/ModalList',
   component: ModalList,
+  parameters: {
+    layout: 'padded',
+    backgrounds: {
+      default: 'light',
+      values: [
+        { name: 'light', value: '#f8fafc' },
+        { name: 'dark', value: '#1e293b' },
+      ],
+    },
+  },
   tags: ['autodocs'],
 };
 
 export default meta;
 type Story = StoryObj<typeof ModalList>;
 
-const Template: Story = {
-  render: (args) => <ModalList {...args} />,
-};
+const mockItems: ModalItem[] = [
+  {
+    Name: 'UI_리팩터링_제안서.pdf',
+    date: 'PDF',
+    iconType: 'diff',
+  },
+  {
+    Name: '컴포넌트_디자인_가이드.pdf',
+    date: 'PDF',
+    iconType: 'download',
+  },
+  {
+    Name: '업로드된_파일.docx',
+    date: 'Word',
+    iconType: 'upload',
+  },
+];
 
-export const DownloadList: Story = {
-  ...Template,
+export const Default: Story = {
   args: {
-    items: [
-      {
-        Name: '문서1.pdf',
-        date: '2024-03-20',
-        iconType: 'download',
-      },
-      {
-        Name: '문서2.pdf',
-        date: '2024-03-19',
-        iconType: 'download',
-      },
-      {
-        Name: '문서3.pdf',
-        date: '2024-03-18',
-        iconType: 'download',
-      },
-    ],
+    items: mockItems,
+    isCreating: false,
+    onFileSelect: (files) => console.log('Files selected:', files),
+    onFileRemove: (index) => console.log('File removed:', index),
   },
 };
 
-export const UploadList: Story = {
-  ...Template,
+export const WithUpload: Story = {
   args: {
-    items: [
-      {
-        Name: '문서1.pdf',
-        date: '2024-03-20',
-        iconType: 'upload',
-      },
-      {
-        Name: '문서2.pdf',
-        date: '2024-03-19',
-        iconType: 'upload',
-      },
-      {
-        Name: '문서3.pdf',
-        date: '2024-03-18',
-        iconType: 'upload',
-      },
-    ],
+    items: mockItems,
+    isCreating: true,
+    onFileSelect: (files) => console.log('Files selected:', files),
+    onFileRemove: (index) => console.log('File removed:', index),
   },
 };
 
-export const DiffList: Story = {
-  ...Template,
+export const EmptyList: Story = {
+  args: {
+    items: [],
+    isCreating: false,
+    onFileSelect: (files) => console.log('Files selected:', files),
+    onFileRemove: (index) => console.log('File removed:', index),
+  },
+};
+
+export const UploadOnly: Story = {
+  args: {
+    items: [],
+    isCreating: true,
+    onFileSelect: (files) => console.log('Files selected:', files),
+    onFileRemove: (index) => console.log('File removed:', index),
+  },
+};
+
+export const DifferentFileTypes: Story = {
   args: {
     items: [
       {
-        Name: '문서1.pdf',
-        date: '2024-03-20',
+        Name: 'API_성능_분석_보고서.pdf',
+        date: 'PDF',
         iconType: 'diff',
       },
       {
-        Name: '문서2.pdf',
-        date: '2024-03-19',
-        iconType: 'diff',
+        Name: '최적화_결과_비교.xlsx',
+        date: 'Excel',
+        iconType: 'download',
       },
       {
-        Name: '문서3.pdf',
-        date: '2024-03-18',
-        iconType: 'diff',
+        Name: '번역_리소스_파일.zip',
+        date: 'Archive',
+        iconType: 'download',
+      },
+      {
+        Name: '테스트_케이스_문서.docx',
+        date: 'Word',
+        iconType: 'download',
+      },
+      {
+        Name: '업로드한_이미지.png',
+        date: 'Image',
+        iconType: 'upload',
       },
     ],
+    isCreating: false,
+    onFileSelect: (files) => console.log('Files selected:', files),
+    onFileRemove: (index) => console.log('File removed:', index),
   },
 };

@@ -15,8 +15,13 @@ interface ModalItem {
 }
 
 interface Comment {
+  id: string;
   author: string;
   content: string;
+  createdAt: string;
+  updatedAt: string;
+  isAuthor: boolean;
+  replies?: Comment[];
 }
 
 interface ModalProps {
@@ -41,8 +46,13 @@ interface ModalProps {
   onCreateSave?: () => void;
   onTitleChange?: (title: string) => void;
   onContentChange?: (content: string) => void;
-  onFileSelect?: (file: File) => void;
-  onFileRemove?: (file: File) => void;
+  onFileSelect?: (files: FileList | null) => void;
+  onFileRemove?: (index: number) => void;
+  onCommentSubmit?: (content: string, parentId?: string) => void;
+  onCommentEdit?: (commentId: string, content: string) => void;
+  onCommentDelete?: (commentId: string) => void;
+  commentContent?: string;
+  onCommentContentChange?: (content: string) => void;
 }
 
 const Overlay = styled.div`
@@ -56,37 +66,39 @@ const Overlay = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  backdrop-filter: blur(4px);
 `;
 
 const Container = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.modalBackground};
   width: 95%;
-  max-width: 1000px;
-  max-height: 90vh;
-  border-radius: 15px;
-  border: 3px solid #CBD5E1;
+  max-width: 700px;
+  max-height: 85vh;
+  border-radius: 18px;
+  box-shadow: 0 20px 40px ${({ theme }) => theme.shadow};
   position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  border: 1px solid ${({ theme }) => theme.border};
 `;
 
 const ContentWrapper = styled.div`
   flex: 1;
   overflow-y: auto;
-  background: #f1f5f9;
+  background: ${({ theme }) => theme.background};
 `;
 
 const SectionTitle = styled.h3`
   font-family: 'Pretendard';
   font-weight: 600;
-  font-size: 26px;
-  line-height: 0.85em;
+  font-size: 18px;
+  line-height: 1.3;
   letter-spacing: -0.007em;
-  color: #1e293b;
+  color: ${({ theme }) => theme.text};
   margin: 0;
-  padding: 46px 33px 22px 33px;
-  background: #f1f5f9;
+  padding: 24px 32px 0 32px;
+  background: ${({ theme }) => theme.background};
 `;
 
 const ButtonRow = styled.div`
@@ -94,8 +106,8 @@ const ButtonRow = styled.div`
   justify-content: flex-end;
   gap: 12px;
   padding: 24px 32px;
-  border-top: 1px solid #e5e7eb;
-  background: white;
+  border-top: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.cardBackground};
 `;
 
 const Modal: React.FC<ModalProps> = ({
@@ -122,6 +134,11 @@ const Modal: React.FC<ModalProps> = ({
   onContentChange,
   onFileSelect,
   onFileRemove,
+  onCommentSubmit,
+  onCommentEdit,
+  onCommentDelete,
+  commentContent,
+  onCommentContentChange,
 }) => {
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -138,28 +155,28 @@ const Modal: React.FC<ModalProps> = ({
   return (
     <Overlay onClick={handleOverlayClick} tabIndex={-1} aria-label="모달 오버레이">
       <Container onClick={(e) => e.stopPropagation()}>
-        <ModalHeader title={modalTitle} onClose={onClose} />
+        <ModalHeader title={modalTitle} onClose={onClose || (() => {})} />
         
-      <ProfileList
-        title={headerTitle}
-        time={headerTime}
-        isEditing={isEditing}
-        canEdit={canEdit}
+        <ProfileList
+          title={headerTitle}
+          time={headerTime}
+          isEditing={isEditing}
+          canEdit={canEdit}
           userProfileImage={userProfileImage}
           onEditStart={onEditStart}
           onEditCancel={onEditCancel}
           onEditSave={onEditSave}
-      />
+        />
         
-      <ContentWrapper>
-        <ModalContent
-          title={contentTitle}
-          content={content}
-          isEditing={isEditing}
+        <ContentWrapper>
+          <ModalContent
+            title={contentTitle}
+            content={content}
+            isEditing={isEditing}
             isModifying={isEditing}
             onTitleChange={onTitleChange}
             onContentChange={onContentChange}
-        />
+          />
           
           <SectionTitle>{isCreating ? '파일 업로드' : '변경사항'}</SectionTitle>
           <ModalList 
@@ -168,6 +185,17 @@ const Modal: React.FC<ModalProps> = ({
             onFileRemove={onFileRemove}
             isCreating={isCreating}
           />
+          {!isEditing && (
+            <ModalComment 
+              comments={comments} 
+              isEditing={isEditing}
+              onCommentSubmit={onCommentSubmit}
+              onCommentEdit={onCommentEdit}
+              onCommentDelete={onCommentDelete}
+              commentContent={commentContent}
+              onCommentContentChange={onCommentContentChange}
+            />
+          )}
         </ContentWrapper>
         
         <ButtonRow>
@@ -196,6 +224,33 @@ const Modal: React.FC<ModalProps> = ({
               생성하기
             </Button>
           )}
+          {(() => {
+            console.log('Modal Button Conditions:', {
+              isEditing,
+              isCreating,
+              role,
+              hasRejectHandler: !!onReject,
+              hasAcceptHandler: !!onAccept
+            });
+            return !isEditing && !isCreating && role && (
+              <>
+                <Button
+                  variant="secondary"
+                  size="medium"
+                  onClick={onReject}
+                >
+                  거절하기
+                </Button>
+                <Button
+                  variant="primary"
+                  size="medium"
+                  onClick={onAccept}
+                >
+                  승인하기
+                </Button>
+              </>
+            );
+          })()}
         </ButtonRow>
       </Container>
     </Overlay>

@@ -5,7 +5,7 @@ import ToastContainer from '../components/common/ToastContainer';
 export type ToastType = 'success' | 'error' | 'warning';
 
 export interface Toast {
-  id: number;
+  id: string;
   type: ToastType;
   message: string;
 }
@@ -14,7 +14,7 @@ interface ToastContextType {
   success: (message: string) => void;
   error: (message: string) => void;
   warning: (message: string) => void;
-  removeToast: (id: number) => void;
+  removeToast: (id: string) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -43,7 +43,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [nextId, setNextId] = useState(1);
 
   const addToast = useCallback((type: ToastType, message: string) => {
-    const id = nextId;
+    const id = String(nextId);
     setNextId(prev => prev + 1);
     
     const newToast: Toast = { id, type, message };
@@ -55,7 +55,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, 3000);
   }, [nextId]);
 
-  const removeToast = useCallback((id: number) => {
+  const removeToast = useCallback((id: string) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
   }, []);
 

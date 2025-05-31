@@ -12,54 +12,60 @@ interface ContentProps {
 }
 
 const ContentContainer = styled.div<{ isEditing?: boolean }>`
-  padding: 24px 33px;
-  background: ${({ isEditing, theme }) => (isEditing ? theme.cardBackground : theme.surface)};
-  transition: background-color 0.3s ease;
+  padding: 32px;
+  background: ${({ isEditing, theme }) => (isEditing ? theme.cardBackground : theme.background)};
+  transition: all 0.2s ease;
 `;
 
 const EditingContainer = styled.div`
-  padding: 24px 33px;
-  background: #ffffff;
+  padding: 32px;
+  background: ${({ theme }) => theme.cardBackground};
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 `;
 
 const ContentTitle = styled.h3<{ isRecentActivity?: boolean }>`
   font-family: 'Pretendard';
-  font-weight: 500;
-  font-size: ${props => props.isRecentActivity ? '20px' : '26px'};
-  line-height: 1.2;
+  font-weight: 600;
+  font-size: ${props => props.isRecentActivity ? '18px' : '24px'};
+  line-height: 1.3;
   color: ${({ theme }) => theme.text};
   margin: 0 0 16px 0;
+  letter-spacing: -0.007em;
 `;
 
 const ContentText = styled.p`
   font-family: 'Pretendard';
   font-weight: 400;
-  font-size: 18px;
-  line-height: 1.67em;
-  letter-spacing: -0.007em;
+  font-size: 16px;
+  line-height: 1.6;
+  letter-spacing: -0.006em;
   color: ${({ theme }) => theme.textSecondary};
   margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
 `;
 
 const TitleInput = styled.input`
   font-family: 'Pretendard';
   font-size: 16px;
   padding: 12px 16px;
-  border: 1px solid #e1e5e9;
+  border: 1px solid ${({ theme }) => theme.border};
   border-radius: 8px;
-  background: white;
-  color: #1a1a1a;
+  background: ${({ theme }) => theme.inputBackground};
+  color: ${({ theme }) => theme.text};
   transition: border-color 0.2s ease;
   width: 100%;
   box-sizing: border-box;
 
   &::placeholder {
-    color: #9ca3af;
+    color: ${({ theme }) => theme.textSecondary};
   }
 
   &:focus {
     outline: none;
-    border-color: #4078FF;
+    border-color: ${({ theme }) => theme.primary};
   }
 `;
 
@@ -67,10 +73,10 @@ const ContentTextarea = styled.textarea`
   font-family: 'Pretendard';
   font-size: 16px;
   padding: 12px 16px;
-  border: 1px solid #e1e5e9;
+  border: 1px solid ${({ theme }) => theme.border};
   border-radius: 8px;
-  background: white;
-  color: #1a1a1a;
+  background: ${({ theme }) => theme.inputBackground};
+  color: ${({ theme }) => theme.text};
   transition: border-color 0.2s ease;
   width: 100%;
   min-height: 120px;
@@ -78,12 +84,12 @@ const ContentTextarea = styled.textarea`
   resize: vertical;
 
   &::placeholder {
-    color: #9ca3af;
+    color: ${({ theme }) => theme.textSecondary};
   }
 
   &:focus {
     outline: none;
-    border-color: #4078FF;
+    border-color: ${({ theme }) => theme.primary};
   }
 `;
 
@@ -116,7 +122,7 @@ const ContentArea: React.FC<ContentProps> = ({
   const Container = isEditing ? EditingContainer : ContentContainer;
 
   return (
-    <Container>
+    <Container isEditing={isEditing}>
       <ContentTitle isRecentActivity={isRecentActivity}>{title}</ContentTitle>
       <ContentText>{content}</ContentText>
     </Container>

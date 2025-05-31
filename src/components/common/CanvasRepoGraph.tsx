@@ -28,6 +28,7 @@ interface NodeData {
   onEditClick?: (historyId: string) => void;
   onCreateClick?: (historyId?: string) => void;
   onProposalClick?: (historyId: string) => void;
+  parentFileId?: string;
   createdBy?: {
     profileImage?: string;
     nickname?: string;
@@ -1094,12 +1095,26 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
         // 현재 사용자가 작성한 히스토리인지 확인
         const canEdit = node.currentUserId && node.historyCreatorId && node.currentUserId === node.historyCreatorId;
         
+        // 디버깅 로그 추가
+        console.log('🔍 Node Debug Info:', {
+          nodeId: node.id,
+          title: node.title,
+          parentFileId: node.parentFileId,
+          isRootNode: !node.parentFileId,
+          currentUserId: node.currentUserId,
+          historyCreatorId: node.historyCreatorId,
+          canEdit
+        });
+        
         const dropdownOptions: DropdownOption[] = [
           { label: '생성하기', value: 'create' },
           { label: '자세히 보기', value: 'detail' },
           ...(canEdit ? [{ label: '수정하기', value: 'edit' }] : []),
-          { label: 'PP 요청', value: 'pp' },
+          ...(node.parentFileId ? [{ label: 'PP 요청', value: 'pp' }] : [])
         ];
+        
+        // 드롭다운 옵션 로그
+        console.log('📝 Dropdown Options:', dropdownOptions);
         
         return (
           <Dropdown

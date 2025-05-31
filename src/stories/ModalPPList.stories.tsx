@@ -7,6 +7,13 @@ const meta: Meta<typeof ModalPPList> = {
   component: ModalPPList,
   parameters: {
     layout: 'fullscreen',
+    backgrounds: {
+      default: 'light',
+      values: [
+        { name: 'light', value: '#f8fafc' },
+        { name: 'dark', value: '#1e293b' },
+      ],
+    },
   },
   tags: ['autodocs'],
 };
@@ -16,28 +23,33 @@ type Story = StoryObj<typeof ModalPPList>;
 
 const mockItems: PPItem[] = [
   {
-    Name: '프로젝트 A',
-    content: '프로젝트 A는 현재 진행 중인 프로젝트입니다. 주요 기능 개발이 완료되었으며, 현재 테스트 단계에 있습니다.',
+    id: '1',
+    Name: '사용자 인증 시스템 개선',
+    content: '기존 로그인 시스템의 보안을 강화하고 2FA 인증을 추가하는 작업입니다. JWT 토큰 관리 방식도 개선합니다.',
     status: 'progress',
   },
   {
-    Name: '프로젝트 B',
-    content: '프로젝트 B는 개발이 완료되어 머지된 프로젝트입니다. 모든 기능이 구현되었으며, 코드 리뷰를 통과했습니다.',
+    id: '2',
+    Name: 'API 성능 최적화',
+    content: '데이터베이스 쿼리 최적화와 캐싱 전략을 통해 API 응답 시간을 30% 단축했습니다.',
     status: 'merge',
   },
   {
-    Name: '프로젝트 C',
-    content: '프로젝트 C는 종료된 프로젝트입니다. 모든 작업이 완료되었으며, 프로덕션 환경에 배포되었습니다.',
+    id: '3',
+    Name: 'UI/UX 리디자인',
+    content: '모바일 반응형 디자인을 적용하고 사용자 경험을 개선했습니다.',
     status: 'close',
   },
   {
-    Name: '프로젝트 D',
-    content: '프로젝트 D는 새로운 기능을 개발 중인 프로젝트입니다. 현재 초기 단계이며, 기본 구조 설계가 진행 중입니다.',
+    id: '4',
+    Name: '다국어 지원 기능',
+    content: 'i18n을 활용한 다국어 지원 시스템을 구축 중입니다. 현재 한국어, 영어, 일본어를 지원합니다.',
     status: 'progress',
   },
   {
-    Name: '프로젝트 E',
-    content: '프로젝트 E는 최근에 머지된 프로젝트입니다. 성능 최적화 작업이 포함되어 있으며, 모든 테스트를 통과했습니다.',
+    id: '5',
+    Name: '데이터 백업 시스템',
+    content: '자동 백업 시스템을 구축하여 데이터 안정성을 확보했습니다.',
     status: 'merge',
   },
 ];
@@ -45,41 +57,31 @@ const mockItems: PPItem[] = [
 export const Default: Story = {
   args: {
     items: mockItems,
-  },
-};
-
-export const Empty: Story = {
-  args: {
-    items: [],
-  },
-};
-
-export const SingleItem: Story = {
-  args: {
-    items: [mockItems[0]],
-  },
-};
-
-export const ManyItems: Story = {
-  args: {
-    items: [...mockItems, ...mockItems, ...mockItems],
+    onClose: () => console.log('Modal closed'),
+    onProposalClick: (id) => console.log('Proposal clicked:', id),
   },
 };
 
 export const ProgressOnly: Story = {
   args: {
     items: mockItems.filter(item => item.status === 'progress'),
+    onClose: () => console.log('Modal closed'),
+    onProposalClick: (id) => console.log('Proposal clicked:', id),
   },
 };
 
-export const MergeOnly: Story = {
+export const CompletedOnly: Story = {
   args: {
-    items: mockItems.filter(item => item.status === 'merge'),
+    items: mockItems.filter(item => item.status === 'merge' || item.status === 'close'),
+    onClose: () => console.log('Modal closed'),
+    onProposalClick: (id) => console.log('Proposal clicked:', id),
   },
 };
 
-export const CloseOnly: Story = {
+export const EmptyState: Story = {
   args: {
-    items: mockItems.filter(item => item.status === 'close'),
+    items: [],
+    onClose: () => console.log('Modal closed'),
+    onProposalClick: (id) => console.log('Proposal clicked:', id),
   },
 };

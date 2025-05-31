@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import Toast from './Toast';
-import { useToast } from '../../hooks/useToast';
+import { Toast as ToastType } from '../../contexts/ToastContext';
 
 const Container = styled.div`
   position: fixed;
@@ -18,18 +18,19 @@ const Container = styled.div`
   }
 `;
 
-const ToastContainer: React.FC = () => {
-  const { toasts, hideToast } = useToast();
+interface ToastContainerProps {
+  toasts: ToastType[];
+  onClose: (id: string) => void;
+}
 
+const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onClose }) => {
   return (
     <Container>
       {toasts.map((toast) => (
         <Toast
           key={toast.id}
-          type={toast.type}
-          message={toast.message}
-          isVisible={toast.isVisible}
-          onClose={() => hideToast(toast.id)}
+          toast={toast}
+          onClose={onClose}
         />
       ))}
     </Container>

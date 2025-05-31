@@ -47,37 +47,39 @@ const Overlay = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  backdrop-filter: blur(4px);
 `;
 
 const Container = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.modalBackground};
   width: 95%;
-  max-width: 900px;
+  max-width: 800px;
   max-height: 90vh;
-  border-radius: 15px;
-  border: 3px solid #CBD5E1;
+  border-radius: 18px;
+  box-shadow: 0 20px 40px ${({ theme }) => theme.shadow};
   position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  border: 1px solid ${({ theme }) => theme.border};
 `;
 
 const ContentWrapper = styled.div`
   flex: 1;
   overflow-y: auto;
-  background: #f1f5f9;
+  background: ${({ theme }) => theme.background};
 `;
 
 const SectionTitle = styled.h3`
   font-family: 'Pretendard';
   font-weight: 600;
-  font-size: 26px;
-  line-height: 0.85em;
+  font-size: 18px;
+  line-height: 1.3;
   letter-spacing: -0.007em;
-  color: #1e293b;
+  color: ${({ theme }) => theme.text};
   margin: 0;
-  padding: 46px 33px 22px 33px;
-  background: #f1f5f9;
+  padding: 32px 32px 16px 32px;
+  background: ${({ theme }) => theme.background};
 `;
 
 const ButtonRow = styled.div`
@@ -85,8 +87,8 @@ const ButtonRow = styled.div`
   justify-content: flex-end;
   gap: 12px;
   padding: 24px 32px;
-  border-top: 1px solid #e5e7eb;
-  background: white;
+  border-top: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.cardBackground};
 `;
 
 const ModalSimple: React.FC<ModalSimpleProps> = ({
