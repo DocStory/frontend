@@ -27,8 +27,8 @@ interface SidebarProps {
 const SidebarContainer = styled.div<{ isCollapsed?: boolean }>`
   width: ${props => props.isCollapsed ? '80px' : '280px'};
   height: 100vh;
-  background-color: #FFFFFF;
-  border-right: 1px solid #F0F0F0;
+  background-color: ${({ theme }) => theme.background};
+  border-right: 1px solid ${({ theme }) => theme.borderLight};
   display: flex;
   flex-direction: column;
   transition: width 0.3s ease;
@@ -36,14 +36,14 @@ const SidebarContainer = styled.div<{ isCollapsed?: boolean }>`
 
 const LogoSection = styled.div`
   padding: 24px;
-  border-bottom: 1px solid #F0F0F0;
+  border-bottom: 1px solid ${({ theme }) => theme.borderLight};
 `;
 
 const LogoTitle = styled.h1`
   font-family: 'Pretendard';
   font-weight: 800;
   font-size: 22px;
-  color: #6C9EFF;
+  color: ${({ theme }) => theme.primary};
   margin: 0;
 `;
 
@@ -71,11 +71,11 @@ const MenuItemBox = styled.div<{ active?: boolean; isCollapsed?: boolean }>`
   transition: all 0.2s ease;
   justify-content: ${props => props.isCollapsed ? 'center' : 'flex-start'};
   
-  background-color: ${props => props.active ? '#F0F7FF' : 'transparent'};
-  color: ${props => props.active ? '#6C9EFF' : '#6B7280'};
+  background-color: ${props => props.active ? props.theme.backgroundLighter : 'transparent'};
+  color: ${props => props.active ? props.theme.primary : props.theme.textSecondary};
   
   &:hover {
-    background-color: ${props => props.active ? '#F0F7FF' : '#F8FAFC'};
+    background-color: ${props => props.active ? props.theme.backgroundLighter : props.theme.surface};
   }
   
   font-family: 'Pretendard';
@@ -95,12 +95,12 @@ const MenuLabel = styled.span<{ isCollapsed?: boolean }>`
 const UserProfileSection = styled.div<{ isCollapsed?: boolean }>`
   margin-top: auto;
   padding: 24px;
-  border-top: 1px solid #F0F0F0;
+  border-top: 1px solid ${({ theme }) => theme.borderLight};
   cursor: pointer;
   transition: background-color 0.2s ease;
   
   &:hover {
-    background-color: #F8FAFC;
+    background-color: ${({ theme }) => theme.surface};
   }
 `;
 
@@ -128,7 +128,7 @@ const UserName = styled.div`
   font-family: 'Pretendard';
   font-weight: 600;
   font-size: 16px;
-  color: #1F2937;
+  color: ${({ theme }) => theme.text};
   line-height: 1.5;
 `;
 
@@ -136,7 +136,7 @@ const UserEmail = styled.div`
   font-family: 'Pretendard';
   font-weight: 400;
   font-size: 14px;
-  color: #6B7280;
+  color: ${({ theme }) => theme.textSecondary};
   line-height: 1.4;
 `;
 

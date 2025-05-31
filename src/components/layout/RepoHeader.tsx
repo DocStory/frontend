@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { useTheme } from 'styled-components';
 import SearchBar from '../common/SearchBar';
 import NotificationIcon from '../../assets/notificationIcon.svg';
 import NotiIcon from '../../assets/notiIcon.svg';
@@ -11,8 +12,8 @@ const HeaderContainer = styled.header`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
-  border-bottom: 3px solid #F0F0F0;
+  background: ${({ theme }) => theme.cardBackground};
+  border-bottom: 1px solid ${({ theme }) => theme.border};
   padding: 0 32px;
   height: 64px;
 `;
@@ -35,32 +36,29 @@ const Icon = styled.img`
   width: 32px;
   height: 32px;
   cursor: pointer;
+  ${({ theme }) => theme.mode === 'dark' ? 'filter: invert(1);' : ''}
 `;
 
 interface RepoHeaderProps {
-  hasNewNotification?: boolean;
   onTeamIconClick?: () => void;
   onRepoIconClick?: () => void;
 }
 
-const RepoHeader: React.FC<RepoHeaderProps> = ({ 
-  hasNewNotification = false, 
-  onTeamIconClick,
-  onRepoIconClick,
-}) => (
-  <HeaderContainer>
-    <SearchBarWrapper>
-      <SearchBar />
-    </SearchBarWrapper>
-    <Right>
-      <Icon src={RepoIcon} alt="레포" onClick={onRepoIconClick} />
-      <Icon src={TeamIcon} alt="팀" onClick={onTeamIconClick} />
-      <Icon
-        src={hasNewNotification ? NotiIcon : NotificationIcon}
-        alt="알림"
-      />
-    </Right>
-  </HeaderContainer>
-);
+const RepoHeader: React.FC<RepoHeaderProps> = ({ onTeamIconClick, onRepoIconClick }) => {
+  const theme = useTheme();
+
+  return (
+    <HeaderContainer>
+      <SearchBarWrapper>
+        <SearchBar />
+      </SearchBarWrapper>
+      <Right>
+        <Icon src={RepoIcon} alt="프로포절" onClick={onRepoIconClick} />
+        <Icon src={TeamIcon} alt="팀" onClick={onTeamIconClick} />
+        <Icon src={NotiIcon} alt="알림" />
+      </Right>
+    </HeaderContainer>
+  );
+};
 
 export default RepoHeader; 

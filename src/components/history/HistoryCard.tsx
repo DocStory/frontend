@@ -19,72 +19,80 @@ interface HistoryCardProps {
   onProposalClick?: (historyId: string) => void;
 }
 
-const Card = styled.div<{ $isMain: boolean; $isExpanded: boolean }>`
-  width: 335px;
-  background: #fff;
-  border-radius: 15px;
-  font-family: 'Pretendard', sans-serif;
-  border: 2px solid;
-  border-color: ${({ $isMain }) => ($isMain ? '#6C9EFF' : '#F0F0F0')};
-  box-shadow: ${({ $isMain, $isExpanded }) =>
-    $isMain && $isExpanded
-      ? '0 4px 16px 0 rgba(108, 158, 255, 0.10)'
-      : $isMain
-      ? '0 2px 8px 0 rgba(108, 158, 255, 0.06)'
-      : 'none'};
-  padding: ${({ $isExpanded }) =>
-    $isExpanded ? '24px 18px 24px 28px' : '24px 28px'};
-  min-height: ${({ $isExpanded }) => ($isExpanded ? '150px' : '105px')};
+const HistoryItem = styled.div<{ $isMain: boolean }>`
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  transition: box-shadow 0.18s, border-color 0.18s, padding 0.18s, min-height 0.18s;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  background: ${({ theme }) => theme.cardBackground};
+  border: 1.5px solid transparent;
+  transition: all 0.2s ease;
   cursor: pointer;
-  position: relative;
-  outline: none;
+  border-color: ${({ $isMain, theme }) => ($isMain ? theme.primary : theme.border)};
+
+  &:hover {
+    box-shadow: 0 4px 12px ${({ theme }) => theme.shadow};
+    border-color: ${({ theme }) => theme.primary};
+  }
 `;
 
-const Content = styled.div`
+const HistoryHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+`;
+
+const HistoryInfo = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
+  flex: 1;
 `;
 
-const TitleRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const Title = styled.div`
-  font-size: 18px;
+const HistoryTitle = styled.h3`
+  font-family: 'Pretendard';
+  font-size: 16px;
   font-weight: 700;
-  color: #222;
-  letter-spacing: -0.5px;
-  line-height: 1.1;
+  color: ${({ theme }) => theme.text};
+  margin: 0;
+  letter-spacing: -0.3px;
+  line-height: 1.3;
 `;
 
-const TimeAgo = styled.div`
-  font-size: 12px;
-  color: #7C7C7C;
-  margin-left: 6px;
-  font-weight: 400;
-`;
-
-const Description = styled.div`
+const HistoryMeta = styled.div`
+  font-family: 'Pretendard';
   font-size: 13px;
-  color: #909090;
-  margin-top: 2px;
-  line-height: 1.5;
-  font-weight: 400;
+  color: ${({ theme }) => theme.textSecondary};
   letter-spacing: -0.2px;
 `;
 
-const BottomRow = styled.div`
+const TimeAgo = styled.span`
+  font-family: 'Pretendard';
+  font-size: 12px;
+  color: ${({ theme }) => theme.textSecondary};
+  opacity: 0.8;
+`;
+
+const UserSection = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 18px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1.5px solid ${({ theme }) => theme.cardBackground};
+  margin-top: 4px;
+  background: ${({ theme }) => theme.surface};
+  transition: all 0.2s ease;
+`;
+
+const UserName = styled.span`
+  font-family: 'Pretendard';
+  font-size: 12px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.text};
+  letter-spacing: -0.2px;
 `;
 
 const Avatar = styled.img`
@@ -95,14 +103,6 @@ const Avatar = styled.img`
   box-shadow: 0 1px 2px 0 rgba(107, 110, 116, 0.04);
   background: #f5f7fa;
   object-fit: cover;
-`;
-
-const UserName = styled.div`
-  font-size: 14px;
-  color: #292929;
-  font-weight: 400;
-  margin-left: 2px;
-  letter-spacing: -0.2px;
 `;
 
 const HistoryCard: React.FC<HistoryCardProps> = ({
@@ -158,10 +158,9 @@ const HistoryCard: React.FC<HistoryCardProps> = ({
 
   return (
     <>
-      <Card
+      <HistoryItem
         ref={cardRef}
         $isMain={isMain}
-        $isExpanded={isHovered}
         tabIndex={0}
         aria-label={isMain ? '메인 히스토리 카드' : '히스토리 카드'}
         role="button"
@@ -172,18 +171,18 @@ const HistoryCard: React.FC<HistoryCardProps> = ({
           if (e.key === 'Enter' || e.key === ' ') setIsHovered(v => !v);
         }}
       >
-        <Content>
-          <TitleRow>
-            <Title>{title}</Title>
+        <HistoryHeader>
+          <HistoryInfo>
+            <HistoryTitle>{title}</HistoryTitle>
             {isHovered && timeAgo && <TimeAgo>{timeAgo}</TimeAgo>}
-          </TitleRow>
-          {isHovered && description && <Description>{description}</Description>}
-        </Content>
-        <BottomRow>
+          </HistoryInfo>
+        </HistoryHeader>
+        {isHovered && description && <HistoryMeta>{description}</HistoryMeta>}
+        <UserSection>
           <Avatar src={avatarImg} alt="사용자 아바타" />
           <UserName>{userName}</UserName>
-        </BottomRow>
-      </Card>
+        </UserSection>
+      </HistoryItem>
       <Dropdown
         isOpen={dropdown.open}
         options={dropdownOptions}

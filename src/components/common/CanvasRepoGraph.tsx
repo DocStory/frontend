@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import styled from 'styled-components';
 import Matter from 'matter-js';
 import { Dropdown, DropdownOption } from './Dropdown';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const CARD_WIDTH = 335;
 const CARD_HEIGHT = 150;
@@ -48,47 +49,78 @@ interface CanvasRepoGraphProps {
 const INITIAL_VIEWPORT = { x: 0, y: 0, scale: 1 };
 
 const GraphContainer = styled.div`
+  position: relative;
   width: 100%;
   height: 100%;
-  min-width: 0;
-  min-height: 0;
-  position: relative;
   overflow: hidden;
-  background: transparent;
   cursor: grab;
+  
   &:active {
     cursor: grabbing;
   }
 `;
 
+const Canvas = styled.canvas`
+  display: block;
+  background: ${({ theme }) => theme.background};
+`;
+
 const StyledCanvas = styled.canvas`
-  position: absolute;
-  top: 0;
-  left: 0;
+  display: block;
+  background: ${({ theme }) => theme.background};
   width: 100%;
   height: 100%;
-  touch-action: none;
 `;
 
 const ResetButton = styled.button`
   position: absolute;
-  top: 24px;
-  right: 24px;
-  z-index: 100;
-  background: #fff;
-  border: 1.5px solid #2563eb;
-  color: #2563eb;
-  border-radius: 8px;
-  padding: 8px 18px;
-  font-size: 1rem;
-  font-weight: 600;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: ${({ theme }) => theme.primary};
+  color: ${({ theme }) => theme.background};
+  font-family: 'Pretendard';
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  transition: background 0.2s, color 0.2s, border 0.2s;
-  &:hover, &:focus {
-    background: #2563eb;
-    color: #fff;
-    outline: none;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.primaryHover};
+  }
+`;
+
+const FloatingControls = styled.div`
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 10;
+`;
+
+const ControlButton = styled.button<{ isActive?: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1.5px solid ${({ theme }) => theme.primary};
+  background: ${({ isActive, theme }) => isActive ? theme.primary : theme.cardBackground};
+  color: ${({ isActive, theme }) => isActive ? theme.background : theme.primary};
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 18px;
+  font-weight: 600;
+
+  &:hover {
+    background: ${({ theme }) => theme.primary};
+    color: ${({ theme }) => theme.background};
   }
 `;
 
@@ -204,12 +236,13 @@ const renderNode = (
   node: NodeData,
   isHovered: boolean,
   isDragging: boolean,
-  imageRefs: { [key: string]: HTMLImageElement }
+  imageRefs: { [key: string]: HTMLImageElement },
+  theme: any
 ): void => {
   const x = node.x;
   const y = node.y;
   const width = CARD_WIDTH;
-  const height = isHovered ? 150 : 105; // 기존 HistoryCard와 동일한 높이
+  const height = isHovered ? 150 : 105;
   
   ctx.save();
   
@@ -226,14 +259,18 @@ const renderNode = (
     ctx.shadowOffsetY = 2;
   }
   
-  // 카드 배경 (둥근 모서리)
+  // 카드 배경 (둥근 모서리) - 항상 흰색
   drawRoundedRect(ctx, x, y, width, height, 15);
   ctx.fillStyle = '#ffffff';
   ctx.fill();
   
-  // 보더 (2px, main일 때 #6C9EFF, 아니면 #F0F0F0)
+  // 보더 (2px, main일 때 primary, 아니면 #F0F0F0)
   ctx.lineWidth = 2;
-  ctx.strokeStyle = node.isMain ? '#6C9EFF' : '#F0F0F0';
+  if (node.isMain) {
+    ctx.strokeStyle = '#6C9EFF';
+  } else {
+    ctx.strokeStyle = '#F0F0F0';
+  }
   ctx.stroke();
   
   ctx.shadowColor = 'transparent'; // 그림자 제거
@@ -243,26 +280,25 @@ const renderNode = (
     ctx.globalAlpha = 0.8;
   }
   
-  // 패딩 계산 (기존: expanded ? '24px 18px 24px 28px') - 상단 패딩 줄임
-  const paddingTop = isHovered ? 18 : 16; // 상단 패딩을 줄여서 컨텐츠를 위로 올림
-  const paddingBottom = isHovered ? 18 : 24; // 호버 시 상단과 동일한 패딩으로 맞춤
+  // 패딩 계산
+  const paddingTop = isHovered ? 18 : 16;
+  const paddingBottom = isHovered ? 18 : 24;
   const paddingLeft = isHovered ? 28 : 28;
   const paddingRight = isHovered ? 18 : 28;
   
   // Content 영역 시작
   const contentStartY = y + paddingTop;
   
-  // Title Row - 타이틀을 더 위로 올림
+  // Title Row
   const titleX = x + paddingLeft;
-  const titleY = contentStartY + 8; // 12에서 8로 줄여서 위로 올림
+  const titleY = contentStartY + 8;
   
-  // 제목 (18px, 700, #222, letter-spacing: -0.5px)
+  // 제목 (18px, 700, 검정색)
   ctx.font = '700 18px Pretendard, Inter, sans-serif';
   ctx.fillStyle = '#222222';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
   
-  // 제목 너비 계산 (timeAgo를 위한 공간 확보)
   const titleMaxWidth = width - paddingLeft - paddingRight - (isHovered && node.timeAgo ? 80 : 0);
   const titleLines = wrapText(ctx, node.title, titleMaxWidth);
   
@@ -270,7 +306,7 @@ const renderNode = (
     ctx.fillText(line, titleX, titleY + (index * 20));
   });
   
-  // TimeAgo (hover 시에만, 12px, #7C7C7C, right-aligned)
+  // TimeAgo (hover 시에만)
   if (isHovered && node.timeAgo) {
     ctx.font = '400 12px Pretendard, Inter, sans-serif';
     ctx.fillStyle = '#7C7C7C';
@@ -279,9 +315,9 @@ const renderNode = (
     ctx.fillText(node.timeAgo, x + width - paddingRight, titleY);
   }
   
-  // Description (hover 시에만, 13px, #909090, margin-top: 2px + 8px gap)
+  // Description (hover 시에만)
   if (isHovered && node.description) {
-    const descY = titleY + (titleLines.length * 20) + 10; // 8px gap + 2px margin-top
+    const descY = titleY + (titleLines.length * 20) + 10;
     ctx.font = '400 13px Pretendard, Inter, sans-serif';
     ctx.fillStyle = '#909090';
     ctx.textAlign = 'left';
@@ -291,17 +327,13 @@ const renderNode = (
     const descLines = wrapText(ctx, node.description, descMaxWidth);
     
     descLines.forEach((line, index) => {
-      ctx.fillText(line, titleX, descY + (index * 19.5)); // line-height 1.5 * 13 = 19.5
+      ctx.fillText(line, titleX, descY + (index * 19.5));
     });
   }
   
-  // Bottom Row - 하단 패딩을 정확히 지켜서 아바타 위치를 고정으로 계산
-  // 호버 시: y + 150 - 18 - 14 = y + 118 (카드높이 - 하단패딩 - 아바타반지름)
-  // 일반 시: y + 105 - 24 - 14 = y + 67 (카드높이 - 하단패딩 - 아바타반지름)
+  // Bottom Row - 아바타 위치
   const avatarY = isHovered ? y + 118 : y + 67;
-  
-  // 아바타 (28px, border: 1.5px solid #fff, box-shadow, background: #f5f7fa)
-  const avatarX = x + paddingLeft + 14; // 28px/2 = 14
+  const avatarX = x + paddingLeft + 14;
   
   // 아바타 배경
   ctx.beginPath();
@@ -314,29 +346,24 @@ const renderNode = (
   ctx.strokeStyle = '#ffffff';
   ctx.stroke();
   
-  // 프로필 이미지 렌더링 (imageRefs에서 로드된 img 요소 사용)
+  // 프로필 이미지 렌더링
   const profileImageSrc = getProfileImageSrc(node);
   let avatarImage = null;
   
-  // 먼저 해당 노드의 프로필 이미지 찾기
   if (profileImageSrc && imageRefs[node.id]) {
     avatarImage = imageRefs[node.id];
   }
   
-  // 프로필 이미지가 없으면 기본 아바타 사용
   if (!avatarImage && imageRefs['default-avatar']) {
     avatarImage = imageRefs['default-avatar'];
   }
   
-  // 이미지가 있는지 확인하고 그리기
   if (avatarImage && avatarImage.complete && avatarImage.naturalWidth > 0) {
     ctx.save();
-    // 원형 클리핑 마스크
     ctx.beginPath();
-    ctx.arc(avatarX, avatarY, 13, 0, 2 * Math.PI); // 보더 안쪽 크기
+    ctx.arc(avatarX, avatarY, 13, 0, 2 * Math.PI);
     ctx.clip();
     
-    // 이미지 그리기
     try {
       ctx.drawImage(avatarImage, avatarX - 13, avatarY - 13, 26, 26);
     } catch (error) {
@@ -344,7 +371,6 @@ const renderNode = (
     }
     ctx.restore();
     
-    // 보더 다시 그리기
     ctx.beginPath();
     ctx.arc(avatarX, avatarY, 14, 0, 2 * Math.PI);
     ctx.lineWidth = 1.5;
@@ -352,7 +378,7 @@ const renderNode = (
     ctx.stroke();
   }
   
-  // 아바타 그림자 효과 (box-shadow: 0 1px 2px 0 rgba(107, 110, 116, 0.04))
+  // 아바타 그림자
   ctx.shadowColor = 'rgba(107, 110, 116, 0.04)';
   ctx.shadowBlur = 2;
   ctx.shadowOffsetX = 0;
@@ -360,12 +386,12 @@ const renderNode = (
   ctx.stroke();
   ctx.shadowColor = 'transparent';
   
-  // 사용자 이름 (14px, #292929, margin-left: 2px, letter-spacing: -0.2px)
-  const userNameX = avatarX + 14 + 8 + 2; // 아바타 반지름 + gap + margin-left
-  const userNameY = avatarY; // 아바타와 동일한 Y 좌표 사용
+  // 사용자 이름 (검정색)
+  const userNameX = avatarX + 14 + 8 + 2;
+  const userNameY = avatarY;
   
   ctx.font = '400 14px Pretendard, Inter, sans-serif';
-  ctx.fillStyle = '#292929';
+  ctx.fillStyle = '#222222';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ctx.fillText(node.userName, userNameX, userNameY);
@@ -378,7 +404,8 @@ const renderEdge = (
   ctx: CanvasRenderingContext2D,
   sourceNode: NodeData,
   targetNode: NodeData,
-  isMain: boolean = false
+  isMain: boolean = false,
+  theme: any
 ): void => {
   const x1 = sourceNode.x + CARD_WIDTH / 2;
   const y1 = sourceNode.y + CARD_HEIGHT / 2;
@@ -390,7 +417,7 @@ const renderEdge = (
   ctx.moveTo(x1, y1);
   ctx.lineTo(x2, y2);
   ctx.lineWidth = isMain ? 3 : 2.5;
-  ctx.strokeStyle = isMain ? '#2563eb' : '#94a3b8';
+  ctx.strokeStyle = isMain ? theme.primary : theme.borderLight;
   ctx.globalAlpha = isMain ? 0.8 : 0.5;
   ctx.stroke();
   ctx.restore();
@@ -404,6 +431,7 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const animationFrameRef = useRef<number>(0);
+  const theme = useTheme();
   
   // States
   const [nodeStates, setNodeStates] = useState<NodeData[]>(nodes);
@@ -542,7 +570,7 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
       const targetNode = nodeStates.find(n => n.id === edge.target);
       if (sourceNode && targetNode) {
         const isMainEdge = sourceNode.isMain && targetNode.isMain;
-        renderEdge(ctx, sourceNode, targetNode, isMainEdge);
+        renderEdge(ctx, sourceNode, targetNode, isMainEdge, theme);
       }
     });
     
@@ -550,11 +578,11 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
     nodeStates.forEach(node => {
       const isHovered = hoveredNodeId === node.id;
       const isDragging = draggingId === node.id;
-      renderNode(ctx, node, isHovered, isDragging, imageRefs.current);
+      renderNode(ctx, node, isHovered, isDragging, imageRefs.current, theme);
     });
     
     ctx.restore();
-  }, [nodeStates, edges, hoveredNodeId, draggingId, forceRender, imageRefs]);
+  }, [nodeStates, edges, hoveredNodeId, draggingId, forceRender, imageRefs, theme]);
   
   // nodes prop 변경 시 업데이트
   useEffect(() => {
@@ -616,46 +644,47 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
     createImageElements();
   }, [createImageElements]);
   
-  // Canvas 이벤트 핸들러들
+  // 클릭 판정용 ref 추가
+  const clickStartNodeId = useRef<string | null>(null);
+  const clickStartPos = useRef<{ x: number; y: number } | null>(null);
+  const CLICK_MOVE_THRESHOLD = 5; // px
+
+  // handleCanvasMouseDown 수정
   const handleCanvasMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-    
     const nodeAtPos = getNodeAtPosition(mouseX, mouseY);
-    
+
     if (nodeAtPos && (e.button === 0)) {
+      // 클릭 시작 노드/좌표 저장
+      clickStartNodeId.current = nodeAtPos.id;
+      clickStartPos.current = { x: mouseX, y: mouseY };
       // 노드 드래그 시작
       setDragMode(DRAG_NODE);
       setDraggingId(nodeAtPos.id);
-      
-      // 마우스 위치와 노드 위치의 오프셋 계산
       const nodePos = screenToNode({ x: mouseX, y: mouseY });
       const offsetX = nodePos.x - nodeAtPos.x;
       const offsetY = nodePos.y - nodeAtPos.y;
       setDragOffset({ x: offsetX, y: offsetY });
-      
       const body = bodiesRef.current[nodeAtPos.id];
       if (body) {
         Matter.Body.setStatic(body, true);
       }
     } else if (e.button === 2 || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) {
-      // 시점 드래그 시작
       setDragMode(DRAG_PAN);
       setIsPanning(true);
       setLastMousePos({ x: e.clientX, y: e.clientY });
     } else {
-      // 빈 공간 클릭 - 시점 드래그
       setDragMode(DRAG_PAN);
       setIsPanning(true);
       setLastMousePos({ x: e.clientX, y: e.clientY });
     }
-  }, [getNodeAtPosition]);
-  
-  // 4. 기존 handleCanvasMouseMove에서 setForceRender는 제거 (루프에서 처리)
+  }, [getNodeAtPosition, screenToNode]);
+
+  // handleCanvasMouseMove 수정
   const handleCanvasMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -691,27 +720,29 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
     }
   }, [dragMode, isPanning, lastMousePos, draggingId, getNodeAtPosition, screenToNode, dragOffset, render]);
   
+  // handleCanvasMouseUp 수정
   const handleCanvasMouseUp = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
-    // 클릭 이벤트 처리 (드래그가 아닌 경우에만)
-    if (dragMode === DRAG_NONE || (dragMode === DRAG_NODE && !draggingId)) {
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-      
-      const nodeAtPos = getNodeAtPosition(mouseX, mouseY);
-      if (nodeAtPos && nodeAtPos.onDetailClick && nodeAtPos.historyId) {
-        // 우클릭이면 context menu 처리하지 않고 기본 동작
-        if (e.button === 2) {
-          return;
-        }
-        // 왼쪽 클릭이면 상세보기 실행
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const nodeAtPos = getNodeAtPosition(mouseX, mouseY);
+
+    // 클릭 판정: 다운/업이 같은 노드 & 이동 거의 없음 & 좌클릭
+    if (
+      e.button === 0 &&
+      nodeAtPos &&
+      clickStartNodeId.current === nodeAtPos.id &&
+      clickStartPos.current &&
+      Math.abs(mouseX - clickStartPos.current.x) < CLICK_MOVE_THRESHOLD &&
+      Math.abs(mouseY - clickStartPos.current.y) < CLICK_MOVE_THRESHOLD
+    ) {
+      if (nodeAtPos.onDetailClick && nodeAtPos.historyId) {
         nodeAtPos.onDetailClick(nodeAtPos.historyId);
       }
     }
-    
+    // 기존 드래그/패닝 처리
     if (dragMode === DRAG_NODE && draggingId) {
       const body = bodiesRef.current[draggingId];
       if (body) {
@@ -720,7 +751,6 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
         Matter.Body.setAngularVelocity(body, 0);
       }
     }
-    
     if (dragMode === DRAG_PAN) {
       setViewport(viewportRef.current);
     }
@@ -728,6 +758,8 @@ const CanvasRepoGraph: React.FC<CanvasRepoGraphProps> = ({ nodes, edges = [] }) 
     setDraggingId(null);
     setIsPanning(false);
     setDragOffset({ x: 0, y: 0 });
+    clickStartNodeId.current = null;
+    clickStartPos.current = null;
   }, [dragMode, draggingId, getNodeAtPosition]);
   
   const handleCanvasMouseLeave = useCallback(() => {

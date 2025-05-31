@@ -104,13 +104,13 @@ const LabelRow = styled.div`
 const Label = styled.label`
   font-family: 'Pretendard';
   font-size: 16px;
-  color: #292929;
+  color: ${({ theme }) => theme.text};
   font-weight: 600;
   margin-bottom: 4px;
 `;
 
 const Required = styled.span`
-  color: #ff5a5a;
+  color: ${({ theme }) => theme.error};
   font-size: 16px;
   font-weight: 700;
 `;
@@ -119,14 +119,20 @@ const Input = styled.input`
   width: 100%;
   font-size: 16px;
   padding: 14px 16px;
-  border: 1.5px solid #e5e7eb;
+  border: 1.5px solid ${({ theme }) => theme.border};
   border-radius: 8px;
-  background: #fafafa;
+  background: ${({ theme }) => theme.inputBackground};
   font-family: 'Pretendard';
-  color: #1f2937;
+  color: ${({ theme }) => theme.text};
+  transition: border-color 0.2s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.primary};
+  }
   
   &::placeholder {
-    color: #9ca3af;
+    color: ${({ theme }) => theme.textSecondary};
   }
 `;
 
@@ -134,16 +140,22 @@ const TextArea = styled.textarea`
   width: 100%;
   font-size: 16px;
   padding: 14px 16px;
-  border: 1.5px solid #e5e7eb;
+  border: 1.5px solid ${({ theme }) => theme.border};
   border-radius: 8px;
-  background: #fafafa;
+  background: ${({ theme }) => theme.inputBackground};
   font-family: 'Pretendard';
   resize: none;
   min-height: 200px;
-  color: #1f2937;
+  color: ${({ theme }) => theme.text};
+  transition: border-color 0.2s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.primary};
+  }
   
   &::placeholder {
-    color: #9ca3af;
+    color: ${({ theme }) => theme.textSecondary};
   }
 `;
 
@@ -156,13 +168,18 @@ const FileLabel = styled.label`
   align-items: center;
   gap: 8px;
   padding: 14px 16px;
-  background: #f6f7fb;
-  border: 1.5px solid #f0f1f6;
+  background: ${({ theme }) => theme.surface};
+  border: 1.5px solid ${({ theme }) => theme.border};
   border-radius: 7px;
   font-size: 14px;
-  color: #7c7c7c;
+  color: ${({ theme }) => theme.textSecondary};
   cursor: pointer;
   font-family: 'Pretendard';
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${({ theme }) => theme.hoverBackground};
+  }
 `;
 
 const ButtonRow = styled.div`
@@ -194,10 +211,10 @@ const FileItem = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  background: #f6f7fb;
+  background: ${({ theme }) => theme.surface};
   border-radius: 6px;
   font-size: 14px;
-  color: #4a4a4a;
+  color: ${({ theme }) => theme.text};
 `;
 
 const DeleteButton = styled.button`
@@ -206,12 +223,13 @@ const DeleteButton = styled.button`
   justify-content: center;
   background: none;
   border: none;
-  color: #666;
+  color: ${({ theme }) => theme.textSecondary};
   cursor: pointer;
   padding: 4px;
+  transition: color 0.2s ease;
   
   &:hover {
-    color: #ff5a5a;
+    color: ${({ theme }) => theme.error};
   }
 `;
 
@@ -226,6 +244,18 @@ const NewRepositoryModal: React.FC<NewRepositoryModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { refreshRepositories } = useRepositories();
   const toast = useToastContext();
+
+  // ESC 키로 모달 닫기
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isOpen]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {

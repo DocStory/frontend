@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import createIcon from '../../assets/pencilIcon.svg';
 import Tab from '../common/FilterTab.tsx';
+import { useTheme } from 'styled-components';
 
 interface RepositoryTileProps {
   title: string;
@@ -14,8 +15,8 @@ const Container = styled.div`
   width: 1622px;
   height: 148px;
   padding: 0 24px 0 58px;
-  background: #fff;
-  border-bottom: 1px solid #f0f0f0;
+  background: ${({ theme }) => theme.background};
+  border-bottom: 1px solid ${({ theme }) => theme.border};
 `;
 
 const TitleContainer = styled.div`
@@ -30,7 +31,7 @@ const Title = styled.h1`
   font-family: 'Pretendard';
   font-weight: 700;
   font-size: 26px;
-  color: #292929;
+  color: ${({ theme }) => theme.text};
   margin: 0;
 `;
 
@@ -38,48 +39,58 @@ const Subtitle = styled.p`
   font-family: 'Pretendard';
   font-weight: 400;
   font-size: 16px;
-  color: rgba(0, 0, 0, 0.62);
-  margin: 0;
-  letter-spacing: 0.94%;
+  color: ${({ theme }) => theme.textSecondary};
+  margin: 0 0 16px 0;
 `;
 
-const CreateIcon = styled.div`
-  cursor: pointer;
+const BottomRow = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 19px;
-  height: 19px;
-
-  img {
-    width: 100%;
-    height: 100%;
-  }
+  justify-content: space-between;
+  width: 100%;
 `;
 
 const TabContainer = styled.div`
   display: flex;
-  gap: 30px;
-  margin-top: 22px;
-  width: 479px;
+  gap: 24px;
 `;
 
-const TabWrapper = styled.div<{ label: string }>`
-  width: ${(props) => (props.label === '전체보기' ? '120px' : '89.75px')};
+const CreateButton = styled.button`
   display: flex;
-  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.cardBackground};
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Pretendard';
+  font-weight: 500;
+  font-size: 14px;
+  color: ${({ theme }) => theme.text};
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.hoverBackground};
+  }
 `;
 
-const RepositoryTile: React.FC<RepositoryTileProps> = ({
+const CreateIcon = styled.img`
+  width: 16px;
+  height: 16px;
+  ${({ theme }) => theme.mode === 'dark' ? 'filter: invert(1);' : ''}
+`;
+
+const RepositoryTitle: React.FC<RepositoryTileProps> = ({
   title,
   subtitle,
   onTabChange,
   onCreateClick,
 }) => {
-  const tabs = ['전체보기', '주요', '하위', '폐기', '필터'];
-  const [activeTab, setActiveTab] = useState('전체보기');
+  const [activeTab, setActiveTab] = useState('전체');
+  const theme = useTheme();
 
-  const handleTabClick = (tab: string) => {
+  const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     if (onTabChange) {
       onTabChange(tab);
@@ -90,25 +101,48 @@ const RepositoryTile: React.FC<RepositoryTileProps> = ({
     <Container>
       <TitleContainer>
         <Title>{title}</Title>
-        <CreateIcon onClick={onCreateClick}>
-          <img src={createIcon} alt='레포지토리 생성' />
-        </CreateIcon>
       </TitleContainer>
       <Subtitle>{subtitle}</Subtitle>
-      <TabContainer>
-        {tabs.map((tab) => (
-          <TabWrapper key={tab} label={tab}>
-            <Tab
-              label={tab}
-              isActive={activeTab === tab}
-              showLine={true}
-              onClick={() => handleTabClick(tab)}
-            />
-          </TabWrapper>
-        ))}
-      </TabContainer>
+      <BottomRow>
+        <TabContainer>
+          <Tab
+            label="전체"
+            isActive={activeTab === '전체'}
+            onClick={() => handleTabChange('전체')}
+            showLine={true}
+          />
+          <Tab
+            label="주요"
+            isActive={activeTab === '주요'}
+            onClick={() => handleTabChange('주요')}
+            showLine={true}
+          />
+          <Tab
+            label="하위"
+            isActive={activeTab === '하위'}
+            onClick={() => handleTabChange('하위')}
+            showLine={true}
+          />
+          <Tab
+            label="폐기"
+            isActive={activeTab === '폐기'}
+            onClick={() => handleTabChange('폐기')}
+            showLine={true}
+          />
+          <Tab
+            label="필터"
+            isActive={activeTab === '필터'}
+            onClick={() => handleTabChange('필터')}
+            showLine={true}
+          />
+        </TabContainer>
+        <CreateButton onClick={onCreateClick}>
+          <CreateIcon src={createIcon} alt="생성" />
+          프로포절
+        </CreateButton>
+      </BottomRow>
     </Container>
   );
 };
 
-export default RepositoryTile;
+export default RepositoryTitle;
