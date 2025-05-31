@@ -21,13 +21,14 @@ interface ProfileListProps {
 const ProfileListContainer = styled.div<{ backgroundColor?: string }>`
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 37px 24px 16px 33px;
+  gap: 12px;
+  padding: 32px 32px 24px 32px;
   background: ${({ backgroundColor, theme }) => 
     backgroundColor === 'transparent' ? 'transparent' : 
     backgroundColor || theme.cardBackground
   };
-  transition: background-color 0.3s ease;
+  border-bottom: 1px solid ${({ theme }) => theme.border};
+  transition: all 0.2s ease;
 `;
 
 const ProfileListContent = styled.div`
@@ -39,26 +40,29 @@ const ProfileListContent = styled.div`
 const UserInfo = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 `;
 
 const Avatar = styled.img`
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid ${({ theme }) => theme.border};
+  transition: border-color 0.2s ease;
 `;
 
 const TextContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 `;
 
 const Title = styled.h2<{ isRecentActivity?: boolean }>`
   font-family: 'Pretendard';
   font-weight: 600;
-  font-size: ${props => props.isRecentActivity ? '14px' : '22px'};
-  line-height: 1em;
+  font-size: ${props => props.isRecentActivity ? '16px' : '20px'};
+  line-height: 1.3;
   letter-spacing: -0.007em;
   color: ${({ theme }) => theme.text};
   margin: 0;
@@ -68,37 +72,49 @@ const Title = styled.h2<{ isRecentActivity?: boolean }>`
 const Time = styled.span<{ isRecentActivity?: boolean }>`
   font-family: 'Pretendard';
   font-weight: 500;
-  font-size: ${props => props.isRecentActivity ? '12px' : '14px'};
-  line-height: 1.43em;
+  font-size: ${props => props.isRecentActivity ? '13px' : '14px'};
+  line-height: 1.4;
   letter-spacing: -0.006em;
   color: ${({ theme }) => theme.textSecondary};
   transition: color 0.3s ease;
+  opacity: 0.8;
 `;
 
 const IconButton = styled.button`
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border: 1px solid ${({ theme }) => theme.border};
-  border-radius: 50%;
+  border-radius: 10px;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: transparent;
+  background: ${({ theme }) => theme.surface};
   cursor: pointer;
-  padding: 16px;
   transition: all 0.2s ease;
 
   &:hover {
     background: ${({ theme }) => theme.hoverBackground};
     border-color: ${({ theme }) => theme.primary};
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px ${({ theme }) => theme.shadow};
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 `;
 
 const Icon = styled.img`
-  width: 20px;
-  height: 20px;
-  min-width: 20px;
-  min-height: 20px;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+
+  ${IconButton}:hover & {
+    opacity: 1;
+  }
 `;
 
 const ProfileList: React.FC<ProfileListProps> = ({

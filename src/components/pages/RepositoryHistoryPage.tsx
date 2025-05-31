@@ -1137,239 +1137,164 @@ const RepositoryHistoryPage: React.FC = () => {
           )}
 
           {isProposalModalOpen && (
-            <div style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000
-            }}>
-              <ModalSimple
-                headerTitle={currentUser?.nickname || 'Unknown User'}
-                headerTime={new Date().toLocaleDateString()}
-                modalTitle="PP 요청"
-                contentTitle={proposalTitle}
-                content={proposalContent}
-                items={[]}
-                onClose={() => {
-                  setIsProposalModalOpen(false);
-                  setSelectedHistoryForProposal(null);
-                  setProposalTitle('');
-                  setProposalContent('');
-                }}
-                isEditing={true}
-                isModifying={true}
-                canEdit={true}
-                onEditStart={() => {}}
-                onEditCancel={() => {
-                  setIsProposalModalOpen(false);
-                  setSelectedHistoryForProposal(null);
-                  setProposalTitle('');
-                  setProposalContent('');
-                }}
-                onEditSave={async () => {
-                  if (!proposalTitle.trim()) {
-                    toast.warning('제목을 입력해주세요.');
-                    return;
-                  }
+            <ModalSimple
+              headerTitle={currentUser?.nickname || 'Unknown User'}
+              headerTime={new Date().toLocaleDateString()}
+              modalTitle="PP 요청"
+              contentTitle={proposalTitle}
+              content={proposalContent}
+              items={[]}
+              onClose={() => {
+                setIsProposalModalOpen(false);
+                setSelectedHistoryForProposal(null);
+                setProposalTitle('');
+                setProposalContent('');
+              }}
+              isEditing={true}
+              isModifying={true}
+              canEdit={true}
+              onEditStart={() => {}}
+              onEditCancel={() => {
+                setIsProposalModalOpen(false);
+                setSelectedHistoryForProposal(null);
+                setProposalTitle('');
+                setProposalContent('');
+              }}
+              onEditSave={async () => {
+                if (!proposalTitle.trim()) {
+                  toast.warning('제목을 입력해주세요.');
+                  return;
+                }
 
-                  if (!selectedHistoryForProposal) {
-                    toast.error('히스토리가 선택되지 않았습니다.');
-                    return;
-                  }
+                if (!selectedHistoryForProposal) {
+                  toast.error('히스토리가 선택되지 않았습니다.');
+                  return;
+                }
 
-                  try {
-                    const proposalData = {
-                      historyId: selectedHistoryForProposal,
-                      title: proposalTitle,
-                      ...(proposalContent.trim() && { description: proposalContent })
-                    };
+                try {
+                  const proposalData = {
+                    historyId: selectedHistoryForProposal,
+                    title: proposalTitle,
+                    ...(proposalContent.trim() && { description: proposalContent })
+                  };
 
-                    const response = await createProposal(proposalData);
-                    
-                    if (response.code === 100) {
-                      toast.success('PP 요청이 성공적으로 생성되었습니다.');
-                      setIsProposalModalOpen(false);
-                      setSelectedHistoryForProposal(null);
-                      setProposalTitle('');
-                      setProposalContent('');
-                    } else {
-                      toast.error(`PP 요청 생성 실패: ${response.message}`);
-                    }
-                  } catch (err) {
-                    console.error('Failed to create proposal:', err);
-                    toast.error('PP 요청 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+                  const response = await createProposal(proposalData);
+                  
+                  if (response.code === 100) {
+                    toast.success('PP 요청이 성공적으로 생성되었습니다.');
+                    setIsProposalModalOpen(false);
+                    setSelectedHistoryForProposal(null);
+                    setProposalTitle('');
+                    setProposalContent('');
+                  } else {
+                    toast.error(`PP 요청 생성 실패: ${response.message}`);
                   }
-                }}
-                onTitleChange={setProposalTitle}
-                onContentChange={setProposalContent}
-                isCreating={true}
-                isProposal={true}
-              />
-            </div>
+                } catch (err) {
+                  console.error('Failed to create proposal:', err);
+                  toast.error('PP 요청 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+                }
+              }}
+              onTitleChange={setProposalTitle}
+              onContentChange={setProposalContent}
+              isCreating={true}
+              isProposal={true}
+            />
           )}
 
           {isProposalListModalOpen && (
-            <div style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000
-            }}>
-              <ModalPPList 
-                items={proposalList}
-                onClose={() => {
-                  setIsProposalListModalOpen(false);
-                }}
-                onProposalClick={(proposalId) => {
-                  handleProposalDetailOpen(proposalId);
-                }}
-              />
-            </div>
+            <ModalPPList 
+              items={proposalList}
+              onClose={() => {
+                setIsProposalListModalOpen(false);
+              }}
+              onProposalClick={(proposalId) => {
+                handleProposalDetailOpen(proposalId);
+              }}
+            />
           )}
 
           {isProposalDetailModalOpen && selectedProposalDetail && (
-            <div style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000
-            }}>
-              <Modal
-                headerTitle={selectedProposalDetail.createdBy.nickname}
-                headerTime={selectedProposalDetail.createdAt ? new Date(selectedProposalDetail.createdAt).toLocaleDateString() : ''}
-                modalTitle="Proposal 상세"
-                contentTitle={isEditing ? editedTitle : selectedProposalDetail.title}
-                content={isEditing ? editedContent : selectedProposalDetail.description}
-                items={[{
-                  Name: selectedProposalDetail.file.name,
-                  date: selectedProposalDetail.file.fileType,
-                  iconType: 'diff' as const
-                }]}
-                onClose={() => {
-                  setIsProposalDetailModalOpen(false);
-                  setSelectedProposalId(null);
-                  setSelectedProposalDetail(null);
-                  setIsEditing(false);
-                  setEditedTitle('');
-                  setEditedContent('');
-                  setReviewContent('');
-                }}
-                isEditing={isEditing}
-                canEdit={isAdmin && selectedProposalDetail.status === 'OPEN'}
-                onEditStart={() => {
-                  setIsEditing(true);
-                  setEditedTitle(selectedProposalDetail.title);
-                  setEditedContent(selectedProposalDetail.description);
-                }}
-                onEditCancel={() => {
-                  setIsEditing(false);
-                  setEditedTitle('');
-                  setEditedContent('');
-                }}
-                onEditSave={async () => {
-                  if (!selectedProposalDetail) return;
+            <Modal
+              headerTitle={selectedProposalDetail.createdBy.nickname}
+              headerTime={selectedProposalDetail.createdAt ? new Date(selectedProposalDetail.createdAt).toLocaleDateString() : ''}
+              modalTitle="PP 상세"
+              contentTitle={isEditing ? editedTitle : selectedProposalDetail.title}
+              content={isEditing ? editedContent : selectedProposalDetail.description}
+              items={[{
+                Name: selectedProposalDetail.file.name,
+                date: selectedProposalDetail.file.fileType,
+                iconType: 'diff' as const
+              }]}
+              onClose={() => {
+                setIsProposalDetailModalOpen(false);
+                setSelectedProposalId(null);
+                setSelectedProposalDetail(null);
+                setIsEditing(false);
+                setEditedTitle('');
+                setEditedContent('');
+                setReviewContent('');
+              }}
+              isEditing={isEditing}
+              canEdit={isAdmin && selectedProposalDetail.status === 'OPEN'}
+              onEditStart={() => {
+                setIsEditing(true);
+                setEditedTitle(selectedProposalDetail.title);
+                setEditedContent(selectedProposalDetail.description);
+              }}
+              onEditCancel={() => {
+                setIsEditing(false);
+                setEditedTitle('');
+                setEditedContent('');
+              }}
+              onEditSave={async () => {
+                if (!selectedProposalDetail) return;
 
-                  try {
-                    const updateData = {
-                      title: editedTitle,
-                      description: editedContent
-                    };
+                try {
+                  const updateData = {
+                    title: editedTitle,
+                    description: editedContent
+                  };
 
-                    const response = await updateProposal(selectedProposalDetail.id, updateData);
-                    
-                    if (response.code === 100) {
-                      const updatedDetailResponse = await getProposalById(selectedProposalDetail.id);
-                      if (updatedDetailResponse.code === 100 && updatedDetailResponse.data) {
-                        const updatedProposalData = {
-                          ...updatedDetailResponse.data,
-                          status: selectedProposalDetail.status
-                        };
-                        setSelectedProposalDetail(updatedProposalData);
-                      }
-                      setIsEditing(false);
-                      setEditedTitle('');
-                      setEditedContent('');
+                  const response = await updateProposal(selectedProposalDetail.id, updateData);
+                  
+                  if (response.code === 100) {
+                    const updatedDetailResponse = await getProposalById(selectedProposalDetail.id);
+                    if (updatedDetailResponse.code === 100 && updatedDetailResponse.data) {
+                      const updatedProposalData = {
+                        ...updatedDetailResponse.data,
+                        status: selectedProposalDetail.status
+                      };
+                      setSelectedProposalDetail(updatedProposalData);
                     }
-                  } catch (err) {
-                    console.error('Failed to update proposal:', err);
-                  }
-                }}
-                onTitleChange={setEditedTitle}
-                onContentChange={setEditedContent}
-                onReject={selectedProposalDetail.status === 'OPEN' ? async () => {
-                  console.log('Reject button clicked');
-                  console.log('Current state:', {
-                    isEditing,
-                    canReviewProposal,
-                    userAuthority,
-                    proposalStatus: selectedProposalDetail.status
-                  });
-                  if (isEditing) {
                     setIsEditing(false);
                     setEditedTitle('');
                     setEditedContent('');
-                  } else {
-                    if (!selectedProposalDetail) return;
-                    
-                    try {
-                      const response = await updateProposalStatus(selectedProposalDetail.id, { status: 'CLOSED' });
-                      if (response.code === 100) {
-                        toast.success('Proposal이 거절되었습니다.');
-                        setIsProposalDetailModalOpen(false);
-                        setSelectedProposalId(null);
-                        setSelectedProposalDetail(null);
-                        if (repositoryId) {
-                          const proposalsResponse = await getProposalsByRepository(repositoryId, 'ALL');
-                          if (proposalsResponse.code === 100 && proposalsResponse.data) {
-                            const formattedProposals = proposalsResponse.data.map(proposal => ({
-                              id: proposal.id,
-                              Name: proposal.title,
-                              content: proposal.description || '',
-                              status: proposal.status.toLowerCase() === 'open' ? 'progress' : 
-                                     proposal.status.toLowerCase() === 'merged' ? 'merge' : 'close'
-                            }));
-                            setProposalList(formattedProposals);
-                          }
-                        }
-                      }
-                    } catch (err) {
-                      console.error('Failed to reject proposal:', err);
-                      toast.error('Proposal 거절 중 오류가 발생했습니다.');
-                    }
                   }
-                } : () => {}}
-                onAccept={selectedProposalDetail.status === 'OPEN' ? async () => {
-                  console.log('Accept button clicked');
-                  console.log('Current state:', {
-                    isEditing,
-                    canReviewProposal,
-                    userAuthority,
-                    proposalStatus: selectedProposalDetail.status
-                  });
+                } catch (err) {
+                  console.error('Failed to update proposal:', err);
+                }
+              }}
+              onTitleChange={setEditedTitle}
+              onContentChange={setEditedContent}
+              onReject={selectedProposalDetail.status === 'OPEN' ? async () => {
+                console.log('Reject button clicked');
+                console.log('Current state:', {
+                  isEditing,
+                  canReviewProposal,
+                  userAuthority,
+                  proposalStatus: selectedProposalDetail.status
+                });
+                if (isEditing) {
+                  setIsEditing(false);
+                  setEditedTitle('');
+                  setEditedContent('');
+                } else {
                   if (!selectedProposalDetail) return;
                   
                   try {
-                    const response = await mergeProposal(selectedProposalDetail.id);
+                    const response = await updateProposalStatus(selectedProposalDetail.id, { status: 'CLOSED' });
                     if (response.code === 100) {
-                      toast.success('Proposal이 승인되었습니다.');
+                      toast.success('Proposal이 거절되었습니다.');
                       setIsProposalDetailModalOpen(false);
                       setSelectedProposalId(null);
                       setSelectedProposalDetail(null);
@@ -1388,45 +1313,81 @@ const RepositoryHistoryPage: React.FC = () => {
                       }
                     }
                   } catch (err) {
-                    console.error('Failed to merge proposal:', err);
-                    toast.error('Proposal 승인 중 오류가 발생했습니다.');
+                    console.error('Failed to reject proposal:', err);
+                    toast.error('Proposal 거절 중 오류가 발생했습니다.');
                   }
-                } : () => {}}
-                comments={reviews.map(review => ({
-                  id: review.id,
-                  content: review.comment,
-                  author: review.reviewer.nickname,
-                  createdAt: review.createdAt,
-                  updatedAt: review.updatedAt,
-                  isAuthor: review.reviewer.providerId === currentUser?.userId,
-                  replies: review.replies.map(reply => ({
-                    id: reply.id,
-                    content: reply.comment,
-                    author: reply.reviewer.nickname,
-                    createdAt: reply.createdAt,
-                    updatedAt: reply.updatedAt,
-                    isAuthor: reply.reviewer.providerId === currentUser?.userId,
-                    replies: []
-                  }))
-                }))}
-                onCommentSubmit={handleCreateReview}
-                onCommentEdit={handleEditReview}
-                onCommentDelete={handleDeleteReview}
-                commentContent={reviewContent}
-                onCommentContentChange={setReviewContent}
-                role={(() => {
-                  const shouldShowButtons = canReviewProposal && selectedProposalDetail.status === 'OPEN' && userAuthority;
-                  console.log('Role Calculation:', {
-                    canReviewProposal,
-                    proposalStatus: selectedProposalDetail.status,
-                    userAuthority,
-                    shouldShowButtons,
-                    finalRole: shouldShowButtons ? userAuthority : undefined
-                  });
-                  return shouldShowButtons ? userAuthority : undefined;
-                })()}
-              />
-            </div>
+                }
+              } : () => {}}
+              onAccept={selectedProposalDetail.status === 'OPEN' ? async () => {
+                console.log('Accept button clicked');
+                console.log('Current state:', {
+                  isEditing,
+                  canReviewProposal,
+                  userAuthority,
+                  proposalStatus: selectedProposalDetail.status
+                });
+                if (!selectedProposalDetail) return;
+                
+                try {
+                  const response = await mergeProposal(selectedProposalDetail.id);
+                  if (response.code === 100) {
+                    toast.success('Proposal이 승인되었습니다.');
+                    setIsProposalDetailModalOpen(false);
+                    setSelectedProposalId(null);
+                    setSelectedProposalDetail(null);
+                    if (repositoryId) {
+                      const proposalsResponse = await getProposalsByRepository(repositoryId, 'ALL');
+                      if (proposalsResponse.code === 100 && proposalsResponse.data) {
+                        const formattedProposals = proposalsResponse.data.map(proposal => ({
+                          id: proposal.id,
+                          Name: proposal.title,
+                          content: proposal.description || '',
+                          status: proposal.status.toLowerCase() === 'open' ? 'progress' : 
+                                 proposal.status.toLowerCase() === 'merged' ? 'merge' : 'close'
+                        }));
+                        setProposalList(formattedProposals);
+                      }
+                    }
+                  }
+                } catch (err) {
+                  console.error('Failed to merge proposal:', err);
+                  toast.error('Proposal 승인 중 오류가 발생했습니다.');
+                }
+              } : () => {}}
+              comments={reviews.map(review => ({
+                id: review.id,
+                content: review.comment,
+                author: review.reviewer.nickname,
+                createdAt: review.createdAt,
+                updatedAt: review.updatedAt,
+                isAuthor: review.reviewer.providerId === currentUser?.userId,
+                replies: review.replies.map(reply => ({
+                  id: reply.id,
+                  content: reply.comment,
+                  author: reply.reviewer.nickname,
+                  createdAt: reply.createdAt,
+                  updatedAt: reply.updatedAt,
+                  isAuthor: reply.reviewer.providerId === currentUser?.userId,
+                  replies: []
+                }))
+              }))}
+              onCommentSubmit={handleCreateReview}
+              onCommentEdit={handleEditReview}
+              onCommentDelete={handleDeleteReview}
+              commentContent={reviewContent}
+              onCommentContentChange={setReviewContent}
+              role={(() => {
+                const shouldShowButtons = canReviewProposal && selectedProposalDetail.status === 'OPEN' && userAuthority;
+                console.log('Role Calculation:', {
+                  canReviewProposal,
+                  proposalStatus: selectedProposalDetail.status,
+                  userAuthority,
+                  shouldShowButtons,
+                  finalRole: shouldShowButtons ? userAuthority : undefined
+                });
+                return shouldShowButtons ? userAuthority : undefined;
+              })()}
+            />
           )}
         </>
       )}
